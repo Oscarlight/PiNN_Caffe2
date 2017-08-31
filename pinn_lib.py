@@ -5,10 +5,7 @@ if sys.platform == 'linux2':
 	sys.path.append("/home/oscar/Documents/caffe2/build/")
 
 from caffe2.python import (
-	workspace, layer_model_helper, schema, optimizer, net_drawer
-)
-from caffe2.python.layer_model_instantiator import (
-	generate_training_nets
+	schema, optimizer, net_drawer
 )
 import numpy as np
 
@@ -131,53 +128,5 @@ def build_pinn(
 	return pred, loss
 
 if __name__ == '__main__':
-	workspace.ResetWorkspace()
-	input_record_schema = schema.Struct(
-			('sig_input', schema.Scalar((np.float32, (2, )))),
-			('tanh_input', schema.Scalar((np.float32, (2, ))))
-		)
-	output_record_schema = schema.Struct(
-			('loss', schema.Scalar((np.float32, (1, )))),
-			('pred', schema.Scalar((np.float32, (1, ))))
-		)
-	trainer_extra_schema = schema.Struct()
-	model = layer_model_helper.LayerModelHelper(
-		"pinn_example",
-		input_record_schema,
-		trainer_extra_schema)
-	# optimizer.build_adagrad(model, base_learning_rate = 0.1)
-	X_sig = np.array([[1., 2.]], dtype = np.float32)
-	Y_tanh = np.array([[2., 1.]], dtype = np.float32)
-	label = np.array([[0.]], dtype = np.float32)
-	schema.FeedRecord(model.input_feature_schema, [X_sig, Y_tanh])
-	pred, loss = build_pinn(
-		model,
-		label,
-		1,
-		sig_net_dim = [1, 1],
-		tanh_net_dim = [1, 1],
-		inner_embed_dim = [2, 1],
-		optim=optimizer.AdagradOptimizer()
-	)
-	model.add_loss(loss)
-	output_record = schema.NewRecord(
-		model.net,
-		output_record_schema
-	)
-	output_record_schema.pred.set_value(pred.get(), unsafe=True)
-	output_record_schema.loss.set_value(loss.get(), unsafe=True)
-	model.output_schema = output_record_schema
-	train_init_net, train_net = generate_training_nets(model)
-
-	workspace.RunNetOnce(train_init_net)
-
-	graph = net_drawer.GetPydotGraph(model.net.Proto().op, rankdir='TB')
-	with open(model.net.Name() + ".png",'wb') as f:
-		f.write(graph.create_png())
-		
-	workspace.CreateNet(train_net)
-	for i in range(100):
-		workspace.RunNet(train_net.Proto().name)
-		print(schema.FetchRecord(loss))
-		print(schema.FetchRecord(pred))
-	
+	pass
+	 
