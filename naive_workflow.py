@@ -48,6 +48,7 @@ output_record = schema.NewRecord(
 output_record_schema.pred.set_value(pred.get(), unsafe=True)
 output_record_schema.loss.set_value(loss.get(), unsafe=True)
 model.output_schema = output_record_schema
+
 train_init_net, train_net = instantiator.generate_training_nets(model)
 
 # Train the model
@@ -59,7 +60,7 @@ workspace.RunNetOnce(train_init_net)
 
 workspace.CreateNet(train_net)
 num_iter = 1000
-eval_num_iter = 1
+eval_num_iter = 2
 for i in range(eval_num_iter):
 	workspace.RunNet(train_net.Proto().name, num_iter=num_iter)
 	print(schema.FetchRecord(loss))
@@ -79,7 +80,7 @@ workspace.RunNet(eval_net.Proto().name)
 print(schema.FetchRecord(loss))
 print(schema.FetchRecord(pred))
 
-# Predict
+# Predict1
 pred_net = instantiator.generate_predict_net(model)
 # graph = net_drawer.GetPydotGraph(pred_net.Proto().op, rankdir='TB')
 # with open(pred_net.Name() + ".png",'wb') as f:
