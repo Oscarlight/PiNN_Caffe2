@@ -55,6 +55,10 @@ def build_block(
 		bias_optim=optim,
 		name = model.next_layer_name('sig_fc_layer'),
 	)
+	sig_h = model.Sigmoid(
+		[sig_h],
+		model.next_layer_name('sig_tranfer_layer'),
+	)
 	if not tranfer_before_interconnect:
 		tanh_h = model.Tanh(
 			[tanh_h], 
