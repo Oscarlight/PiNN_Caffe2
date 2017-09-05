@@ -126,9 +126,11 @@ def build_pinn(
 			('prediction', schema.Scalar((np.float32, (num_label, ))))
 		)
 	)
-	schema.FeedRecord(loss_input_record.label, label)
+	schema.FeedRecord(loss_input_record.label, [label])
+	print(pred)
+	print(loss_input_record.label)
 	loss_input_record.prediction.set_value(pred.get(), unsafe=True)
-	loss = model.BatchMSELoss(loss_input_record)
+	loss = model.BatchDirectMSELoss(loss_input_record)
 	return pred, loss
 
 if __name__ == '__main__':

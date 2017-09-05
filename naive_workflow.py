@@ -17,8 +17,8 @@ input_record_schema = schema.Struct(
 		('tanh_input', schema.Scalar((np.float32, (2, ))))
 	)
 output_record_schema = schema.Struct(
-		('loss', schema.Scalar((np.float32, (1, )))),
-		('pred', schema.Scalar((np.float32, (1, ))))
+		('loss', schema.Scalar((np.float32, (2, )))),
+		('pred', schema.Scalar((np.float32, (2, ))))
 	)
 trainer_extra_schema = schema.Struct()
 model = layer_model_helper.LayerModelHelper(
@@ -26,18 +26,18 @@ model = layer_model_helper.LayerModelHelper(
 	input_record_schema,
 	trainer_extra_schema)
 # example data
-X_sig = np.array([[1., 2.], [2., 1.]], dtype = np.float32)
-Y_tanh = np.array([[2., 1.], [1., 2.]], dtype = np.float32)
-label = np.array([[0., 1.]], dtype = np.float32)
+X_sig = np.array([[2., 2.], [2., 2.], [3., 4.]], dtype = np.float32)
+Y_tanh = np.array([[1., 1.], [1., 1.], [2., 5.]], dtype = np.float32)
+label = np.ones((3, 2), dtype = np.float32)
 schema.FeedRecord(model.input_feature_schema, [X_sig, Y_tanh])
 # build the model
 pred, loss = build_pinn(
 	model,
 	label,
-	1,
-	sig_net_dim = [1, 1],
-	tanh_net_dim = [1, 1],
-	inner_embed_dim = [2, 1],
+	2,
+	sig_net_dim = [3, 2],
+	tanh_net_dim = [5, 2],
+	inner_embed_dim = [2, 3],
 	optim=optimizer.AdagradOptimizer()
 )
 model.add_loss(loss)
@@ -66,25 +66,25 @@ for i in range(eval_num_iter):
 	print(schema.FetchRecord(loss))
 	print(schema.FetchRecord(pred))
 
-# Eval
-X_sig = np.array([[2., 2.], [2., 2.]], dtype = np.float32)
-Y_tanh = np.array([[1., 1.], [1., 1.]], dtype = np.float32)
-label = np.array([[0., 1.]], dtype = np.float32)
-schema.FeedRecord(model.input_feature_schema, [X_sig, Y_tanh])
-eval_net = instantiator.generate_eval_net(model)
-# graph = net_drawer.GetPydotGraph(eval_net.Proto().op, rankdir='TB')
-# with open(eval_net.Name() + ".png",'wb') as f:
-# 	f.write(graph.create_png())
-workspace.CreateNet(eval_net)
-workspace.RunNet(eval_net.Proto().name)
-print(schema.FetchRecord(loss))
-print(schema.FetchRecord(pred))
+# # Eval
+# X_sig = np.array([[2., 2.], [2., 2.], [3., 4.]], dtype = np.float32)
+# Y_tanh = np.array([[1., 1.], [1., 1.], [2., 5.]], dtype = np.float32)
+# label = np.array([[0.], [1.], [3.]], dtype = np.float32)
+# schema.FeedRecord(model.input_feature_schema, [X_sig, Y_tanh])
+# eval_net = instantiator.generate_eval_net(model)
+# # graph = net_drawer.GetPydotGraph(eval_net.Proto().op, rankdir='TB')
+# # with open(eval_net.Name() + ".png",'wb') as f:
+# # 	f.write(graph.create_png())
+# workspace.CreateNet(eval_net)
+# workspace.RunNet(eval_net.Proto().name)
+# print(schema.FetchRecord(loss))
+# print(schema.FetchRecord(pred))
 
-# Predict1
-pred_net = instantiator.generate_predict_net(model)
+# # Predict1
+# pred_net = instantiator.generate_predict_net(model)
 # graph = net_drawer.GetPydotGraph(pred_net.Proto().op, rankdir='TB')
 # with open(pred_net.Name() + ".png",'wb') as f:
 # 	f.write(graph.create_png())
-workspace.CreateNet(pred_net)
-workspace.RunNet(pred_net.Proto().name)
-print(schema.FetchRecord(pred))
+# workspace.CreateNet(pred_net)
+# workspace.RunNet(pred_net.Proto().name)
+# print(schema.FetchRecord(pred))
