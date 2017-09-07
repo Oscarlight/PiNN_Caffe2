@@ -58,13 +58,7 @@ def parse_mdm_to_nparray(file_name):
 					tmp = f.readline().split()
 
 			# Transfer string to float
-			j = 1
-			while (j < len(data)):
-				k = 0
-				while (k < len(data[0])):
-					data[j][k] = float(data[j][k])
-					k = k+1
-				j = j+1
+			data[1:] = [map(float,e) for e in data[1:]]
 
 			Condition.append(cond)
 			Data_tmp.append(data)
