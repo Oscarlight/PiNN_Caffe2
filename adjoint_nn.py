@@ -59,7 +59,7 @@ def build_adjoint_mlp(
 				name='fc1'
 			)
 	adjoint_pred = output
-	origin_pred = gamma1
+	origin_pred = gamma2
 	loss_input_record = schema.NewRecord(
 		model.net,
 		schema.Struct(
@@ -76,7 +76,7 @@ if __name__ == '__main__':
 	workspace.ResetWorkspace()
 	input_dim = 1
 	output_dim = 1
-	hidden_dims = 4
+	hidden_dims = 100
 	input_record_schema = schema.Struct(
 			('origin_input', schema.Scalar((np.float32, (input_dim, )))),
 			('adjoint_input', schema.Scalar((np.float32, (output_dim, ))))
@@ -92,11 +92,9 @@ if __name__ == '__main__':
 		input_record_schema,
 		trainer_extra_schema)
 	# example data
-	# origin_input = np.array([[e] for e in np.linspace(0, 3, 100)], dtype = np.float32)
-	origin_input = np.ones((5,1), dtype = np.float32)
-	print(origin_input)
-	adjoint_input = np.ones((5,1), dtype = np.float32)
-	adjoint_label = np.ones((5,1), dtype = np.float32)
+	origin_input = np.array([[e] for e in np.linspace(0.3, 0.8, 100)], dtype = np.float32)
+	adjoint_input = np.ones((100,1), dtype = np.float32)
+	adjoint_label = origin_input
 	schema.FeedRecord(model.input_feature_schema, [origin_input, adjoint_input])
 
 	origin_pred, adjoint_pred, loss = build_adjoint_mlp(
@@ -126,6 +124,7 @@ if __name__ == '__main__':
 	# for param, optimizer in viewitems(model.param_to_optim):
 	# 	print(param)
 	# 	print(grad_map.get(str(param)))
+
 	# Train the model
 	train_init_net, train_net = instantiator.generate_training_nets(model)
 	workspace.RunNetOnce(train_init_net)
@@ -135,14 +134,16 @@ if __name__ == '__main__':
 	# 	f.write(graph.create_png())
 
 	workspace.CreateNet(train_net)
-	num_iter = 1000
+	num_iter = 5000
 	eval_num_iter = 2
 	for i in range(eval_num_iter):
 		workspace.RunNet(train_net.Proto().name, num_iter=num_iter)
-		print(schema.FetchRecord(loss))
-		print(schema.FetchRecord(origin_pred))
-		print(schema.FetchRecord(adjoint_pred))
-
+		print(schema.FetchRecord(loss).get())
+	import matplotlib.pyplot as plt
+	plt.plot(schema.FetchRecord(origin_pred).get(), 'r')
+	plt.plot(schema.FetchRecord(adjoint_pred).get(), 'b')
+	plt.plot(adjoint_label, 'b--')
+	plt.show()
 	# # Predict1
 	# pred_net = instantiator.generate_predict_net(model)
 	# graph = net_drawer.GetPydotGraph(pred_net.Proto().op, rankdir='TB')
