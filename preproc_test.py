@@ -3,7 +3,7 @@ import preproc
 from caffe2.python import workspace, layer_model_helper, schema, core, utils, workspace
 import unittest
 
-class TestModelInput(unittest.TestCase):
+class TestPreproc(unittest.TestCase):
 	def test_write_db(self):
 		num_example = 10
 		batch_size = 3
