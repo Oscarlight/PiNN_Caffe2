@@ -6,7 +6,7 @@ import unittest
 class TestPreproc(unittest.TestCase):
 	def test_write_db(self):
 		num_example = 10
-		batch_size = 3
+		batch_size = 2
 		np.random.seed(42)
 		features_expected = np.random.rand(num_example, 2).astype('float32')
 		labels_expected = np.random.rand(num_example, 2).astype('float32')

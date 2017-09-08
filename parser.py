@@ -115,3 +115,10 @@ def parse_mdm_to_nparray(file_name):
 		Header['Outputs'] = outputs
 
 		return Header, Data
+
+# @ Xiang: please implement this function by 09/12
+def dc_iv_input(file_name)
+	_, data = parse_mdm_to_nparray(file_name)
+	# assert whether is it DC IV data
+	# return two numpy array features (voltages) and labels (drain current)
+	return features, labels
