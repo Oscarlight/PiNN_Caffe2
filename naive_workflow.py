@@ -1,5 +1,5 @@
 import sys
-if sys.platform == 'macox':
+if sys.platform == 'darwin':
 	sys.path.append("/Users/Mingda/Documents/Caffe2/caffe2/build/")
 if sys.platform == 'linux2':
 	sys.path.append("/home/oscar/Documents/caffe2/build/")
