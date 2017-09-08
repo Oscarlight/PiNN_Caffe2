@@ -1,8 +1,4 @@
-import sys
-if sys.platform == 'darwin':
-	sys.path.append("/Users/Mingda/Documents/Caffe2/caffe2/build/")
-if sys.platform == 'linux2':
-	sys.path.append("/home/oscar/Documents/caffe2/build/")
+import caffe2_paths
 
 from caffe2.python import (
 	core, workspace, layer_model_helper, schema, optimizer, net_drawer, scope
@@ -17,49 +13,89 @@ def build_adjoint_mlp(
 	model,
 	label,
 	input_dim = 1,
-	hidden_dims = 2,
+	hidden_dims = [2, 2],
 	output_dim = 1,
 	optim=None,
 ):
+	assert len(hidden_dims) >= 1, "at least one hidden dim"
 	with ParameterSharing({'origin' : 'adjoint'}):
 		with scope.NameScope('origin'):
-			gamma1 = model.FCWithoutBias(
+			gamma = model.FCWithoutBias(
 				model.input_feature_schema.origin_input, 
-				hidden_dims, 
+				hidden_dims[0], 
 				weight_optim=optim,
 				name='fc1'
 			)
-			z1 = model.Sigmoid(gamma1, 'sig1')
-			gamma2 = model.FCWithoutBias(
-				z1, 
+			z = model.Sigmoid(gamma, 'sig1')
+			z_lst = [z]
+			for hidden_dim in hidden_dims[1:]:
+				gamma = model.FCWithoutBias(
+					z,
+					hidden_dim, 
+					weight_optim=optim,
+					name='fc{}'.format(len(z_lst) + 1)
+				)
+				z = model.Sigmoid(gamma, 'sig{}'.format(len(z_lst) + 1))
+				z_lst.append(z)
+			origin_pred = model.FCWithoutBias(
+				z_lst[-1], 
 				output_dim,
 				weight_optim=optim, 
-				name='fc2'
+				name='fc{}'.format(len(z_lst) + 1)
 			)
 		with scope.NameScope('adjoint'):
-			gamma1_ad = model.FCTransposeW(
+			idx = len(z_lst) + 1
+			# print(idx)
+			gamma_ad = model.FCTransposeW(
 				model.input_feature_schema.adjoint_input, 
-				hidden_dims, 
+				hidden_dims[-1], 
 				weight_optim=optim,
-				name='fc2'
+				name='fc{}'.format(idx)
 			)
+			z = z_lst.pop()
+			one_vector = model.ConstantFill(
+				[z], 
+				'ones{}'.format(idx), 
+				value=1.0, 
+				dtype=core.DataType.FLOAT
+			)
+			multiplier = model.Mul(
+				[z, model.Sub([one_vector, z], 'sub{}'.format(idx))],
+					'multiplier{}'.format(idx),
+			)
+			# model.StopGradient(z, z)
+			alpha = model.Mul([gamma_ad, multiplier], 'adjoint_layer{}'.format(idx))
 			# one_vector = model.add_global_constant(name='ONES', array=np.ones(hidden_dims), dtype=np.float32)
 			# one_vector = model.Cast(one_vector, 'FLOAT_ONES', dtype=core.DataType.FLOAT)
-			one_vector = model.ConstantFill([z1], 'ONES', value=1.0, dtype=core.DataType.FLOAT)
-			multiplier = model.Mul(
-				[z1, model.Sub([one_vector, z1], 'sub1')],
-				'multiplier1',
-			)
-			# model.StopGradient(z1, z1)
-			alpha1 = model.Mul([gamma1_ad, multiplier], 'adjoint_layer1')
-			output = model.FCTransposeW(
-				alpha1, 
+			while len(z_lst) > 0:
+				idx = len(z_lst) + 1
+				gamma = model.FCTransposeW(
+					alpha, 
+					hidden_dims[len(z_lst) - 1],
+					weight_optim=optim,
+					name='fc{}'.format(idx)
+				)
+				print(idx)
+				z = z_lst.pop()
+				one_vector = model.ConstantFill(
+					[z],
+					'ones{}'.format(idx),
+					value=1.0, 
+					dtype=core.DataType.FLOAT
+				)
+				multiplier = model.Mul(
+					[z, model.Sub([one_vector, z], 'sub{}'.format(idx))],
+						'multiplier{}'.format(idx),
+				)
+				# model.StopGradient(z, z)
+				alpha = model.Mul([gamma_ad, multiplier], 'adjoint_layer{}'.format(idx))
+			adjoint_pred = model.FCTransposeW(
+				alpha, 
 				input_dim,
 				weight_optim=optim,
 				name='fc1'
 			)
-	adjoint_pred = output
-	origin_pred = gamma2
+
 	loss_input_record = schema.NewRecord(
 		model.net,
 		schema.Struct(
@@ -76,7 +112,7 @@ if __name__ == '__main__':
 	workspace.ResetWorkspace()
 	input_dim = 1
 	output_dim = 1
-	hidden_dims = 100
+	hidden_dims = [10, 10]
 	input_record_schema = schema.Struct(
 			('origin_input', schema.Scalar((np.float32, (input_dim, )))),
 			('adjoint_input', schema.Scalar((np.float32, (output_dim, ))))

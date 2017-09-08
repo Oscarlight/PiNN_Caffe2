@@ -1,30 +1,36 @@
 import numpy as np
 import preproc
 from caffe2.python import workspace, layer_model_helper, schema, core, utils, workspace
+import unittest
 
-features = np.random.rand(10, 2).astype('float32')
-labels = np.random.rand (10, 2).astype('float32')
+class TestModelInput(unittest.TestCase):
+	def test_write_db(self):
+		num_example = 10
+		batch_size = 3
+		np.random.seed(42)
+		features_expected = np.random.rand(num_example, 2).astype('float32')
+		labels_expected = np.random.rand(num_example, 2).astype('float32')
+		workspace.ResetWorkspace()
+		preproc.write_db('minidb', 'test.db', features_expected, labels_expected)
+		net_proto = core.Net("example_reader")
+		dbreader = net_proto.CreateDB(
+			[], "dbreader", db="test.db", db_type="minidb")
+		net_proto.TensorProtosDBInput(
+			[dbreader], ["features", "labels"], batch_size=batch_size)
 
-workspace.ResetWorkspace()
-preproc.write_db('minidb', 'test.db', features, labels)
-net_proto = core.Net("example_reader")
-dbreader = net_proto.CreateDB([], "dbreader", db="test.db", db_type="minidb")
-net_proto.TensorProtosDBInput([dbreader], ["data", "label"], batch_size=10)
+		workspace.CreateNet(net_proto)
 
-print("The net looks like this:")
-print(str(net_proto.Proto()))
+		for i in range(num_example//batch_size):
+			workspace.RunNet(net_proto.Proto().name)
+			print(workspace.FetchBlob("features"))
+			print(features_expected[i * batch_size : (i + 1) * batch_size])
+			self.assertTrue(
+				np.array_equal(workspace.FetchBlob("features"), 
+					features_expected[i * batch_size : (i + 1) * batch_size])
+			)
+			self.assertTrue(
+				np.array_equal(workspace.FetchBlob("labels"),
+					labels_expected[i * batch_size : (i + 1) * batch_size]))
 
-workspace.CreateNet(net_proto)
-workspace.RunNet(net_proto.Proto().name)
-
-print("Features after running net once:")
-print(workspace.FetchBlob("data"))
-print("\nLabels after running net once:")
-print(workspace.FetchBlob("label"))
-
-workspace.RunNet(net_proto.Proto().name)
-
-print("\nFeatures after running net twice:")
-print(workspace.FetchBlob("data"))
-print("\nLabels after running net twice:")
-print(workspace.FetchBlob("label"))
+if __name__ == '__main__':
+    unittest.main()

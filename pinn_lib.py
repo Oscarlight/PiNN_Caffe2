@@ -1,8 +1,4 @@
-import sys
-if sys.platform == 'macox':
-	sys.path.append("/Users/Mingda/Documents/Caffe2/caffe2/build/")
-if sys.platform == 'linux2':
-	sys.path.append("/home/oscar/Documents/caffe2/build/")
+import caffe2_paths
 
 from caffe2.python import (
 	schema, optimizer, net_drawer

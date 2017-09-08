@@ -1,12 +1,9 @@
-# @ Xiang Li: write a python scirpt to parse the data in .mdm file from 
-# HEMT_Bo folder to numpy arrays of features and labels
-
 def parse_mdm_to_nparray(file_name):
-
-'''Read data from .mdm files. Output is two dictionaries: 1. Data 2. Header
+'''
+   Read data from .mdm files. Output is two dictionaries: 1. Data 2. Header
    In Data dict, the keys are in string formats. The datas are in float format.
-   In Header dict, everyhing is in string formats.'''
-
+   In Header dict, everyhing is in string formats.
+'''
 	with open(file_name,'r') as f:
 
 		tmp = ''

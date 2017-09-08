@@ -1,7 +1,5 @@
+import caffe2_paths
 import numpy as np
-
-import sys
-sys.path.append("/home/malavika/caffe2/build/")
 
 from caffe2.python import core, utils, workspace, schema
 from caffe2.proto import caffe2_pb2
@@ -19,10 +17,12 @@ def write_db(db_type, db_name, features, labels):
 
 
 def add_input(model, batch_size, db, db_type):
-	data, label = model.TensorProtosDBInput([], ["data", 
-			"label"], batch_size = batch_size, db=db, db_type =
-			db_type)
-	schema.FeedRecord(model.input_feature_schema, data)
+	feature, label = model.TensorProtosDBInput(
+			[], ["feature", "label"],
+			batch_size = batch_size, 
+			db=db, db_type=db_type
+	)
+	schema.FeedRecord(model.input_feature_schema, feature)
 	schema.FeedRecord(model.trainer_extra_schema, label)
 	return data, label
 
