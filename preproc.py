@@ -1,17 +1,29 @@
-# @ Malavika: please implement the following two fucntion, and add unit tests to 
-# verifty the correctness. 
+import numpy as np
+
+import sys
+sys.path.append("/home/malavika/caffe2/build/")
+
+from caffe2.python import core, utils, workspace, schema
+from caffe2.proto import caffe2_pb2
 
 def write_db(db_type, db_name, features, labels):
-	''' feature and labels are both numpy arrays 
-	    save them into a database specified by db_type and db_name
-	    Use https://github.com/caffe2/caffe2/blob/master/caffe2/python/tutorials/create_your_own_dataset.ipynb
-	    as a reference, especially In [7]
-	'''
-	pass
+	db = core.C.create_db(db_type, db_name, core.C.Mode.write)
+	transaction = db.new_transaction()
+	for n in range(features.shape[0]):
+		tensor = caffe2_pb2.TensorProtos()
+		tensor.protos.extend([utils.NumpyArrayToCaffe2Tensor(features[n]),
+				utils.NumpyArrayToCaffe2Tensor(labels[n])])
+		transaction.put(str(n), tensor.SerializeToString())
+	del transaction
+	del db
+
 
 def add_input(model, batch_size, db, db_type):
-	''' load the data from db
-	    Use https://github.com/caffe2/caffe2/blob/master/caffe2/python/tutorials/MNIST.ipynb
-	    as the reference, especially In [3]
-	'''
-	pass
+	data, label = model.TensorProtosDBInput([], ["data", 
+			"label"], batch_size = batch_size, db=db, db_type =
+			db_type)
+	schema.FeedRecord(model.input_feature_schema, data)
+	schema.FeedRecord(model.trainer_extra_schema, label)
+	return data, label
+
+
