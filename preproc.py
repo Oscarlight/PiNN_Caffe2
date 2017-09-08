@@ -29,14 +29,14 @@ def add_input(model, batch_size, db, db_type):
 # @ Xiang: please implement this function by 09/12
 #          Note: please add unittest in preproc_test.py
 def dc_iv_preproc(features, labels, scale = 2.0):
-'''
+	'''
 	input: 
 	    1) two numpy array features and labels
 	    2) arguments for preprocessing
 	output: 
 		1) preprocss features and labels
 		2) a function for restoring to the origin data
-'''
+	'''
 	preproc_features = features
 	preproc_labels = labels
 	restore_func = None
