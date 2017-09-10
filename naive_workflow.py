@@ -29,7 +29,7 @@ pred, loss = build_pinn(
 	sig_net_dim = [3, 2],
 	tanh_net_dim = [5, 2],
 	inner_embed_dim = [2, 3],
-	optim=optimizer.AdagradOptimizer()
+	optim=optimizer.AdagradOptimizer(alpha=0.01, epsilon=1e-4,)
 )
 # Train the model
 train_init_net, train_net = instantiator.generate_training_nets(model)
