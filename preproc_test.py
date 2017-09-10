@@ -14,22 +14,21 @@ class TestPreproc(unittest.TestCase):
 		workspace.ResetWorkspace()
 		if os.path.isfile('test.db'):
 			os.remove("test.db")
-		preproc.write_db('minidb', 'test.db', features_expected, labels_expected)
+		preproc.write_db('minidb', 'test.db', 
+			features_expected, features_expected, labels_expected)
+		init_net = core.Net("example_reader_init")
 		net_proto = core.Net("example_reader")
-		dbreader = net_proto.CreateDB(
+		dbreader = init_net.CreateDB(
 			[], "dbreader", db="test.db", db_type="minidb")
 		net_proto.TensorProtosDBInput(
-			[dbreader], ["features", "labels"], batch_size=batch_size)
-
+			[dbreader], ["feature1", "feature2", "labels"], batch_size=batch_size)
+		workspace.RunNetOnce(init_net)
 		workspace.CreateNet(net_proto)
 
 		for i in range(num_example//batch_size):
 			workspace.RunNet(net_proto.Proto().name)
-			print(workspace.FetchBlob("features"))
-			print(features_expected[i * batch_size : (i + 1) * batch_size])
-			print('------------')
 			self.assertTrue(
-				np.array_equal(workspace.FetchBlob("features"), 
+				np.array_equal(workspace.FetchBlob("feature1"), 
 					features_expected[i * batch_size : (i + 1) * batch_size])
 			)
 			self.assertTrue(

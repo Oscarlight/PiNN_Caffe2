@@ -1,31 +1,26 @@
 import caffe2_paths
-
+import os
 from caffe2.python import (
 	workspace, layer_model_helper, schema, optimizer, net_drawer
 )
 import caffe2.python.layer_model_instantiator as instantiator 
 import numpy as np
-from pinn_lib import build_pinn
-
+from pinn_lib import build_pinn, init_model_with_schemas
+from preproc import write_db, add_input_and_label
 workspace.ResetWorkspace()
-input_record_schema = schema.Struct(
-		('sig_input', schema.Scalar((np.float32, (2, )))),
-		('tanh_input', schema.Scalar((np.float32, (2, ))))
-	)
-output_record_schema = schema.Struct(
-		('loss', schema.Scalar((np.float32, (2, )))),
-		('pred', schema.Scalar((np.float32, (2, ))))
-	)
-trainer_extra_schema = schema.Struct()
-model = layer_model_helper.LayerModelHelper(
-	"pinn_example",
-	input_record_schema,
-	trainer_extra_schema)
+model = init_model_with_schemas('pinn_example', 2, 2, 2)
 # example data
-X_sig = np.array([[2., 2.], [2., 2.], [3., 4.]], dtype = np.float32)
-Y_tanh = np.array([[1., 1.], [1., 1.], [2., 5.]], dtype = np.float32)
+sig_input = np.array([[2., 1.], [2., 2.], [3., 4.]], dtype = np.float32)
+tanh_input = np.array([[1., 1.], [1., 2.], [2., 5.]], dtype = np.float32)
 label = np.ones((3, 2), dtype = np.float32)
-schema.FeedRecord(model.input_feature_schema, [X_sig, Y_tanh])
+db_name = 'pinn.db'
+if not os.path.isfile(db_name):
+	print("Create a new database...")
+	write_db('minidb', db_name, 
+		sig_input, tanh_input, label)
+sig_input, tanh_input, label = add_input_and_label(
+	model, db_name, 'minidb', batch_size=1
+)
 # build the model
 pred, loss = build_pinn(
 	model,
@@ -36,31 +31,18 @@ pred, loss = build_pinn(
 	inner_embed_dim = [2, 3],
 	optim=optimizer.AdagradOptimizer()
 )
-model.add_loss(loss)
-output_record = schema.NewRecord(
-	model.net,
-	output_record_schema
-)
-output_record_schema.pred.set_value(pred.get(), unsafe=True)
-output_record_schema.loss.set_value(loss.get(), unsafe=True)
-model.output_schema = output_record_schema
-
-train_init_net, train_net = instantiator.generate_training_nets(model)
-
 # Train the model
+train_init_net, train_net = instantiator.generate_training_nets(model)
 workspace.RunNetOnce(train_init_net)
-
-# graph = net_drawer.GetPydotGraph(train_net.Proto().op, rankdir='TB')
-# with open(train_net.Name() + ".png",'wb') as f:
-# 	f.write(graph.create_png())
-
 workspace.CreateNet(train_net)
-num_iter = 1000
-eval_num_iter = 2
+num_iter = 1
+eval_num_iter = 4
 for i in range(eval_num_iter):
-	workspace.RunNet(train_net.Proto().name, num_iter=num_iter)
-	print(schema.FetchRecord(loss))
-	print(schema.FetchRecord(pred))
+	print('--------')
+	workspace.RunNet(train_net, num_iter=num_iter)
+	print(schema.FetchRecord(tanh_input).get())
+	print(schema.FetchRecord(loss).get())
+	print(schema.FetchRecord(pred).get())
 
 # # Eval
 # X_sig = np.array([[2., 2.], [2., 2.], [3., 4.]], dtype = np.float32)
