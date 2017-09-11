@@ -1,8 +1,8 @@
 def parse_mdm_to_nparray(file_name):
 '''
    Read data from .mdm files. Output is two dictionaries: 1. Data 2. Header
-   In Data dict, the keys are in string formats. The datas are in float format.
-   In Header dict, everyhing is in string formats.
+   In Data dict, the keys are in string formats. The data are in float format.
+   In Header dict, everything is in string formats.
 '''
 	with open(file_name,'r') as f:
 
@@ -118,7 +118,22 @@ def parse_mdm_to_nparray(file_name):
 
 # @ Xiang: please implement this function by 09/12
 def dc_iv_input(file_name)
-	_, data = parse_mdm_to_nparray(file_name)
+	header, data = parse_mdm_to_nparray(file_name)
 	# assert whether is it DC IV data
-	# return two numpy array features (voltages) and labels (drain current)
-	return features, labels
+	# return three numpy arrays, vg, vd and id
+	import numpy as np
+	
+	assert ('freq' not in data.keys()),'The input data is not dc measurement, abort!'
+
+	if ('#Vd' in data.keys()):
+		vd = np.array(data['#Vd'])
+		vg = np.array(data['Vg'])
+		id = np.array(data['Id'])
+	elif ('#vd' in data.keys()):
+		vd = np.array(data['#vd'])
+		vg = np.array(data['vg'])
+		id = np.array(data['id'])
+	else:
+		raise Exception('Vd not found!')
+
+	return vg, vd, id
