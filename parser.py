@@ -1,9 +1,9 @@
 def parse_mdm_to_nparray(file_name):
-'''
-   Read data from .mdm files. Output is two dictionaries: 1. Data 2. Header
-   In Data dict, the keys are in string formats. The datas are in float format.
-   In Header dict, everyhing is in string formats.
-'''
+	'''
+	   Read data from .mdm files. Output is two dictionaries: 1. Data 2. Header
+	   In Data dict, the keys are in string formats. The data are in float format.
+	   In Header dict, everything is in string formats.
+	'''
 	with open(file_name,'r') as f:
 
 		tmp = ''
@@ -31,8 +31,8 @@ def parse_mdm_to_nparray(file_name):
 				inputs.append(header[i-1])
 		if (header[i][0] == 'ICCAP_OUTPUTS'):
 			while (i < len(header)):
-			outputs.append(header[i])
-			i = i+1
+				outputs.append(header[i])
+				i = i+1
 
 		# Read Data
 		Condition = []
@@ -117,8 +117,42 @@ def parse_mdm_to_nparray(file_name):
 		return Header, Data
 
 # @ Xiang: please implement this function by 09/12
-def dc_iv_input(file_name)
-	_, data = parse_mdm_to_nparray(file_name)
+def dc_iv_input(file_name):
+	header, data = parse_mdm_to_nparray(file_name)
 	# assert whether is it DC IV data
-	# return two numpy array features (voltages) and labels (drain current)
-	return features, labels
+	# return three numpy arrays, vg, vd and id
+	import numpy as np
+	
+	assert ('freq' not in data.keys()),'The input data is not dc measurement, abort!'
+
+	if ('#Vd' in data.keys()):
+		vd = np.array(data['#Vd'])
+		vg = np.array(data['Vg'])
+		id = np.array(data['Id'])
+	elif ('#vd' in data.keys()):
+		vd = np.array(data['#vd'])
+		vg = np.array(data['vg'])
+		id = np.array(data['id'])
+	else:
+		raise Exception('Vd not found!')
+
+	return vg, vd, id
+	
+def ac_s_input(file_name):
+    header, data = parse_mdm_to_nparray(file_name)
+
+    import numpy as np
+
+    s11arr = np.array(data["R:s(1,1)"]) + 1j*np.array(data["I:s(1,1)"])
+    s12arr = np.array(data["R:s(1,2)"]) + 1j*np.array(data["I:s(1,2)"])
+    s21arr = np.array(data["R:s(2,1)"]) + 1j*np.array(data["I:s(2,1)"])
+    s22arr = np.array(data["R:s(2,2)"]) + 1j*np.array(data["I:s(2,2)"])
+    freq = header["Inputs"][1][3]
+
+
+    return s11arr,s12arr,s21arr,s22arr,freq
+
+# if __name__ == '__main__':
+#     # dict1 = (parse_mdm_to_nparray('./HEMT_bo/s_at_f_vs_Vd.mdm')[1])
+#     # print (dict1["R:s(1,1)"])
+#     ac_s_input('./HEMT_bo/s_at_f_vs_Vd.mdm')
