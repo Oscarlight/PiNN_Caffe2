@@ -1,7 +1,7 @@
 import caffe2_paths
 
 from caffe2.python import (
-	schema, optimizer, net_drawer
+	schema, optimizer, net_drawer, workspace, layer_model_helper
 )
 import numpy as np
 
@@ -114,20 +114,40 @@ def build_pinn(
 		tranfer_before_interconnect=tranfer_before_interconnect,
 		concat_embed=concat_embed
 	)
-
-	loss_input_record = schema.NewRecord(
-		model.net,
-		schema.Struct(
-			('label', schema.Scalar((np.float32, (num_label, )))),
-			('prediction', schema.Scalar((np.float32, (num_label, ))))
-		)
-	)
-	schema.FeedRecord(loss_input_record.label, [label])
-	print(pred)
-	print(loss_input_record.label)
-	loss_input_record.prediction.set_value(pred.get(), unsafe=True)
-	loss = model.BatchDirectMSELoss(loss_input_record)
+	model.trainer_extra_schema.prediction.set_value(pred.get(), unsafe=True)
+	loss = model.BatchDirectMSELoss(model.trainer_extra_schema)
+	model.output_schema.pred.set_value(pred.get(), unsafe=True)
+	model.output_schema.loss.set_value(loss.get(), unsafe=True)
+	model.add_loss(loss)
 	return pred, loss
+
+def init_model_with_schemas(
+	model_name, 
+	sig_input_dim, tanh_input_dim,
+	pred_dim
+):
+	workspace.ResetWorkspace()
+	input_record_schema = schema.Struct(
+		('sig_input', schema.Scalar((np.float32, (tanh_input_dim, )))),
+		('tanh_input', schema.Scalar((np.float32, (tanh_input_dim, ))))
+	)
+	output_record_schema = schema.Struct(
+		('loss', schema.Scalar((np.float32, (1, )))),
+		('pred', schema.Scalar((np.float32, (pred_dim, ))))
+	)
+	# use trainer_extra_schema as the loss input record
+	trainer_extra_schema = schema.Struct(
+		('label', schema.Scalar((np.float32, (pred_dim, )))),
+		('prediction', schema.Scalar((np.float32, (pred_dim, ))))
+	)
+	model = layer_model_helper.LayerModelHelper(
+		model_name,
+		input_record_schema,
+		trainer_extra_schema
+	)
+	model.output_schema = output_record_schema
+	return model
+
 
 if __name__ == '__main__':
 	pass
