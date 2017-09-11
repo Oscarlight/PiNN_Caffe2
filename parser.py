@@ -123,14 +123,17 @@ def dc_iv_input(file_name)
 	# return three numpy arrays, vg, vd and id
 	import numpy as np
 	
-	assert('freq' not in data.keys())
+	assert ('freq' not in data.keys()),'The input data is not dc measurement, abort!'
 
 	if ('#Vd' in data.keys()):
-            	vd = np.array(data['#Vd'])
-            	vg = np.array(data['Vg'])
-            	id = np.array(data['Id'])
-        else:
-            	vd = np.array(data['#vd'])
-            	vg = np.array(data['vg'])
-            	id = np.array(data['id'])
-        return vg, vd, id
+		vd = np.array(data['#Vd'])
+		vg = np.array(data['Vg'])
+		id = np.array(data['Id'])
+	elif ('#vd' in data.keys()):
+		vd = np.array(data['#vd'])
+		vg = np.array(data['vg'])
+		id = np.array(data['id'])
+	else:
+		raise Exception('Vd not found!')
+
+	return vg, vd, id
