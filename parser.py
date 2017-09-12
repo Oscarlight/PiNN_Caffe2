@@ -1,3 +1,5 @@
+import numpy as np
+
 def parse_mdm_to_nparray(file_name):
 	'''
 	   Read data from .mdm files. Output is two dictionaries: 1. Data 2. Header
@@ -143,16 +145,42 @@ def ac_s_input(file_name):
 
     import numpy as np
 
+    if ('freq' in data.keys()):
+    	freq = np.array(data['freq'])
+    elif('#freq' in data.keys()):
+    	freq = np.array(data['#freq'])
+    else:
+    	raise Exception('This is not ac measurement, abort!')
+
+    if ('Vg' in data.keys()):
+    	vg = np.array(data['Vg'])
+    elif('#Vg' in data.keys()):
+    	vg = np.array(data['#Vg'])
+    else:
+    	raise Exception('Vg not found')
+
+    if ('Vd' in data.keys()):
+    	vd = np.array(data['Vd'])
+    elif('#Vd' in data.keys()):
+    	vd = np.array(data['#Vd'])
+    else:
+    	raise Exception('Vd not found')
+
+    # if ('Id' in data.keys()):
+    # 	id = np.array(data['Id'])
+    # else:
+    # 	raise Exception('Id not found')
+
     s11arr = np.array(data["R:s(1,1)"]) + 1j*np.array(data["I:s(1,1)"])
     s12arr = np.array(data["R:s(1,2)"]) + 1j*np.array(data["I:s(1,2)"])
     s21arr = np.array(data["R:s(2,1)"]) + 1j*np.array(data["I:s(2,1)"])
     s22arr = np.array(data["R:s(2,2)"]) + 1j*np.array(data["I:s(2,2)"])
-    freq = header["Inputs"][1][3]
 
 
-    return s11arr,s12arr,s21arr,s22arr,freq
+    return s11arr,s12arr,s21arr,s22arr,freq,vg,vd
 
-# if __name__ == '__main__':
-#     # dict1 = (parse_mdm_to_nparray('./HEMT_bo/s_at_f_vs_Vd.mdm')[1])
+if __name__ == '__main__':
+	dict1 = (parse_mdm_to_nparray('./HEMT_bo/s_vs_f_at_VgVd.mdm')[1])
+	print(dict1["Vg"])
 #     # print (dict1["R:s(1,1)"])
 #     ac_s_input('./HEMT_bo/s_at_f_vs_Vd.mdm')
