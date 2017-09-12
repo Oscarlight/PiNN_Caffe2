@@ -1,9 +1,11 @@
+import numpy as np
+
 def parse_mdm_to_nparray(file_name):
-'''
-   Read data from .mdm files. Output is two dictionaries: 1. Data 2. Header
-   In Data dict, the keys are in string formats. The data are in float format.
-   In Header dict, everything is in string formats.
-'''
+	'''
+	   Read data from .mdm files. Output is two dictionaries: 1. Data 2. Header
+	   In Data dict, the keys are in string formats. The data are in float format.
+	   In Header dict, everything is in string formats.
+	'''
 	with open(file_name,'r') as f:
 
 		tmp = ''
@@ -31,8 +33,8 @@ def parse_mdm_to_nparray(file_name):
 				inputs.append(header[i-1])
 		if (header[i][0] == 'ICCAP_OUTPUTS'):
 			while (i < len(header)):
-			outputs.append(header[i])
-			i = i+1
+				outputs.append(header[i])
+				i = i+1
 
 		# Read Data
 		Condition = []
@@ -118,6 +120,7 @@ def parse_mdm_to_nparray(file_name):
 
 # @ Xiang: please implement this function by 09/12
 def dc_iv_input(file_name):
+
 	header, data = parse_mdm_to_nparray(file_name)
 	# assert whether is it DC IV data
 	# return three numpy arrays, vg, vd and id

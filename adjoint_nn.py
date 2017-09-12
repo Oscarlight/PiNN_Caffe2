@@ -6,6 +6,7 @@ from caffe2.python import (
 from caffe2.python.modeling.parameter_sharing import (
     ParameterSharing,
 )
+from caffe2.python.layers.tags import Tags
 import caffe2.python.layer_model_instantiator as instantiator 
 import numpy as np
 
@@ -13,88 +14,75 @@ def build_adjoint_mlp(
 	model,
 	label,
 	input_dim = 1,
-	hidden_dims = [2, 2],
+	hidden_dims = [5, 5],
 	output_dim = 1,
 	optim=None,
 ):
+	''' Precondition:
+			model.input_feature_schema.origin_input has shape of (input_dim, )
+			model.input_feature_schema.adjoint_input has shape of (output_dim, )
+		Note:
+			adjoint_input is binary array, e.g. [1, 0], which is used as the 
+			"selecter".
+	'''
 	assert len(hidden_dims) >= 1, "at least one hidden dim"
 	with ParameterSharing({'origin' : 'adjoint'}):
+		z = model.input_feature_schema.origin_input 
+		z_lst = []
+		idx = 0
 		with scope.NameScope('origin'):
-			gamma = model.FCWithoutBias(
-				model.input_feature_schema.origin_input, 
-				hidden_dims[0], 
-				weight_optim=optim,
-				name='fc1'
-			)
-			z = model.Sigmoid(gamma, 'sig1')
-			z_lst = [z]
-			for hidden_dim in hidden_dims[1:]:
-				gamma = model.FCWithoutBias(
+			for hidden_dim in hidden_dims:
+				gamma = model.FC(
 					z,
 					hidden_dim, 
 					weight_optim=optim,
-					name='fc{}'.format(len(z_lst) + 1)
+					bias_optim=optim,
+					name='fc{}'.format(idx)
 				)
-				z = model.Sigmoid(gamma, 'sig{}'.format(len(z_lst) + 1))
+				z = model.Sigmoid(gamma, 'sig{}'.format(idx))
 				z_lst.append(z)
+				idx += 1
+			# Output layer: no grad for the bias in this layer,
+			# use FCWithoutBias
 			origin_pred = model.FCWithoutBias(
-				z_lst[-1], 
+				z, 
 				output_dim,
 				weight_optim=optim, 
-				name='fc{}'.format(len(z_lst) + 1)
-			)
-		with scope.NameScope('adjoint'):
-			idx = len(z_lst) + 1
-			# print(idx)
-			gamma_ad = model.FCTransposeW(
-				model.input_feature_schema.adjoint_input, 
-				hidden_dims[-1], 
-				weight_optim=optim,
 				name='fc{}'.format(idx)
 			)
-			z = z_lst.pop()
-			one_vector = model.ConstantFill(
-				[z], 
-				'ones{}'.format(idx), 
-				value=1.0, 
-				dtype=core.DataType.FLOAT
-			)
-			multiplier = model.Mul(
-				[z, model.Sub([one_vector, z], 'sub{}'.format(idx))],
-					'multiplier{}'.format(idx),
-			)
-			# model.StopGradient(z, z)
-			alpha = model.Mul([gamma_ad, multiplier], 'adjoint_layer{}'.format(idx))
-			# one_vector = model.add_global_constant(name='ONES', array=np.ones(hidden_dims), dtype=np.float32)
-			# one_vector = model.Cast(one_vector, 'FLOAT_ONES', dtype=core.DataType.FLOAT)
-			while len(z_lst) > 0:
-				idx = len(z_lst) + 1
-				gamma = model.FCTransposeW(
+
+		with scope.NameScope('adjoint'):
+			with Tags(Tags.EXCLUDE_FROM_PREDICTION):
+				alpha = model.input_feature_schema.adjoint_input
+				for hidden_dim in reversed(hidden_dims):
+					gamma_ad = model.FCTransposeW(
+						alpha, 
+						hidden_dim,
+						weight_optim=optim,
+						name='fc{}'.format(idx)
+					)
+					z = z_lst[idx-1]
+					# Note: passing gradient is helpful
+					# z = model.StopGradient(z, z)
+					# TODO: use add_global_constant
+					one_vector = model.ConstantFill(
+						[z],
+						'ones{}'.format(idx),
+						value=1.0, 
+						dtype=core.DataType.FLOAT
+					)
+					multiplier = model.Mul(
+						[z, model.Sub([one_vector, z], 'sub{}'.format(idx))],
+							'multiplier{}'.format(idx),
+					)
+					alpha = model.Mul([gamma_ad, multiplier], 'adjoint_layer{}'.format(idx))
+					idx -= 1
+				adjoint_pred = model.FCTransposeW(
 					alpha, 
-					hidden_dims[len(z_lst) - 1],
+					input_dim,
 					weight_optim=optim,
 					name='fc{}'.format(idx)
 				)
-				print(idx)
-				z = z_lst.pop()
-				one_vector = model.ConstantFill(
-					[z],
-					'ones{}'.format(idx),
-					value=1.0, 
-					dtype=core.DataType.FLOAT
-				)
-				multiplier = model.Mul(
-					[z, model.Sub([one_vector, z], 'sub{}'.format(idx))],
-						'multiplier{}'.format(idx),
-				)
-				# model.StopGradient(z, z)
-				alpha = model.Mul([gamma_ad, multiplier], 'adjoint_layer{}'.format(idx))
-			adjoint_pred = model.FCTransposeW(
-				alpha, 
-				input_dim,
-				weight_optim=optim,
-				name='fc1'
-			)
 
 	loss_input_record = schema.NewRecord(
 		model.net,
@@ -112,7 +100,7 @@ if __name__ == '__main__':
 	workspace.ResetWorkspace()
 	input_dim = 1
 	output_dim = 1
-	hidden_dims = [10, 10]
+	hidden_dims = [10, 10, 10]
 	input_record_schema = schema.Struct(
 			('origin_input', schema.Scalar((np.float32, (input_dim, )))),
 			('adjoint_input', schema.Scalar((np.float32, (output_dim, ))))
@@ -128,9 +116,13 @@ if __name__ == '__main__':
 		input_record_schema,
 		trainer_extra_schema)
 	# example data
-	origin_input = np.array([[e] for e in np.linspace(0.3, 0.8, 100)], dtype = np.float32)
+	x_array = np.linspace(-0.8, 0.8, 100)
+	origin_input = np.array([[x] for x in x_array], dtype = np.float32)
+	adjoint_label = np.array(
+		[[(1 - np.exp(10*x)) / (1 + np.exp(10*x))] for x in x_array], 
+		dtype = np.float32
+	)
 	adjoint_input = np.ones((100,1), dtype = np.float32)
-	adjoint_label = origin_input
 	schema.FeedRecord(model.input_feature_schema, [origin_input, adjoint_input])
 
 	origin_pred, adjoint_pred, loss = build_adjoint_mlp(
@@ -139,7 +131,7 @@ if __name__ == '__main__':
 		input_dim=input_dim,
 		hidden_dims=hidden_dims,
 		output_dim=output_dim,
-		optim=optimizer.AdagradOptimizer())
+		optim=optimizer.AdagradOptimizer(alpha=0.01, epsilon=1e-4,))
 
 	model.add_loss(loss)
 	output_record = schema.NewRecord(
@@ -152,14 +144,14 @@ if __name__ == '__main__':
 	model.output_schema = output_record_schema
 
 	## =========================
-	# # print(model.param_to_optim)
-	# train_init_net, train_net = instantiator._generate_training_net_only(model)
-	# grad_map = train_net.AddGradientOperators(model.loss.field_blobs())
-	# # print(grad_map)
-	# from future.utils import viewitems
-	# for param, optimizer in viewitems(model.param_to_optim):
-	# 	print(param)
-	# 	print(grad_map.get(str(param)))
+	# print(model.param_to_optim)
+	train_init_net, train_net = instantiator._generate_training_net_only(model)
+	grad_map = train_net.AddGradientOperators(model.loss.field_blobs())
+	# print(grad_map)
+	from future.utils import viewitems
+	for param, optimizer in viewitems(model.param_to_optim):
+		print(param)
+		print(grad_map.get(str(param)))
 
 	# Train the model
 	train_init_net, train_net = instantiator.generate_training_nets(model)
@@ -170,21 +162,26 @@ if __name__ == '__main__':
 	# 	f.write(graph.create_png())
 
 	workspace.CreateNet(train_net)
-	num_iter = 5000
-	eval_num_iter = 2
+	num_iter = 100000
+	eval_num_iter = 1
 	for i in range(eval_num_iter):
 		workspace.RunNet(train_net.Proto().name, num_iter=num_iter)
 		print(schema.FetchRecord(loss).get())
 	import matplotlib.pyplot as plt
-	plt.plot(schema.FetchRecord(origin_pred).get(), 'r')
-	plt.plot(schema.FetchRecord(adjoint_pred).get(), 'b')
-	plt.plot(adjoint_label, 'b--')
-	plt.show()
-	# # Predict1
-	# pred_net = instantiator.generate_predict_net(model)
-	# graph = net_drawer.GetPydotGraph(pred_net.Proto().op, rankdir='TB')
-	# with open(pred_net.Name() + ".png",'wb') as f:
-	# 	f.write(graph.create_png())
-	# # workspace.CreateNet(pred_net)
-	# # workspace.RunNet(pred_net.Proto().name)
-	# # print(schema.FetchRecord(pred))
+	origin_pred_array = np.squeeze(schema.FetchRecord(origin_pred).get())
+	plt.plot(x_array, np.gradient(origin_pred_array, np.squeeze(x_array)), 'r')
+	plt.plot(x_array, origin_pred_array, 'r')
+	plt.plot(x_array, schema.FetchRecord(adjoint_pred).get(), 'b')
+	plt.plot(x_array, adjoint_label, 'b--')
+	plt.show() 
+
+	# Predict1
+	pred_net = instantiator.generate_predict_net(model)
+	graph = net_drawer.GetPydotGraph(pred_net.Proto().op, rankdir='TB')
+	with open(pred_net.Name() + ".png",'wb') as f:
+		f.write(graph.create_png())
+	origin_input = np.array([[0.0]], dtype=np.float32 )
+	schema.FeedRecord(model.input_feature_schema, [origin_input, adjoint_input])
+	workspace.CreateNet(pred_net)
+	workspace.RunNet(pred_net.Proto().name)
+	print(schema.FetchRecord(origin_pred))
