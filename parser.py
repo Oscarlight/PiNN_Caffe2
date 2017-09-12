@@ -117,7 +117,7 @@ def parse_mdm_to_nparray(file_name):
 		return Header, Data
 
 # @ Xiang: please implement this function by 09/12
-def dc_iv_input(file_name)
+def dc_iv_input(file_name):
 	header, data = parse_mdm_to_nparray(file_name)
 	# assert whether is it DC IV data
 	# return three numpy arrays, vg, vd and id
