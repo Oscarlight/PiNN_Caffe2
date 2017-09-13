@@ -47,7 +47,7 @@ origin_pred, adjoint_pred, loss = build_adjoint_mlp(
 train_init_net, train_net = instantiator.generate_training_nets(model)
 workspace.RunNetOnce(train_init_net)
 workspace.CreateNet(train_net)
-num_iter = 50000
+num_iter = 100000
 eval_num_iter = 1
 for i in range(eval_num_iter):
 	workspace.RunNet(train_net.Proto().name, num_iter=num_iter)
@@ -62,9 +62,9 @@ plt.show()
 
 # Predict1
 pred_net = instantiator.generate_predict_net(model)
-graph = net_drawer.GetPydotGraph(pred_net.Proto().op, rankdir='TB')
-with open(pred_net.Name() + ".png",'wb') as f:
-	f.write(graph.create_png())
+# graph = net_drawer.GetPydotGraph(pred_net.Proto().op, rankdir='TB')
+# with open(pred_net.Name() + ".png",'wb') as f:
+# 	f.write(graph.create_png())
 origin_input = np.array([[0.0]], dtype=np.float32 )
 adjoint_input = np.array([[1.0]], dtype=np.float32 )
 schema.FeedRecord(model.input_feature_schema, [origin_input, adjoint_input])

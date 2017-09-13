@@ -37,6 +37,9 @@ pred, loss = build_pinn(
 train_init_net, train_net = instantiator.generate_training_nets(model)
 workspace.RunNetOnce(train_init_net)
 workspace.CreateNet(train_net)
+# graph = net_drawer.GetPydotGraph(train_net.Proto().op, rankdir='TB')
+# with open(train_net.Name() + ".png",'wb') as f:
+# 	f.write(graph.create_png())
 num_iter = 1000
 eval_num_iter = 4
 for i in range(eval_num_iter):
@@ -52,10 +55,10 @@ for i in range(eval_num_iter):
 # Y_tanh = np.array([[1., 1.], [1., 1.], [2., 5.]], dtype = np.float32)
 # label = np.array([[0.], [1.], [3.]], dtype = np.float32)
 # schema.FeedRecord(model.input_feature_schema, [X_sig, Y_tanh])
-eval_net = instantiator.generate_eval_net(model)
-# # graph = net_drawer.GetPydotGraph(eval_net.Proto().op, rankdir='TB')
-# # with open(eval_net.Name() + ".png",'wb') as f:
-# # 	f.write(graph.create_png())
+# eval_net = instantiator.generate_eval_net(model)
+# graph = net_drawer.GetPydotGraph(eval_net.Proto().op, rankdir='TB')
+# with open(eval_net.Name() + ".png",'wb') as f:
+# 	f.write(graph.create_png())
 # workspace.CreateNet(eval_net)
 # workspace.RunNet(eval_net.Proto().name)
 # print(schema.FetchRecord(loss))
