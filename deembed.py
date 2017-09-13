@@ -22,6 +22,7 @@ def deembed(file_name,lg,ld,rg,rd):
     y12im = []
     y21im = []
     y22im = []
+    qdinput = []
     qdqginput = []
 
     for i in range (0, size(s11arr)):
@@ -52,13 +53,16 @@ def deembed(file_name,lg,ld,rg,rd):
 
     idcinput = listcombine(y11re,y12re)
     iacinput = listcombine(y21re,y22re)
-
-    for i in range (0,size(y11im)):
-        qdqginput.append([y21im[i],y22im[i]])
-        qdqginput.append([y11im[i],y12im[i]])
+    qdinput = listcombine(y21im,y22im)
+    qginput = listcombine(y11im,y12im)
 
 
-    return idcinput,iacinput,qdqginput
+    # for i in range (0,size(y11im)):
+    #     qdqginput.append([y21im[i],y22im[i]])
+    #     qdqginput.append([y11im[i],y12im[i]])
+
+
+    return idcinput,iacinput,qdinput,qginput
 
 def listcombine(list1,list2):
     result = []
@@ -75,8 +79,8 @@ if __name__ == '__main__':
     rg=1
     rd=1
     
-    idcinput,iacinput,qdqginput = (deembed('./HEMT_bo/s_at_f_vs_Vd.mdm',lg,ld,rg,rd))
-    print (qdqginput)
+    idcinput,iacinput,qdinput,qginput = (deembed('./HEMT_bo/s_at_f_vs_Vd.mdm',lg,ld,rg,rd))
+    print (qdinput)
 #     list1 = [1,3,4]
 #     list2 = [4,6,7]
 
