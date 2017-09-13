@@ -12,8 +12,17 @@ from parser import ac_s_input
 
 
 def deembed(file_name,lg,ld,rg,rd):
-    s11arr,s12arr,s21arr,s22arr,freq,vg,vd= ac_s_input(file_name)
+    s11arr,s12arr,s21arr,s22arr,freq,vg,vd,id = ac_s_input(file_name)
     yfinal = []
+    y11re = []
+    y12re = []
+    y21re = []
+    y22re = []
+    y11im = []
+    y12im = []
+    y21im = []
+    y22im = []
+    qdqginput = []
 
     for i in range (0, size(s11arr)):
         s11 = s11arr[i]
@@ -29,9 +38,36 @@ def deembed(file_name,lg,ld,rg,rd):
             [z[1,0],z[1,1]-1j*omega*ld-rd]])
 
         yfinal.append(linalg.inv(znew))
+        y = linalg.inv(znew)
+
+        y11re.append(y[0][0].real)
+        y12re.append(y[0][1].real)
+        y21re.append(y[1][0].real)
+        y22re.append(y[1][1].real)
+
+        y11im.append((y[0][0].imag)/omega)
+        y12im.append((y[0][1].imag)/omega)
+        y21im.append((y[1][0].imag)/omega)
+        y22im.append((y[1][1].imag)/omega)
+
+    idcinput = listcombine(y11re,y12re)
+    iacinput = listcombine(y21re,y22re)
+
+    for i in range (0,size(y11im)):
+        qdqginput.append([y21im[i],y22im[i]])
+        qdqginput.append([y11im[i],y12im[i]])
 
 
-    return yfinal
+    return idcinput,iacinput,qdqginput
+
+def listcombine(list1,list2):
+    result = []
+    x = list1
+    y = list2
+    for i in range(0,size(x)):
+        result.append([x[i],y[i]])
+    return result
+
 
 if __name__ == '__main__':
     lg=1
@@ -39,10 +75,11 @@ if __name__ == '__main__':
     rg=1
     rd=1
     
-    print(deembed('./HEMT_bo/s_vs_f_at_VgVd.mdm',lg,ld,rg,rd))
-    
+    idcinput,iacinput,qdqginput = (deembed('./HEMT_bo/s_at_f_vs_Vd.mdm',lg,ld,rg,rd))
+    print (qdqginput)
+#     list1 = [1,3,4]
+#     list2 = [4,6,7]
 
-
-
+# print(listcombine(list1,list2))
 
 

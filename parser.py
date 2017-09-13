@@ -143,8 +143,6 @@ def dc_iv_input(file_name):
 def ac_s_input(file_name):
     header, data = parse_mdm_to_nparray(file_name)
 
-    import numpy as np
-
     if ('freq' in data.keys()):
     	freq = np.array(data['freq'])
     elif('#freq' in data.keys()):
@@ -166,10 +164,10 @@ def ac_s_input(file_name):
     else:
     	raise Exception('Vd not found')
 
-    # if ('Id' in data.keys()):
-    # 	id = np.array(data['Id'])
-    # else:
-    # 	raise Exception('Id not found')
+    if ('Id' in data.keys()):
+    	id = np.array(data['Id'])
+    else:
+    	id = "not there"
 
     s11arr = np.array(data["R:s(1,1)"]) + 1j*np.array(data["I:s(1,1)"])
     s12arr = np.array(data["R:s(1,2)"]) + 1j*np.array(data["I:s(1,2)"])
@@ -177,10 +175,10 @@ def ac_s_input(file_name):
     s22arr = np.array(data["R:s(2,2)"]) + 1j*np.array(data["I:s(2,2)"])
 
 
-    return s11arr,s12arr,s21arr,s22arr,freq,vg,vd
+    return s11arr,s12arr,s21arr,s22arr,freq,vg,vd,id
 
-if __name__ == '__main__':
-	dict1 = (parse_mdm_to_nparray('./HEMT_bo/s_vs_f_at_VgVd.mdm')[1])
-	print(dict1["Vg"])
-#     # print (dict1["R:s(1,1)"])
+# if __name__ == '__main__':
+# 	dict1 = (parse_mdm_to_nparray('./HEMT_bo/s_vs_f_at_VgVd.mdm')[1])
+# 	print(dict1["Vg"])
+#     print (dict1["R:s(1,1)"])
 #     ac_s_input('./HEMT_bo/s_at_f_vs_Vd.mdm')
