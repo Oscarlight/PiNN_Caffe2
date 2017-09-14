@@ -23,8 +23,6 @@ def deembed(read_data,file_name,lg,ld,rg,rd):
     y12im = []
     y21im = []
     y22im = []
-    qdinput = []
-    qdqginput = []
 
     for i in range (0, size(s11arr)):
         s11 = s11arr[i]
@@ -81,7 +79,7 @@ if __name__ == '__main__':
     rd=1
     
     idcinput,iacinput,qdinput,qginput = (deembed(read_s_par_csv,'./s_par_test.csv',lg,ld,rg,rd))
-    print (qdinput)
+    print (qginput)
 #     list1 = [1,3,4]
 #     list2 = [4,6,7]
 
