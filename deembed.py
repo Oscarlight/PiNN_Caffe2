@@ -9,10 +9,11 @@ Created on Fri Sep  8 19:16:48 2017
 from numpy import *
 import scipy.linalg
 from parser import ac_s_input
+from parser import read_s_par_csv
 
 
-def deembed(file_name,lg,ld,rg,rd):
-    s11arr,s12arr,s21arr,s22arr,freq,vg,vd,id = ac_s_input(file_name)
+def deembed(read_data,file_name,lg,ld,rg,rd):
+    s11arr,s12arr,s21arr,s22arr,freq,vg,vd,id = read_data(file_name)
     yfinal = []
     y11re = []
     y12re = []
@@ -79,7 +80,7 @@ if __name__ == '__main__':
     rg=1
     rd=1
     
-    idcinput,iacinput,qdinput,qginput = (deembed('./HEMT_bo/s_at_f_vs_Vd.mdm',lg,ld,rg,rd))
+    idcinput,iacinput,qdinput,qginput = (deembed(read_s_par_csv,'./s_par_test.csv',lg,ld,rg,rd))
     print (qdinput)
 #     list1 = [1,3,4]
 #     list2 = [4,6,7]

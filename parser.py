@@ -1,4 +1,5 @@
 import numpy as np
+import csv
 
 def parse_mdm_to_nparray(file_name):
 	'''
@@ -177,8 +178,92 @@ def ac_s_input(file_name):
 
     return s11arr,s12arr,s21arr,s22arr,freq,vg,vd,id
 
-# if __name__ == '__main__':
+def read_dc_iv_csv(filename):
+    vg = []
+    vd = []
+    id = []
+
+
+    with open(filename) as csvDataFile:
+        csvReader = csv.DictReader(csvDataFile,delimiter=',')
+        rows = list(csvReader)
+
+        for row in rows:
+        	vg.append(row['Vg'])
+        	vd.append(row['Vd'])
+        	id.append(row['Id'])
+        	
+        vg = [float(e) for e in vg]
+        vd = [float(e) for e in vd]
+        id = [float(e) for e in id]
+ 
+    return vg,vd,id
+
+def read_s_par_csv(filename):
+    vg = []
+    vd = []
+    freq = []
+    s11arr = []
+    s12arr = []
+    s21arr = []
+    s22arr = []
+    r11 = []
+    i11 = []
+    r12 = []
+    i12 = []
+    r21 = []
+    i21 = []
+    r22 = []
+    i22 = []
+
+
+    with open(filename) as csvDataFile:
+        csvReader = csv.DictReader(csvDataFile,delimiter=',')
+        rows = list(csvReader)
+
+        for row in rows:
+        	vg.append(row['Vg'])
+        	vd.append(row['Vd'])
+        	freq.append(row['freq'])
+        	r11.append(row['R:s(1,1)'])
+        	i11.append(row['I:s(1,1)'])
+        	r12.append(row['R:s(1,2)'])
+        	i12.append(row['I:s(1,2)'])
+        	r21.append(row['R:s(2,1)'])
+        	i21.append(row['I:s(2,1)'])
+        	r22.append(row['R:s(2,2)'])
+        	i22.append(row['I:s(2,2)'])
+
+
+
+        vg = [float(e) for e in vg]
+        vd = [float(e) for e in vd]
+        freq = [float(e) for e in freq]
+        r11 = [float(e) for e in r11]
+        i11 = [float(e) for e in i11]
+        r12 = [float(e) for e in r12]
+        i12 = [float(e) for e in i12]
+        r21 = [float(e) for e in r21]
+        i21 = [float(e) for e in i21]
+        r22 = [float(e) for e in r22]
+        i22 = [float(e) for e in i22]
+
+        s11arr = np.array(r11) + 1j*np.array(i11)
+    	s12arr = np.array(r12) + 1j*np.array(i12)
+    	s21arr = np.array(r21) + 1j*np.array(i21)
+    	s22arr = np.array(r22) + 1j*np.array(i22)
+    	id = "not there"
+ 
+    return s11arr,s12arr,s21arr,s22arr,freq,vd,vd,id
+
+
+if __name__ == '__main__':
 # 	dict1 = (parse_mdm_to_nparray('./HEMT_bo/s_vs_f_at_VgVd.mdm')[1])
 # 	print(dict1["Vg"])
 #     print (dict1["R:s(1,1)"])
-#     ac_s_input('./HEMT_bo/s_at_f_vs_Vd.mdm')
+    #print(ac_s_input('./HEMT_bo/s_at_f_vs_Vd.mdm'))
+	vg,vd,id = read_dc_iv_csv('./dc_test.csv')
+	print(id)
+	
+
+
