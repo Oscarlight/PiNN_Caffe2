@@ -7,10 +7,11 @@ import caffe2.python.layer_model_instantiator as instantiator
 import numpy as np
 from pinn_lib import build_pinn, init_model_with_schemas
 from preproc import write_db, add_input_and_label
+from parser import dc_iv_input
 
 class DCModel:
 
-	def __init__(model_name):
+	def __init__(self,model_name):
 		self.__model_name = model_name
 		self.__model = None
 		self.__test_data_file = None
@@ -22,14 +23,15 @@ class DCModel:
 		self.__loss = 0		
 
 
-	def build_model_with_input (db_name, train_file_name = None, 
-		test_file_name,	batch_size = 100, transfer_before_interconnect = 		False, interconnect_method = 'Add', inner_embed_dim = [0]):
+	def build_model_with_input (self, test_file_name, db_name, 
+		train_file_name = None, batch_size = 100, 
+		transfer_before_interconnect = False, 
+		interconnect_method = 'Add', inner_embed_dim = [0]):
 		self.__test_data_file = test_file_name
 		if not os.path.isfile (db_name):
-			assert file_name is not None, 
-			"Database does not exist and input file not specified."
+			assert train_file_name is not None,"Database does not exist and input file not specified."
 			print ("Creating a new database.")
-			vg, vd, label = dc_iv_input(file_name)
+			vg, vd, label = dc_iv_input(train_file_name)
 			self.__sig_input_dim[0] = vg.ndim
 			self.__tanh_input_dim[0] = vd.ndim
 			self.__pred_dim = id_label.ndim
@@ -42,10 +44,10 @@ class DCModel:
 		input_1, input_2, label = add_input_and_label (self.__model, 
 			db_name, 'minidb', 'sig_input', 'tanh_input', 
 			batch_size)
-		 self.__build_model(label, transfer_before_interconnect, 
+		self.__build_model(label, transfer_before_interconnect, 
 				interconnect_method, inner_embed_dim)
 
-	def __build_model (label, transfer_before_interconnect, 
+	def __build_model (self, label, transfer_before_interconnect, 
 			interconnect_method, inner_embed_dim):
 		if (interconnect_method == 'Add'): 
 			self.__inner_embed_dim[0] = sig_input[0]
@@ -58,13 +60,13 @@ class DCModel:
 			transfer_before_interconnect, interconnect_method = 
 			interconnect_method)
 	
-	def __feed_test_data ():
+	def __feed_test_data (self):
 		X_sig, Y_tanh, label = dc_iv_input(self.__test_data_file)
 		schema.FeedRecord(self.__model.input_feature_schema, 
 			[X_sig, Y_tanh])
 		return label
 
-	def test_model ():
+	def test_model (self):
 		label = self.__feed_test_data()
 		eval_net = instantiator.generate_eval_net(self.__model)
 		workspace.CreateNet(eval_net)
@@ -75,14 +77,14 @@ class DCModel:
 		print (eval_pred)
 		return eval_loss, eval_pred
 
-	def train_test_model (iterations, loss_reports):
-		num_iter = (int) iterations/loss_reports
+	def train_and_test (self, iterations = 1000, loss_reports = 1):
+		num_iter = iterations / loss_repors
 		train_init_net, train_net = instantiator.generate_training_nets(			self.__model)
 		workspace.RunNetOnce(train_init_net)
 		workspace.CreateNet(train_net)
-		for (i in range loss_reports):
+		for i in range (loss_reports):
 			print ("------------")
-			workspace.RunNet(train_net, num_iter = num_iter)
+			workspace.RunNet(train_net, num_iter = int( num_iter))
 			print(schema.FetchRecord(self.__loss).get())
 		print ("------------")
 		self.test_model()

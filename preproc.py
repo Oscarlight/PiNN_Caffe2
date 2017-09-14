@@ -51,23 +51,7 @@ def add_input_and_label(
 	model.trainer_extra_schema.label.set_value(label.get(), unsafe=True)
 	return input_1, input_2, label
 
-# @ Xiang: please implement this function by 09/12
-#          Note: please add unittest in preproc_test.py
-<<<<<<< HEAD
-#def dc_iv_preproc(features, labels, scale = 2.0):
-#	'''
-#	input: 
-#	    1) two numpy array features and labels
-#	    2) arguments for preprocessing
-#	output: 
-#		1) preprocss features and labels
-#		2) a function for restoring to the origin data
-#	'''
-#	preproc_features = features
-#	preproc_labels = labels
-#	restore_func = None
-#	return preproc_features, preproc_labels, restore_func
-=======
+
 def dc_iv_preproc(features, labels, scale = 2.0):
 	'''
 	input: 
@@ -81,4 +65,3 @@ def dc_iv_preproc(features, labels, scale = 2.0):
 	preproc_labels = labels
 	restore_func = None
 	return preproc_features, preproc_labels, restore_func
->>>>>>> e121c281b72167dc4ff15829c49e11b8ab4b480a
