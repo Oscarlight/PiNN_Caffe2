@@ -9,42 +9,44 @@ def build_block(
 	model,
 	sig_input, tanh_input,
 	sig_n, tanh_n, embed_n,
+	block_index,
 	optim=None,
 	tranfer_before_interconnect=False,
-	interconnect_method='Add'
+	interconnect_method='Add',
+	linear_activation = False
 ):
 	tanh_h = model.FCWithoutBias(
 		tanh_input, 
 		tanh_n,
 		weight_optim=optim,
-		name = model.next_layer_name('tanh_fc_layer')
+		name = 'tanh_fc_layer_{}'.format(block_index),
 	)
-	if tranfer_before_interconnect:
+	if not linear_activation and tranfer_before_interconnect:
 		tanh_h = model.Tanh(
 			[tanh_h],
-			name = model.next_layer_name('tanh_tranfer_layer')
+			name = 'tanh_tranfer_layer_{}'.format(block_index),
 		)
 	if embed_n > 0:
 		inter_h = model.FCWithoutBias(
 			tanh_h, 
 			embed_n,
 			weight_optim=optim,
-			name = model.next_layer_name('inter_embed_layer')
+			name = 'inter_embed_layer_{}'.format(block_index),
 		)
 		if interconnect_method == 'Concat':
 			sig_input = model.Concat(
 				[inter_h, sig_input],
-				model.next_layer_name('sig_concat_layer'),
+				'inter_concat_layer_{}'.format(block_index),
 				axis = 1
 			)
 		elif interconnect_method == 'Add':
 			sig_input = model.Add(
 				[inter_h, sig_input],
-				model.next_layer_name('sig_add_layer')
+				'inter_add_layer_{}'.format(block_index),
 			)
 		else:
 			raise Exception('Interconnect method: {} is not implemented.'.format(
-					interconnect_metho
+					interconnect_method
 				)
 			)
 
@@ -53,17 +55,19 @@ def build_block(
 		sig_n,
 		weight_optim=optim,
 		bias_optim=optim,
-		name = model.next_layer_name('sig_fc_layer'),
+		name = 'sig_fc_layer_{}'.format(block_index),
 	)
-	sig_h = model.Sigmoid(
-		[sig_h],
-		model.next_layer_name('sig_tranfer_layer'),
-	)
-	if not tranfer_before_interconnect:
-		tanh_h = model.Tanh(
-			[tanh_h], 
-			model.next_layer_name('tanh_tranfer_layer'),
+	
+	if not linear_activation:
+		sig_h = model.Sigmoid(
+			[sig_h],
+			'sig_tranfer_layer_{}'.format(block_index),
 		)
+		if not tranfer_before_interconnect:
+			tanh_h = model.Tanh(
+				[tanh_h], 
+				'tanh_tranfer_layer_{}'.format(block_index),
+			)
 	return sig_h, tanh_h
 
 def build_pinn(
@@ -85,26 +89,35 @@ def build_pinn(
 	assert len(sig_net_dim) == len(tanh_net_dim), 'arch mismatch'
 	assert sig_net_dim[-1] == tanh_net_dim[-1], 'last dim mismatch'
 
+	block_index = 0
 	sig_h, tanh_h = build_block(
 		model,
 		model.input_feature_schema.input_1,
 		model.input_feature_schema.input_2,
 		sig_net_dim[0], tanh_net_dim[0], inner_embed_dim[0],
+		block_index,
 		optim=optim,
 		tranfer_before_interconnect = tranfer_before_interconnect,
 		interconnect_method = interconnect_method,
 	)
+
 	for sig_n, tanh_n, embed_n in zip(
 		sig_net_dim[1:], tanh_net_dim[1:], inner_embed_dim[1:]
 	):
+		block_index += 1
+		# Use linear activation function in the last layer for the regression 
+		linear_activation = True if block_index == len(sig_net_dim) else False
 		sig_h, tanh_h = build_block(
 			model,
 			sig_h, tanh_h,
 			sig_n, tanh_n, embed_n,
+			block_index,
 			optim=optim,
 			tranfer_before_interconnect = tranfer_before_interconnect,
 			interconnect_method = interconnect_method,
+			linear_activation = linear_activation,
 		)
+
 	pred = model.Mul([sig_h, tanh_h], model.trainer_extra_schema.prediction)
 	# Add loss
 	loss = model.BatchDirectMSELoss(model.trainer_extra_schema)
