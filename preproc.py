@@ -28,12 +28,15 @@ def add_input_only():
 	'''
 	pass
 
-def add_input_and_label(
+def add_two_inputs_and_label(
 	model, 
 	db_name, db_type, 
 	input_1_name, input_2_name,
 	batch_size=1
 ):
+	'''
+	For adjoint MLP and Pi-NN
+	'''
 	assert batch_size != 0, 'batch_size cannot be zero'
 	reader_init_net = core.Net('reader_init_net')
 	dbreader = reader_init_net.CreateDB(
@@ -51,6 +54,13 @@ def add_input_and_label(
 	model.input_feature_schema.input_2.set_value(input_2.get(), unsafe=True)
 	model.trainer_extra_schema.label.set_value(label.get(), unsafe=True)
 	return input_1, input_2, label
+
+def add_three_inputs_and_label(
+):
+	'''
+	For adjoint Pi-NN
+	'''
+	pass
 
 def dc_iv_preproc(vg, vd, ids, scale, shift, 
 	slope = 0, threshold = 0
