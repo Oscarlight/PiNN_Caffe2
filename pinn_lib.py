@@ -6,12 +6,12 @@ from caffe2.python import (
 import numpy as np
 
 def build_block(
-	model, 
+	model,
 	sig_input, tanh_input,
 	sig_n, tanh_n, embed_n,
 	optim=None,
 	tranfer_before_interconnect=False,
-	concat_embed=False
+	interconnect_method='Add'
 ):
 	tanh_h = model.FCWithoutBias(
 		tanh_input, 
@@ -31,17 +31,21 @@ def build_block(
 			weight_optim=optim,
 			name = model.next_layer_name('inter_embed_layer')
 		)
-		if concat_embed:
+		if interconnect_method == 'Concat':
 			sig_input = model.Concat(
 				[inter_h, sig_input],
 				model.next_layer_name('sig_concat_layer'),
 				axis = 1
 			)
-		else:
-			#TODO: assert dim is the same
+		elif interconnect_method == 'Add':
 			sig_input = model.Add(
 				[inter_h, sig_input],
 				model.next_layer_name('sig_add_layer')
+			)
+		else:
+			raise Exception('Interconnect method: {} is not implemented.'.format(
+					interconnect_metho
+				)
 			)
 
 	sig_h = model.FC(
@@ -62,24 +66,33 @@ def build_block(
 		)
 	return sig_h, tanh_h
 
-def _build_pinn_impl(
-	model, 
+def build_pinn(
+	model,
+	label,
 	sig_net_dim=[1], tanh_net_dim=[1], inner_embed_dim=[0],
 	optim=None,
 	tranfer_before_interconnect=False,
-	concat_embed=False
+	interconnect_method='Add' 
 ):
+	'''
+		sig_net_dim and tanh_net_dim are the lists of dimensions for each hidden
+		layers in the sig_net and tanh_net respectively.
+
+		Precondition: when using Add as the interconncet method, the inner_embed_dim has 
+		to be the same as the dimension of the last sig_net layer.
+	'''
 	assert len(sig_net_dim) * len(tanh_net_dim) > 0, 'arch cannot be empty'
 	assert len(sig_net_dim) == len(tanh_net_dim), 'arch mismatch'
 	assert sig_net_dim[-1] == tanh_net_dim[-1], 'last dim mismatch'
+
 	sig_h, tanh_h = build_block(
 		model,
-		model.input_feature_schema.sig_input,
-		model.input_feature_schema.tanh_input,
+		model.input_feature_schema.input_1,
+		model.input_feature_schema.input_2,
 		sig_net_dim[0], tanh_net_dim[0], inner_embed_dim[0],
 		optim=optim,
 		tranfer_before_interconnect = tranfer_before_interconnect,
-		concat_embed = concat_embed,
+		interconnect_method = interconnect_method,
 	)
 	for sig_n, tanh_n, embed_n in zip(
 		sig_net_dim[1:], tanh_net_dim[1:], inner_embed_dim[1:]
@@ -90,35 +103,16 @@ def _build_pinn_impl(
 			sig_n, tanh_n, embed_n,
 			optim=optim,
 			tranfer_before_interconnect = tranfer_before_interconnect,
-			concat_embed = concat_embed,
+			interconnect_method = interconnect_method,
 		)
-	output = model.Mul([sig_h, tanh_h], 'prediction')
-	return output
-
-def build_pinn(
-	model,
-	label,
-	num_label,
-	sig_net_dim=[1], tanh_net_dim=[1], inner_embed_dim=[0],
-	optim=None,
-	tranfer_before_interconnect=False,
-	concat_embed=False
-):
-
-	pred = _build_pinn_impl(
-		model, 
-		sig_net_dim=sig_net_dim, 
-		tanh_net_dim=tanh_net_dim, 
-		inner_embed_dim=inner_embed_dim,
-		optim=optim,
-		tranfer_before_interconnect=tranfer_before_interconnect,
-		concat_embed=concat_embed
-	)
-	model.trainer_extra_schema.prediction.set_value(pred.get(), unsafe=True)
+	pred = model.Mul([sig_h, tanh_h], model.trainer_extra_schema.prediction)
+	# Add loss
 	loss = model.BatchDirectMSELoss(model.trainer_extra_schema)
+	model.add_loss(loss)
+	# Set output
 	model.output_schema.pred.set_value(pred.get(), unsafe=True)
 	model.output_schema.loss.set_value(loss.get(), unsafe=True)
-	model.add_loss(loss)
+
 	return pred, loss
 
 def init_model_with_schemas(
@@ -128,8 +122,8 @@ def init_model_with_schemas(
 ):
 	workspace.ResetWorkspace()
 	input_record_schema = schema.Struct(
-		('sig_input', schema.Scalar((np.float32, (tanh_input_dim, )))),
-		('tanh_input', schema.Scalar((np.float32, (tanh_input_dim, ))))
+		('input_1', schema.Scalar((np.float32, (tanh_input_dim, )))), # sig
+		('input_2', schema.Scalar((np.float32, (tanh_input_dim, ))))  # tanh
 	)
 	output_record_schema = schema.Struct(
 		('loss', schema.Scalar((np.float32, (1, )))),

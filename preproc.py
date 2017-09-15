@@ -7,17 +7,17 @@ from caffe2.python import (
 )
 from caffe2.proto import caffe2_pb2
 
-def write_db(db_type, db_name, sig_input, tanh_input, labels):
+def write_db(db_type, db_name, input_1, input_2, labels):
 	''' The minidb datebase seems immutable.
 	'''
 	db = core.C.create_db(db_type, db_name, core.C.Mode.write)
 	transaction = db.new_transaction()
-	assert sig_input.shape == tanh_input.shape, 'two inputs have the same size.'
-	for i in range(sig_input.shape[0]):
+	assert input_1.shape == input_2.shape, 'two inputs have the same size.'
+	for i in range(input_1.shape[0]):
 		tensor = caffe2_pb2.TensorProtos()
 		tensor.protos.extend(
-				[utils.NumpyArrayToCaffe2Tensor(sig_input[i]),
-				 utils.NumpyArrayToCaffe2Tensor(tanh_input[i]),
+				[utils.NumpyArrayToCaffe2Tensor(input_1[i]),
+				 utils.NumpyArrayToCaffe2Tensor(input_2[i]),
 				 utils.NumpyArrayToCaffe2Tensor(labels[i])])
 		transaction.put(str(i), tensor.SerializeToString())
 	del transaction
@@ -29,24 +29,28 @@ def add_input_only():
 	pass
 
 def add_input_and_label(
-	model, db_name, db_type, batch_size=1
+	model, 
+	db_name, db_type, 
+	input_1_name, input_2_name,
+	batch_size=1
 ):
 	assert batch_size != 0, 'batch_size cannot be zero'
 	reader_init_net = core.Net('reader_init_net')
 	dbreader = reader_init_net.CreateDB(
 		[], "dbreader", db=db_name, db_type=db_type)
 	workspace.RunNetOnce(reader_init_net) # need to initialze dbreader ONLY ONCE
-	sig_input, tanh_input, label = model.TensorProtosDBInput(
+	input_1, input_2, label = model.TensorProtosDBInput(
 		[dbreader], 
-		["sig_input", "tanh_input", "label"], 
+		[input_1_name, input_2_name, "label"], 
 		batch_size=batch_size
 	)
-	sig_input = model.StopGradient(sig_input, sig_input)
-	tanh_input = model.StopGradient(tanh_input, tanh_input)
-	model.input_feature_schema.sig_input.set_value(sig_input.get(), unsafe=True)
-	model.input_feature_schema.tanh_input.set_value(tanh_input.get(), unsafe=True)
+	input_1 = model.StopGradient(input_1, input_1)
+	input_2 = model.StopGradient(input_2, input_2)
+	# set inputs and label
+	model.input_feature_schema.input_1.set_value(input_1.get(), unsafe=True)
+	model.input_feature_schema.input_2.set_value(input_2.get(), unsafe=True)
 	model.trainer_extra_schema.label.set_value(label.get(), unsafe=True)
-	return sig_input, tanh_input, label
+	return input_1, input_2, label
 
 # @ Xiang: please implement this function by 09/12
 #          Note: please add unittest in preproc_test.py
