@@ -4,8 +4,8 @@ from caffe2.python import (
 	core, workspace, layer_model_helper, schema, optimizer, net_drawer
 )
 import caffe2.python.layer_model_instantiator as instantiator
-from preproc import write_db, add_input_and_label
-from adjoint_nn_lib import (
+from preproc import write_db, add_two_inputs_and_label
+from adjoint_mlp_lib import (
 	build_adjoint_mlp, init_model_with_schemas
 )
 import numpy as np
@@ -31,7 +31,7 @@ if not os.path.isfile(db_name):
 		origin_input, adjoint_input, adjoint_label)
 else:
 	print(">>> The database with the same name already existed.")
-origin_input, adjoint_input, label = add_input_and_label(
+origin_input, adjoint_input, label = add_two_inputs_and_label(
 	model, db_name, 'minidb', 'origin_input', 'adjoint_input', batch_size=100
 )
 # Build model

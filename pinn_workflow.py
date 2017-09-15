@@ -6,7 +6,7 @@ from caffe2.python import (
 import caffe2.python.layer_model_instantiator as instantiator 
 import numpy as np
 from pinn_lib import build_pinn, init_model_with_schemas
-from preproc import write_db, add_input_and_label
+from preproc import write_db, add_two_inputs_and_label
 # workspace.ResetWorkspace()
 model = init_model_with_schemas('pinn_example', 2, 2, 2)
 # example data
@@ -21,7 +21,7 @@ if not os.path.isfile(db_name):
 		sig_input, tanh_input, label)
 else:
 	print("The database with the same name already existed.")
-sig_input, tanh_input, label = add_input_and_label(
+sig_input, tanh_input, label = add_two_inputs_and_label(
 	model, db_name, 'minidb', 'sig_input', 'tanh_input', batch_size=1
 )
 # build the model
