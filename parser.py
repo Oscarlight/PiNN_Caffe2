@@ -119,14 +119,9 @@ def parse_mdm_to_nparray(file_name):
 
 		return Header, Data
 
-# @ Xiang: please implement this function by 09/12
-def dc_iv_input(file_name):
-
+def read_dc_iv_mdm(file_name):
 	header, data = parse_mdm_to_nparray(file_name)
 	# assert whether is it DC IV data
-	# return three numpy arrays, vg, vd and id
-	import numpy as np
-	
 	assert ('freq' not in data.keys()),'The input data is not dc measurement, abort!'
 
 	if ('#Vd' in data.keys()):
@@ -142,7 +137,7 @@ def dc_iv_input(file_name):
 
 	return vg, vd, id
 	
-def ac_s_input(file_name):
+def read_s_par_mdm(file_name):
     header, data = parse_mdm_to_nparray(file_name)
 
     if ('freq' in data.keys()):
