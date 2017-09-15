@@ -2,18 +2,11 @@ import numpy as np
 import csv
 
 def parse_mdm_to_nparray(file_name):
-
 	'''
 	   Read data from .mdm files. Output is two dictionaries: 1. Data 2. Header
 	   In Data dict, the keys are in string formats. The data are in float format.
 	   In Header dict, everything is in string formats.
 	'''
-#'''
-#   Read data from .mdm files. Output is two dictionaries: 1. Data 2. Header
-#   In Data dict, the keys are in string formats. The datas are in float format.
-#   In Header dict, everyhing is in string formats.
-#'''
-
 	with open(file_name,'r') as f:
 
 		tmp = ''
@@ -126,10 +119,7 @@ def parse_mdm_to_nparray(file_name):
 
 		return Header, Data
 
-
-# @ Xiang: please implement this function by 09/12
-def dc_iv_input(file_name):
-
+def read_dc_iv_mdm(file_name):
 	header, data = parse_mdm_to_nparray(file_name)
 	# assert whether is it DC IV data
 	assert ('freq' not in data.keys()),'The input data is not dc measurement, abort!'
@@ -260,5 +250,3 @@ def read_s_par_csv(filename):
 
 if __name__ == '__main__':
 	pass
-	
-

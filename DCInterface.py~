@@ -11,12 +11,12 @@ from parser import read_dc_iv_mdm
 
 class DCModel:
 
-	def __init__(self,model_name, hidden_dim_sig, hidden_dim_tan):
+	def __init__(self,model_name):
 		self.__model_name = model_name
 		self.__model = None
 		self.__test_data_file = None
-		self.__sig_net_dim = hidden_dim_sig
-		self.__tanh_net_dim = hidden_dim_tan
+		self.__sig_net_dim = []
+		self.__tanh_net_dim = []
 		self.__inner_embed_dim = []
 		self.__pred_dim = 0
 		self.__pred = 0
@@ -32,8 +32,8 @@ class DCModel:
 			assert train_file_name is not None,"Database does not exist and input file not specified."
 			print ("Creating a new database.")
 			vg, vd, label = read_dc_iv_mdm(train_file_name)
-			self.__sig_input_dim = [vg.ndim] + self.__sig_input_dim
-			self.__tanh_input_dim = [vd.ndim] + self.__tanh_input_dim
+			self.__sig_input_dim[0] = vg.ndim
+			self.__tanh_input_dim[0] = vd.ndim
 			self.__pred_dim = id_label.ndim
 			write_db('minidb', db_name, vg, vd, label)
 		else:

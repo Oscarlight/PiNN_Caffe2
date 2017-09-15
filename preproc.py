@@ -52,12 +52,9 @@ def add_input_and_label(
 	model.trainer_extra_schema.label.set_value(label.get(), unsafe=True)
 	return input_1, input_2, label
 
-# @ Xiang: please implement this function by 09/12
-#          Note: please add unittest in preproc_test.py
-
-
-def dc_iv_preproc(vg, vd, id, scale, shift, a, b):
-
+def dc_iv_preproc(vg, vd, ids, scale, shift, 
+	slope = 0, threshold = 0
+):
     '''
     inputs:
         1) two numpy array features and labels
