@@ -1,5 +1,6 @@
 import caffe2_paths
 import numpy as np
+import math
 
 from caffe2.python import (
 	core, utils, workspace, schema, layer_model_helper
@@ -50,7 +51,7 @@ def add_input_and_label(
 # @ Xiang: please implement this function by 09/12
 #          Note: please add unittest in preproc_test.py
 
-def dc_iv_preproc(vg, vd, id, scale, shift):
+def dc_iv_preproc(vg, vd, id, scale, shift, a, b):
     '''
     inputs:
         1) two numpy array features and labels
@@ -62,12 +63,12 @@ def dc_iv_preproc(vg, vd, id, scale, shift):
     '''
     preproc_vg = (vg-shift)/scale['vg']
     preproc_vd = vd/scale['vd']
-    preproc_id = id/scale['id']
+    preproc_id = id/scale['id']*(math.exp(-a*(vg+b))+1)
 
-    def restore_func(vg, vd, id, scale, shift):
+    def restore_func(vg, vd, id, scale, shift, a, b):
         ori_vg = vg*scale['vg']+shift
         ori_vd = vd*scale['vd']
-        ori_id = id*scale['id']
+        ori_id = id*scale['id']/(math.exp(-a*(vg+b))+1)
         return ori_vg, ori_vd, ori_id
 
     return preproc_vg, preproc_vd, preproc_id, restore_func
@@ -80,6 +81,5 @@ def compute_meta(vg, vd, id):
     id_scale = max(abs(np.max(id))/0.9, abs(np.min(id))/0.9)
 
     scale = {'vg':vg_scale, 'vd':vd_scale, 'id':id_scale}
-    shift = vg_shift
 
-    return scale, shift
+    return scale, vg_shift
