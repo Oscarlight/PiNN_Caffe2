@@ -182,8 +182,6 @@ def read_dc_iv_csv(filename):
     vg = []
     vd = []
     id = []
-
-
     with open(filename) as csvDataFile:
         csvReader = csv.DictReader(csvDataFile,delimiter=',')
         rows = list(csvReader)
@@ -216,7 +214,6 @@ def read_s_par_csv(filename):
     r22 = []
     i22 = []
 
-
     with open(filename) as csvDataFile:
         csvReader = csv.DictReader(csvDataFile,delimiter=',')
         rows = list(csvReader)
@@ -233,8 +230,6 @@ def read_s_par_csv(filename):
         	i21.append(row['I:s(2,1)'])
         	r22.append(row['R:s(2,2)'])
         	i22.append(row['I:s(2,2)'])
-
-
 
         vg = [float(e) for e in vg]
         vd = [float(e) for e in vd]
@@ -258,12 +253,7 @@ def read_s_par_csv(filename):
 
 
 if __name__ == '__main__':
-# 	dict1 = (parse_mdm_to_nparray('./HEMT_bo/s_vs_f_at_VgVd.mdm')[1])
-# 	print(dict1["Vg"])
-#     print (dict1["R:s(1,1)"])
-    #print(ac_s_input('./HEMT_bo/s_at_f_vs_Vd.mdm'))
-	vg,vd,id = read_dc_iv_csv('./dc_test.csv')
-	print(id)
+	pass
 	
 
 
