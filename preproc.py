@@ -1,5 +1,6 @@
 import caffe2_paths
 import numpy as np
+import math
 
 from caffe2.python import (
 	core, utils, workspace, schema, layer_model_helper
@@ -53,16 +54,36 @@ def add_input_and_label(
 
 # @ Xiang: please implement this function by 09/12
 #          Note: please add unittest in preproc_test.py
-def dc_iv_preproc(features, labels, scale = 2.0):
-	'''
-	input: 
-	    1) two numpy array features and labels
-	    2) arguments for preprocessing
-	output: 
-		1) preprocss features and labels
-		2) a function for restoring to the origin data
-	'''
-	preproc_features = features
-	preproc_labels = labels
-	restore_func = None
-	return preproc_features, preproc_labels, restore_func
+
+def dc_iv_preproc(vg, vd, id, scale, shift, a, b):
+    '''
+    inputs:
+        1) two numpy array features and labels
+        2) arguments for pre-processing
+    outputs:
+        1) pre-process features and labels
+        2) a function for restoring to the original data
+
+    '''
+    preproc_vg = (vg-shift)/scale['vg']
+    preproc_vd = vd/scale['vd']
+    preproc_id = id/scale['id']*(math.exp(-a*(vg+b))+1)
+
+    def restore_func(vg, vd, id, scale, shift, a, b):
+        ori_vg = vg*scale['vg']+shift
+        ori_vd = vd*scale['vd']
+        ori_id = id*scale['id']/(math.exp(-a*(vg+b))+1)
+        return ori_vg, ori_vd, ori_id
+
+    return preproc_vg, preproc_vd, preproc_id, restore_func
+
+def compute_meta(vg, vd, id):
+
+    vg_shift = np.median(vg)-0.0
+    vg_scale = max(abs(np.max(vg)-vg_shift)/1.0, abs(np.min(vg)-vg_shift)/1.0)
+    vd_scale = max(abs(np.max(vd))/1.0, abs(np.min(vd))/1.0)
+    id_scale = max(abs(np.max(id))/0.9, abs(np.min(id))/0.9)
+
+    scale = {'vg':vg_scale, 'vd':vd_scale, 'id':id_scale}
+
+    return scale, vg_shift
