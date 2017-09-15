@@ -135,7 +135,7 @@ def init_model_with_schemas(
 ):
 	workspace.ResetWorkspace()
 	input_record_schema = schema.Struct(
-		('input_1', schema.Scalar((np.float32, (tanh_input_dim, )))), # sig
+		('input_1', schema.Scalar((np.float32, (sig_input_dim, )))), # sig
 		('input_2', schema.Scalar((np.float32, (tanh_input_dim, ))))  # tanh
 	)
 	output_record_schema = schema.Struct(
