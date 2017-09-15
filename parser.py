@@ -250,6 +250,3 @@ def read_s_par_csv(filename):
 
 if __name__ == '__main__':
 	pass
-	
-
-
