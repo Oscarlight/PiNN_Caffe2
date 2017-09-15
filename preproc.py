@@ -55,6 +55,7 @@ def add_input_and_label(
 # @ Xiang: please implement this function by 09/12
 #          Note: please add unittest in preproc_test.py
 
+
 def dc_iv_preproc(vg, vd, id, scale, shift, a, b):
     '''
     inputs:
@@ -87,3 +88,18 @@ def compute_meta(vg, vd, id):
     scale = {'vg':vg_scale, 'vd':vd_scale, 'id':id_scale}
 
     return scale, vg_shift
+
+#def dc_iv_preproc(features, labels, scale = 2.0):
+#	'''
+#	input: 
+#	    1) two numpy array features and labels
+#	    2) arguments for preprocessing
+#	output: 
+#		1) preprocss features and labels
+#		2) a function for restoring to the origin data
+#	'''
+#	preproc_features = features
+#	preproc_labels = labels
+#	restore_func = None
+#	return preproc_features, preproc_labels, restore_func
+
