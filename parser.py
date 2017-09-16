@@ -125,13 +125,13 @@ def read_dc_iv_mdm(file_name):
 	assert ('freq' not in data.keys()),'The input data is not dc measurement, abort!'
 
 	if ('#Vd' in data.keys()):
-		vd = np.array(data['#Vd'])
-		vg = np.array(data['Vg'])
-		id = np.array(data['Id'])
+		vd = np.array(data['#Vd'], dtype = np.float32)
+		vg = np.array(data['Vg'], dtype = np.float32)
+		id = np.array(data['Id'], dtype = np.float32)
 	elif ('#vd' in data.keys()):
-		vd = np.array(data['#vd'])
-		vg = np.array(data['vg'])
-		id = np.array(data['id'])
+		vd = np.array(data['#vd'], dtype = np.float32)
+		vg = np.array(data['vg'], dtype = np.float32)
+		id = np.array(data['id'], dtype = np.float32)
 	else:
 		raise Exception('Vd not found!')
 
@@ -177,7 +177,7 @@ def read_s_par_mdm(file_name):
 def read_dc_iv_csv(filename):
     vg = []
     vd = []
-    id = []
+    ids = []
     with open(filename) as csvDataFile:
         csvReader = csv.DictReader(csvDataFile,delimiter=',')
         rows = list(csvReader)
@@ -185,13 +185,13 @@ def read_dc_iv_csv(filename):
         for row in rows:
         	vg.append(row['Vg'])
         	vd.append(row['Vd'])
-        	id.append(row['Id'])
+        	ids.append(row['Id'])
         	
-        vg = [float(e) for e in vg]
-        vd = [float(e) for e in vd]
-        id = [float(e) for e in id]
+        vg = np.array(map(float, vg), dtype = np.float32)
+        vd = np.array(map(float, vd), dtype = np.float32)
+        ids = np.array(map(float, ids), dtype = np.float32)
  
-    return vg,vd,id
+    return vg,vd,ids
 
 def read_s_par_csv(filename):
     vg = []
@@ -250,6 +250,3 @@ def read_s_par_csv(filename):
 
 if __name__ == '__main__':
 	pass
-	
-
-
