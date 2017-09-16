@@ -92,8 +92,8 @@ def build_pinn(
 	block_index = 0
 	sig_h, tanh_h = build_block(
 		model,
-		model.input_feature_schema.input_1,
-		model.input_feature_schema.input_2,
+		model.input_feature_schema.sig_input,
+		model.input_feature_schema.tanh_input,
 		sig_net_dim[0], tanh_net_dim[0], inner_embed_dim[0],
 		block_index,
 		optim=optim,
@@ -135,8 +135,8 @@ def init_model_with_schemas(
 ):
 	workspace.ResetWorkspace()
 	input_record_schema = schema.Struct(
-		('input_1', schema.Scalar((np.float32, (sig_input_dim, )))), # sig
-		('input_2', schema.Scalar((np.float32, (tanh_input_dim, ))))  # tanh
+		('sig_input', schema.Scalar((np.float32, (sig_input_dim, )))),
+		('tanh_input', schema.Scalar((np.float32, (tanh_input_dim, ))))
 	)
 	output_record_schema = schema.Struct(
 		('loss', schema.Scalar((np.float32, (1, )))),

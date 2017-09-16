@@ -125,7 +125,7 @@ def read_dc_iv_mdm(file_name):
 	assert ('freq' not in data.keys()),'The input data is not dc measurement, abort!'
 
 	if ('#Vd' in data.keys()):
-		vd = np.array(data['#Vd'])
+		vd = np.array(data['#Vd'], )
 		vg = np.array(data['Vg'])
 		id = np.array(data['Id'])
 	elif ('#vd' in data.keys()):
