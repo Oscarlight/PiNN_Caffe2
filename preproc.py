@@ -1,7 +1,9 @@
 import numpy as np
 
-def dc_iv_preproc(vg, vd, ids, scale, shift, 
-	slope = 0, threshold = 0
+def dc_iv_preproc(
+	vg, vd, ids, 
+	scale, shift, 
+	slope=0, threshold=0
 ):
     '''
     inputs:
@@ -13,17 +15,19 @@ def dc_iv_preproc(vg, vd, ids, scale, shift,
     '''
     preproc_vg = (vg-shift) / scale['vg']
     preproc_vd = vd / scale['vd']
-    preproc_id_scalar = [(math.exp(-slope * (x + threshold)) + 1) for x in vg]
-    preproc_id = ids / scale['id'] * preproc_id_scalar if slope > 0 else ids/scale['id']
+    preproc_id = ids / scale['id'] * (
+    	np.exp(-slope * (vg + threshold)) + 1
+    	) if slope > 0 else ids/scale['id']
 
     def restore_func(vg, vd, ids):
         ori_vg = vg * scale['vg'] + shift
         ori_vd = vd * scale['vd']
-        ori_id_scalar = [(math.exp(-slope * (x + threshold)) + 1) for x in vg]
-        ori_id = ids * scale['id'] / ori_id_scalar if slope > 0 else ids * scale['id']
+        ori_id = ids * scale['id'] / (
+ 		  	np.exp(-slope*(vg + threshold)) + 1
+ 			) if slope > 0 else ids * scale['id']
         return ori_vg, ori_vd, ori_id
 
-    return preproc_vg, preproc_vd, preproc_id, restore_func
+    return [preproc_vg, preproc_vd, preproc_id], restore_func
 
 def compute_dc_meta(vg, vd, ids):
 
