@@ -5,72 +5,7 @@ def write_csv_file (file_name, data, description):
     ''' Write data to .csv file.'''
     np.savetxt(file_name, data, delimiter=',', newline='\n', header=description)
 
-
-def plot_linear_Id_vs_Vd_at_Vg (header, vg, vd, id):
-
-    vg_count = 0
-    vd_count = 0
-    for item in header['Inputs']:
-        if (item[0] == 'vd'):
-            vd_count = int(item[10])
-        elif (item[0] == 'vg'):
-            vg_count = int(item[10])
-        else:
-            pass
-
-    i = 0
-    while (i < vg_count):
-        vd_tmp = vd[i*vd_count : i*vd_count+vd_count]
-        id_tmp = id[i*vd_count : i*vd_count+vd_count]
-        vg_label = 'vg='+str(vg[i*vd_count])
-        plt.plot(vd_tmp, id_tmp, label = vg_label)
-        i = i+1
-
-    plt.xlabel('vd')
-    plt.ylabel('id')
-    plt.legend(loc = 'upper left')
-    plt.show()
-
-def plot_linear_Id_vs_Vg_at_Vd (header, vg, vd, id):
-
-    vg_count = 0
-    vd_count = 0
-    for item in header['Inputs']:
-        if (item[0] == 'vd'):
-            vd_count = int(item[10])
-        elif (item[0] == 'vg'):
-            vg_count = int(item[10])
-        else:
-            pass
-
-    # Re-arrange the data so that data is sorted by vd instead of vg
-    sort_vg = []
-    sort_vd = []
-    sort_id = []
-    i = 0
-    while (i < vd_count):
-        j = 0
-        while (j < vg_count):
-            sort_vg.append(vg[j*vd_count+i])
-            sort_vd.append(vd[j*vd_count+i])
-            sort_id.append(id[j*vd_count+i])
-            j = j+1
-        i = i+1
-
-    k = 0
-    while (k < vd_count):
-        vg_tmp = sort_vg[k*vg_count : k*vg_count+vg_count]
-        id_tmp = sort_id[k*vg_count : k*vg_count+vg_count]
-        vd_label = 'vd='+str(sort_vd[k*vg_count])
-        plt.plot(vg_tmp, id_tmp, label = vd_label)
-        k = k+1
-
-    plt.xlabel('vg')
-    plt.ylabel('id')
-    plt.legend(loc = 'upper left', ncol = 3)
-    plt.show()
-
-def plot_log_Id_vs_Vd_at_Vg (header, vg, vd, id):
+def plot_linear_Id_vs_Vd_at_Vg (header, vg, vd, ids, vg_comp = None, vd_comp = None, ids_comp = None):
 
     vg_count = 0
     vd_count = 0
@@ -85,22 +20,33 @@ def plot_log_Id_vs_Vd_at_Vg (header, vg, vd, id):
     i = 0
     while (i < vg_count):
         vd_tmp = vd[i*vd_count : i*vd_count+vd_count]
-        id_tmp = np.abs(id[i*vd_count : i*vd_count+vd_count])
+        ids_tmp = ids[i*vd_count : i*vd_count+vd_count]
         vg_label = 'vg='+str(vg[i*vd_count])
-        print(vd_tmp)
-        print(len(vd_tmp))
-        print(id_tmp)
-        print(len(id_tmp))
-        plt.plot(vd_tmp, id_tmp, label = vg_label)
+        plt.plot(vd_tmp, ids_tmp, label = vg_label)
         i = i+1
 
-    plt.xlabel('vd')
-    plt.ylabel('id')
-    plt.yscale('log')
-    plt.legend(loc = 'lower right')
-    plt.show()
 
-def plot_log_Id_vs_Vg_at_Vd (header, vg, vd, id):
+    if (vg_comp == None):
+        plt.xlabel('vd')
+        plt.ylabel('id')
+        plt.legend(loc = 'upper left')
+        plt.show()
+
+    else:
+        j = 0
+        while (j < vg_count):
+            vd_comp_tmp = vd_comp[j * vd_count: j * vd_count + vd_count]
+            ids_comp_tmp = ids_comp[j * vd_count: j * vd_count + vd_count]
+            vg_comp_label = 'vg=' + str(vg[j * vd_count])
+            plt.plot(vd_comp_tmp, ids_comp_tmp, label=vg_comp_label, ls='--')
+            j = j + 1
+
+        plt.xlabel('vd')
+        plt.ylabel('id')
+        plt.legend(loc='best', ncol = 2)
+        plt.show()
+
+def plot_linear_Id_vs_Vg_at_Vd (header, vg, vd, ids, vg_comp = None, vd_comp = None, ids_comp = None):
 
     vg_count = 0
     vd_count = 0
@@ -115,27 +61,165 @@ def plot_log_Id_vs_Vg_at_Vd (header, vg, vd, id):
     # Re-arrange the data so that data is sorted by vd instead of vg
     sort_vg = []
     sort_vd = []
-    sort_id = []
+    sort_ids = []
     i = 0
     while (i < vd_count):
         j = 0
         while (j < vg_count):
             sort_vg.append(vg[j*vd_count+i])
             sort_vd.append(vd[j*vd_count+i])
-            sort_id.append(id[j*vd_count+i])
+            sort_ids.append(ids[j*vd_count+i])
             j = j+1
         i = i+1
 
     k = 0
     while (k < vd_count):
         vg_tmp = sort_vg[k*vg_count : k*vg_count+vg_count]
-        id_tmp = np.abs(sort_id[k*vg_count : k*vg_count+vg_count])
+        ids_tmp = sort_ids[k*vg_count : k*vg_count+vg_count]
         vd_label = 'vd='+str(sort_vd[k*vg_count])
-        plt.plot(vg_tmp, id_tmp, label = vd_label)
+        plt.plot(vg_tmp, ids_tmp, label = vd_label)
         k = k+1
 
-    plt.xlabel('vg')
-    plt.ylabel('id')
-    plt.yscale('log')
-    plt.legend(loc = 'lower right', ncol = 3)
-    plt.show()
+    if (vg_comp == None):
+        plt.xlabel('vg')
+        plt.ylabel('id')
+        plt.legend(loc = 'upper left', ncol = 3)
+        plt.show()
+
+    else:
+        sort_vg_comp = []
+        sort_vd_comp = []
+        sort_ids_comp = []
+        i = 0
+        while (i < vd_count):
+            j = 0
+            while (j < vg_count):
+                sort_vg_comp.append(vg_comp[j * vd_count + i])
+                sort_vd_comp.append(vd_comp[j * vd_count + i])
+                sort_ids_comp.append(ids_comp[j * vd_count + i])
+                j = j + 1
+            i = i + 1
+
+        k = 0
+        while (k < vd_count):
+            vg_tmp_comp = sort_vg_comp[k * vg_count: k * vg_count + vg_count]
+            ids_tmp_comp = sort_ids_comp[k * vg_count: k * vg_count + vg_count]
+            vd_label_comp = 'vd=' + str(sort_vd_comp[k * vg_count])
+            plt.plot(vg_tmp_comp, ids_tmp_comp, label = vd_label_comp, ls = '--')
+            k = k + 1
+
+        plt.xlabel('vg')
+        plt.ylabel('id')
+        plt.legend(loc='best', ncol = 6)
+        plt.show()
+
+def plot_log_Id_vs_Vd_at_Vg (header, vg, vd, ids, vg_comp = None, vd_comp = None, ids_comp = None):
+
+    vg_count = 0
+    vd_count = 0
+    for item in header['Inputs']:
+        if (item[0] == 'vd'):
+            vd_count = int(item[10])
+        elif (item[0] == 'vg'):
+            vg_count = int(item[10])
+        else:
+            pass
+
+    i = 0
+    while (i < vg_count):
+        vd_tmp = vd[i * vd_count: i * vd_count + vd_count]
+        ids_tmp = np.abs(ids[i * vd_count: i * vd_count + vd_count])
+        vg_label = 'vg=' + str(vg[i * vd_count])
+        plt.plot(vd_tmp, ids_tmp, label=vg_label)
+        i = i + 1
+
+    if (vg_comp == None):
+        plt.xlabel('vd')
+        plt.ylabel('id')
+        plt.yscale('log')
+        plt.legend(loc='upper left')
+        plt.show()
+
+    else:
+        j = 0
+        while (j < vg_count):
+            vd_comp_tmp = vd_comp[j * vd_count: j * vd_count + vd_count]
+            ids_comp_tmp = np.abs(ids_comp[j * vd_count: j * vd_count + vd_count])
+            vg_comp_label = 'vg=' + str(vg[j * vd_count])
+            plt.plot(vd_comp_tmp, ids_comp_tmp, label=vg_comp_label, ls='--')
+            j = j + 1
+
+        plt.xlabel('vd')
+        plt.ylabel('id')
+        plt.yscale('log')
+        plt.legend(loc='best', ncol=2)
+        plt.show()
+
+def plot_log_Id_vs_Vg_at_Vd (header, vg, vd, ids, vg_comp = None, vd_comp = None, ids_comp = None):
+
+    vg_count = 0
+    vd_count = 0
+    for item in header['Inputs']:
+        if (item[0] == 'vd'):
+            vd_count = int(item[10])
+        elif (item[0] == 'vg'):
+            vg_count = int(item[10])
+        else:
+            pass
+
+    # Re-arrange the data so that data is sorted by vd instead of vg
+    sort_vg = []
+    sort_vd = []
+    sort_ids = []
+    i = 0
+    while (i < vd_count):
+        j = 0
+        while (j < vg_count):
+            sort_vg.append(vg[j * vd_count + i])
+            sort_vd.append(vd[j * vd_count + i])
+            sort_ids.append(ids[j * vd_count + i])
+            j = j + 1
+        i = i + 1
+
+    k = 0
+    while (k < vd_count):
+        vg_tmp = sort_vg[k * vg_count: k * vg_count + vg_count]
+        ids_tmp = np.abs(sort_ids[k * vg_count: k * vg_count + vg_count])
+        vd_label = 'vd=' + str(sort_vd[k * vg_count])
+        plt.plot(vg_tmp, ids_tmp, label=vd_label)
+        k = k + 1
+
+    if (vg_comp == None):
+        plt.xlabel('vg')
+        plt.ylabel('id')
+        plt.yscale('log')
+        plt.legend(loc='upper left', ncol=3)
+        plt.show()
+
+    else:
+        sort_vg_comp = []
+        sort_vd_comp = []
+        sort_ids_comp = []
+        i = 0
+        while (i < vd_count):
+            j = 0
+            while (j < vg_count):
+                sort_vg_comp.append(vg_comp[j * vd_count + i])
+                sort_vd_comp.append(vd_comp[j * vd_count + i])
+                sort_ids_comp.append(ids_comp[j * vd_count + i])
+                j = j + 1
+            i = i + 1
+
+        k = 0
+        while (k < vd_count):
+            vg_tmp_comp = sort_vg_comp[k * vg_count: k * vg_count + vg_count]
+            ids_tmp_comp = np.abs(sort_ids_comp[k * vg_count: k * vg_count + vg_count])
+            vd_label_comp = 'vd=' + str(sort_vd_comp[k * vg_count])
+            plt.plot(vg_tmp_comp, ids_tmp_comp, label=vd_label_comp, ls='--')
+            k = k + 1
+
+        plt.xlabel('vg')
+        plt.ylabel('id')
+        plt.yscale('log')
+        plt.legend(loc='best', ncol=6)
+        plt.show()
