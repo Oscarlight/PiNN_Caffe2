@@ -40,33 +40,36 @@ class DCModel:
 		hidden_sig_dims, 
 		hidden_tanh_dims,
 		train_batch_size=1,
-		test_batch_size=1,
+		eval_batch_size=1,
 		transfer_before_interconnect=False,
 		interconnect_method='Add',
 		inner_embed_dims=[],
 		optim_param = {'alpha':0.01, 'epsilon':1e-4} 
 	):
 		assert len(self.input_data_store) > 0, 'Input data store is empty.'
-		assert 'train' in input_data_store, 'Missing training data.'
+		assert 'train' in self.input_data_store, 'Missing training data.'
 		# Build the date reader net for train net
 		input_data_train = data_reader.build_input_reader(
 			self.model, 
-			input_data_store['train'][0], 
+			self.input_data_store['train'][0], 
 			'minidb', 
 			['sig_input', 'tanh_input'], 
 			batch_size=train_batch_size,
 			data_type='train',
 		)
-		if 'eval' in input_data_store:
+		self.input_data_store['train'].append(train_batch_size)
+
+		if 'eval' in self.input_data_store:
 			# Build the data reader net for eval net
 			input_data_eval = data_reader.build_input_reader(
 				self.model, 
-				input_data_store['eval'][0], 
+				self.input_data_store['eval'][0], 
 				'minidb', 
 				['sig_input', 'tanh_input'], 
 				batch_size=eval_batch_size,
 				data_type='eval',
 			)
+			self.input_data_store['eval'].append(eval_batch_size)
 
 		# Build the computational net
 		if interconnect_method == 'Add':
@@ -75,10 +78,19 @@ class DCModel:
 				inner_embed_dims.append(sig_dim)
 		elif interconnect_method == 'Concat':
 			assert len(inner_embed_dims) == len(hidden_sig_dims), 'invalid inner_embed_dims'
+		else:
+			raise Exception('Unsupported data format.')
 
-		pred, loss = build_pinn(
+		# Create train net
+		self.model.input_feature_schema.sig_input.set_value(
+			input_data_train[0].get(), unsafe=True)
+		self.model.input_feature_schema.tanh_input.set_value(
+			input_data_train[1].get(), unsafe=True)
+		self.model.trainer_extra_schema.label.set_value(
+			input_data_train[2].get(), unsafe=True)
+
+		self.pred, self.loss = build_pinn(
 			self.model,
-			label,
 			sig_net_dim = hidden_sig_dims,
 			tanh_net_dim = hidden_tanh_dims,
 			inner_embed_dim = inner_embed_dims,
@@ -87,26 +99,18 @@ class DCModel:
 			interconnect_method=interconnect_method
 		)
 
-		# Create train net
-		model.input_feature_schema.sig_input.set_value(
-			input_data_train[0].get(), unsafe=True)
-		model.input_feature_schema.tanh_input.set_value(
-			input_data_train[1].get(), unsafe=True)
-		model.trainer_extra_schema.label.set_value(
-			input_data_train[2].get(), unsafe=True)
-
 		train_init_net, train_net = instantiator.generate_training_nets(self.model)
 		workspace.RunNetOnce(train_init_net)
 		workspace.CreateNet(train_net)
 		self.net_store['train_net'] = train_net
 
-		if 'eval' in input_data_store:
+		if 'eval' in self.input_data_store:
 			# Create eval net
-			model.input_feature_schema.sig_input.set_value(
+			self.model.input_feature_schema.sig_input.set_value(
 				input_data_eval[0].get(), unsafe=True)
-			model.input_feature_schema.tanh_input.set_value(
+			self.model.input_feature_schema.tanh_input.set_value(
 				input_data_eval[1].get(), unsafe=True)
-			model.trainer_extra_schema.label.set_value(
+			self.model.trainer_extra_schema.label.set_value(
 				input_data_eval[2].get(), unsafe=True)
 
 			eval_net = instantiator.generate_eval_net(model)
@@ -137,6 +141,11 @@ class DCModel:
 		else:
 			raise Exception('No data source.')
 
+		# number of examples
+		num_example = len(data_arrays[0])
+		for data in data_arrays[1:]:
+			assert len(data) == num_example
+
 		db_name = file_name_wo_ext + '.minidb'
 		restore_func = None
 		if not os.path.isfile(db_name):
@@ -156,10 +165,44 @@ class DCModel:
 		else:
 			print(">>> The database with the same name already existed.")
 
-		self.input_data_store[data_tag] = (db_name, restore_func)
+		self.input_data_store[data_tag] = [db_name, restore_func, num_example]
 
-	
-		
+	def train_with_eval(
+		self,
+		num_epoch,
+		eval_interval
+	):
+		num_batch_per_epoch = int(
+			self.input_data_store['train'][2] / 
+			self.input_data_store['train'][3]
+		)
+		num_eval = int(num_epoch / eval_interval)
+		num_unit_iter = int((num_batch_per_epoch * num_epoch)/num_eval)
+
+		for i in range(num_eval):
+			train_net = self.net_store['train_net']
+			workspace.RunNet(train_net, num_iter=num_unit_iter)
+			train_loss = schema.FetchRecord(self.loss).get()
+			if 'eval_net' in self.net_store:
+				eval_net = self.net_store['eval_net']
+				workspace.RunNet(eval_net)
+				eval_loss = schema.FetchRecord(self.loss).get()
+			if 'eval_net' not in self.net_store:
+				print('Epoch: {}, Batched Train Loss: {}'.format(
+						i * eval_interval,
+						train_loss,
+					)
+				)
+			else:
+				print('Epoch: {}, Batched Train Loss: {}, Batched Eval Loss: {}'.format(
+						i * eval_interval,
+						train_loss,
+						eval_loss
+					)
+				)				
+
+
+
 		 
 			
 			

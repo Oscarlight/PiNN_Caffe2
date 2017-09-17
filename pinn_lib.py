@@ -72,7 +72,6 @@ def build_block(
 
 def build_pinn(
 	model,
-	label,
 	sig_net_dim=[1], tanh_net_dim=[1], inner_embed_dim=[0],
 	optim=None,
 	tranfer_before_interconnect=False,
