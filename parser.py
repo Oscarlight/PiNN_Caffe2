@@ -125,18 +125,18 @@ def read_dc_iv_mdm(file_name):
 	# assert whether is it DC IV data
 	assert ('freq' not in data.keys()),'The input data is not dc measurement, abort!'
 
-	if ('#Vd' in data.keys()):
-		vd = np.array(data['#Vd'], dtype = np.float32)
+	if ('Vd' in data.keys()):
+		vd = np.array(data['Vd'], dtype = np.float32)
 		vg = np.array(data['Vg'], dtype = np.float32)
-		id = np.array(data['Id'], dtype = np.float32)
-	elif ('#vd' in data.keys()):
-		vd = np.array(data['#vd'], dtype = np.float32)
+		ids = np.array(data['Id'], dtype = np.float32)
+	elif ('vd' in data.keys()):
+		vd = np.array(data['vd'], dtype = np.float32)
 		vg = np.array(data['vg'], dtype = np.float32)
-		id = np.array(data['id'], dtype = np.float32)
+		ids = np.array(data['id'], dtype = np.float32)
 	else:
 		raise Exception('Vd not found!')
 
-	return vg, vd, id
+	return vg, vd, ids
 	
 def read_s_par_mdm(file_name):
     header, data = parse_mdm_to_nparray(file_name)
