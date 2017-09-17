@@ -104,7 +104,8 @@ def parse_mdm_to_nparray(file_name):
 			store_tmp.append(cond_store_tmp)
 
 		# Combine together
-		count = 0
+		Data[Data_tmp[0][0][0][1:]] = store_tmp[0]
+		count = 1
 		while (count < data_val_num):
 			Data[Data_tmp[0][0][count]] = store_tmp[count]
 			count = count+1
