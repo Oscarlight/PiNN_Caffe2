@@ -1,11 +1,11 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-def write_csv_file (file_name, data, description):
+def write_csv_file(file_name, data, description):
     ''' Write data to .csv file.'''
     np.savetxt(file_name, data, delimiter=',', newline='\n', header=description)
 
-def plot_linear_Id_vs_Vd_at_Vg (vg, vd, ids, vg_comp = None, vd_comp = None, ids_comp = None):
+def plot_linear_Id_vs_Vd_at_Vg(vg, vd, ids, vg_comp = None, vd_comp = None, ids_comp = None):
 
     vd_count = 0
 
@@ -26,10 +26,10 @@ def plot_linear_Id_vs_Vd_at_Vg (vg, vd, ids, vg_comp = None, vd_comp = None, ids
         i = i+1
 
 
-    if (vg_comp == None):
+    if (vg_comp is None):
         plt.xlabel('vd')
         plt.ylabel('id')
-        plt.legend(loc = 'upper left')
+        # plt.legend(loc = 'upper left')
         plt.show()
 
     else:
@@ -43,10 +43,10 @@ def plot_linear_Id_vs_Vd_at_Vg (vg, vd, ids, vg_comp = None, vd_comp = None, ids
 
         plt.xlabel('vd')
         plt.ylabel('id')
-        plt.legend(loc='best', ncol = 2)
+        # plt.legend(loc='best', ncol = 2)
         plt.show()
 
-def plot_linear_Id_vs_Vg_at_Vd (vg, vd, ids, vg_comp = None, vd_comp = None, ids_comp = None):
+def plot_linear_Id_vs_Vg_at_Vd(vg, vd, ids, vg_comp = None, vd_comp = None, ids_comp = None):
 
     vd_count = 0
 
@@ -80,10 +80,10 @@ def plot_linear_Id_vs_Vg_at_Vd (vg, vd, ids, vg_comp = None, vd_comp = None, ids
         plt.plot(vg_tmp, ids_tmp, label = vd_label)
         k = k+1
 
-    if (vg_comp == None):
+    if (vg_comp is None):
         plt.xlabel('vg')
         plt.ylabel('id')
-        plt.legend(loc = 'upper left', ncol = 3)
+        # plt.legend(loc = 'upper left', ncol = 3)
         plt.show()
 
     else:
@@ -110,10 +110,10 @@ def plot_linear_Id_vs_Vg_at_Vd (vg, vd, ids, vg_comp = None, vd_comp = None, ids
 
         plt.xlabel('vg')
         plt.ylabel('id')
-        plt.legend(loc='best', ncol = 6)
+        # plt.legend(loc='best', ncol = 6)
         plt.show()
 
-def plot_log_Id_vs_Vd_at_Vg (vg, vd, ids, vg_comp = None, vd_comp = None, ids_comp = None):
+def plot_log_Id_vs_Vd_at_Vg(vg, vd, ids, vg_comp = None, vd_comp = None, ids_comp = None):
 
     vd_count = 0
 
@@ -133,11 +133,11 @@ def plot_log_Id_vs_Vd_at_Vg (vg, vd, ids, vg_comp = None, vd_comp = None, ids_co
         plt.plot(vd_tmp, ids_tmp, label=vg_label)
         i = i + 1
 
-    if (vg_comp == None):
+    if (vg_comp is None):
         plt.xlabel('vd')
         plt.ylabel('id')
         plt.yscale('log')
-        plt.legend(loc='upper left')
+        # plt.legend(loc='upper left')
         plt.show()
 
     else:
@@ -152,10 +152,10 @@ def plot_log_Id_vs_Vd_at_Vg (vg, vd, ids, vg_comp = None, vd_comp = None, ids_co
         plt.xlabel('vd')
         plt.ylabel('id')
         plt.yscale('log')
-        plt.legend(loc='best', ncol=2)
+        # plt.legend(loc='best', ncol=2)
         plt.show()
 
-def plot_log_Id_vs_Vg_at_Vd (vg, vd, ids, vg_comp = None, vd_comp = None, ids_comp = None):
+def plot_log_Id_vs_Vg_at_Vd(vg, vd, ids, vg_comp = None, vd_comp = None, ids_comp = None):
 
     vd_count = 0
 
@@ -189,11 +189,11 @@ def plot_log_Id_vs_Vg_at_Vd (vg, vd, ids, vg_comp = None, vd_comp = None, ids_co
         plt.plot(vg_tmp, ids_tmp, label=vd_label)
         k = k + 1
 
-    if (vg_comp == None):
+    if (vg_comp is None):
         plt.xlabel('vg')
         plt.ylabel('id')
         plt.yscale('log')
-        plt.legend(loc='upper left', ncol=3)
+        # plt.legend(loc='upper left', ncol=3)
         plt.show()
 
     else:
@@ -221,5 +221,5 @@ def plot_log_Id_vs_Vg_at_Vd (vg, vd, ids, vg_comp = None, vd_comp = None, ids_co
         plt.xlabel('vg')
         plt.ylabel('id')
         plt.yscale('log')
-        plt.legend(loc='best', ncol=6)
+        # plt.legend(loc='best', ncol=6)
         plt.show()
