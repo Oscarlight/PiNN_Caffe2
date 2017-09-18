@@ -5,17 +5,17 @@ def write_csv_file (file_name, data, description):
     ''' Write data to .csv file.'''
     np.savetxt(file_name, data, delimiter=',', newline='\n', header=description)
 
-def plot_linear_Id_vs_Vd_at_Vg (header, vg, vd, ids, vg_comp = None, vd_comp = None, ids_comp = None):
+def plot_linear_Id_vs_Vd_at_Vg (vg, vd, ids, vg_comp = None, vd_comp = None, ids_comp = None):
 
-    vg_count = 0
     vd_count = 0
-    for item in header['Inputs']:
-        if (item[0] == 'vd'):
-            vd_count = int(item[10])
-        elif (item[0] == 'vg'):
-            vg_count = int(item[10])
-        else:
-            pass
+
+    vg_tmp = vg
+    vg_tmp.sort()
+    while (vg_tmp[vd_count+1] == vg_tmp[vd_count]):
+        vd_count = vd_count +1
+
+    vd_count = vd_count + 1
+    vg_count = len(vg)/vd_count
 
     i = 0
     while (i < vg_count):
@@ -46,17 +46,17 @@ def plot_linear_Id_vs_Vd_at_Vg (header, vg, vd, ids, vg_comp = None, vd_comp = N
         plt.legend(loc='best', ncol = 2)
         plt.show()
 
-def plot_linear_Id_vs_Vg_at_Vd (header, vg, vd, ids, vg_comp = None, vd_comp = None, ids_comp = None):
+def plot_linear_Id_vs_Vg_at_Vd (vg, vd, ids, vg_comp = None, vd_comp = None, ids_comp = None):
 
-    vg_count = 0
     vd_count = 0
-    for item in header['Inputs']:
-        if (item[0] == 'vd'):
-            vd_count = int(item[10])
-        elif (item[0] == 'vg'):
-            vg_count = int(item[10])
-        else:
-            pass
+
+    vg_tmp = vg
+    vg_tmp.sort()
+    while (vg_tmp[vd_count+1] == vg_tmp[vd_count]):
+        vd_count = vd_count +1
+
+    vd_count = vd_count + 1
+    vg_count = len(vg)/vd_count
 
     # Re-arrange the data so that data is sorted by vd instead of vg
     sort_vg = []
@@ -113,17 +113,17 @@ def plot_linear_Id_vs_Vg_at_Vd (header, vg, vd, ids, vg_comp = None, vd_comp = N
         plt.legend(loc='best', ncol = 6)
         plt.show()
 
-def plot_log_Id_vs_Vd_at_Vg (header, vg, vd, ids, vg_comp = None, vd_comp = None, ids_comp = None):
+def plot_log_Id_vs_Vd_at_Vg (vg, vd, ids, vg_comp = None, vd_comp = None, ids_comp = None):
 
-    vg_count = 0
     vd_count = 0
-    for item in header['Inputs']:
-        if (item[0] == 'vd'):
-            vd_count = int(item[10])
-        elif (item[0] == 'vg'):
-            vg_count = int(item[10])
-        else:
-            pass
+
+    vg_tmp = vg
+    vg_tmp.sort()
+    while (vg_tmp[vd_count+1] == vg_tmp[vd_count]):
+        vd_count = vd_count +1
+
+    vd_count = vd_count + 1
+    vg_count = len(vg)/vd_count
 
     i = 0
     while (i < vg_count):
@@ -155,17 +155,17 @@ def plot_log_Id_vs_Vd_at_Vg (header, vg, vd, ids, vg_comp = None, vd_comp = None
         plt.legend(loc='best', ncol=2)
         plt.show()
 
-def plot_log_Id_vs_Vg_at_Vd (header, vg, vd, ids, vg_comp = None, vd_comp = None, ids_comp = None):
+def plot_log_Id_vs_Vg_at_Vd (vg, vd, ids, vg_comp = None, vd_comp = None, ids_comp = None):
 
-    vg_count = 0
     vd_count = 0
-    for item in header['Inputs']:
-        if (item[0] == 'vd'):
-            vd_count = int(item[10])
-        elif (item[0] == 'vg'):
-            vg_count = int(item[10])
-        else:
-            pass
+
+    vg_tmp = vg
+    vg_tmp.sort()
+    while (vg_tmp[vd_count+1] == vg_tmp[vd_count]):
+        vd_count = vd_count +1
+
+    vd_count = vd_count + 1
+    vg_count = len(vg)/vd_count
 
     # Re-arrange the data so that data is sorted by vd instead of vg
     sort_vg = []
