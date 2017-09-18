@@ -14,7 +14,7 @@ sig_input = np.array([[2., 1.], [2., 2.], [3., 4.]], dtype = np.float32)
 tanh_input = np.array([[1., 1.], [1., 2.], [2., 5.]], dtype = np.float32)
 label = np.ones((3, 2), dtype = np.float32)
 # create db if needed
-db_name = 'pinn_train'
+db_name = 'pinn_train.minidb'
 if not os.path.isfile(db_name):
 	print("Create a new database...")
 	write_db('minidb', db_name, 
@@ -29,10 +29,13 @@ input_data_train = build_input_reader(
 )
 
 # example eval data
-sig_input_eval = np.array([[2., 2.], [2., 2.], [3., 4.]], dtype = np.float32)
-tanh_input_eval = np.array([[1., 1.], [1., 1.], [2., 5.]], dtype = np.float32)
-label_eval = np.array([[0., 3], [0., 2], [3., 0]], dtype = np.float32)
-db_name = 'pinn_eval'
+sig_input_eval = np.array([[2., 1.], [2., 2.], [3., 4.]], dtype = np.float32)
+tanh_input_eval = np.array([[1., 1.], [1., 2.], [2., 5.]], dtype = np.float32)
+label_eval = np.ones((3, 2), dtype = np.float32)
+# sig_input_eval = np.array([[2., 2.], [2., 2.], [3., 4.]], dtype = np.float32)
+# tanh_input_eval = np.array([[1., 1.], [1., 1.], [2., 5.]], dtype = np.float32)
+# label_eval = np.array([[0., 3], [0., 2], [3., 0]], dtype = np.float32)
+db_name = 'pinn_eval.minidb'
 if not os.path.isfile(db_name):
 	print("Create a new database...")
 	write_db('minidb', db_name, 
@@ -56,7 +59,6 @@ model.trainer_extra_schema.label.set_value(
 # build the model
 pred, loss = build_pinn(
 	model,
-	label,
 	sig_net_dim = [3, 2],
 	tanh_net_dim = [5, 2],
 	inner_embed_dim = [2, 3],
@@ -69,15 +71,6 @@ workspace.CreateNet(train_net)
 # graph = net_drawer.GetPydotGraph(train_net.Proto().op, rankdir='TB')
 # with open(train_net.Name() + ".png",'wb') as f:
 # 	f.write(graph.create_png())
-num_iter = 1000
-eval_num_iter = 4
-for i in range(eval_num_iter):
-	print('--------')
-	workspace.RunNet(train_net, num_iter=num_iter)
-	# print(schema.FetchRecord(tanh_input).get())
-	print(schema.FetchRecord(loss).get())
-	# print(schema.FetchRecord(label).get())
-	# print(schema.FetchRecord(pred).get())
 
 # Eval
 model.input_feature_schema.sig_input.set_value(
@@ -86,15 +79,31 @@ model.input_feature_schema.tanh_input.set_value(
 	input_data_eval[1].get(), unsafe=True)
 model.trainer_extra_schema.label.set_value(
 	input_data_eval[2].get(), unsafe=True)
-
 eval_net = instantiator.generate_eval_net(model)
-graph = net_drawer.GetPydotGraph(eval_net.Proto().op, rankdir='TB')
-with open(eval_net.Name() + ".png",'wb') as f:
-	f.write(graph.create_png())
+# graph = net_drawer.GetPydotGraph(eval_net.Proto().op, rankdir='TB')
+# with open(eval_net.Name() + ".png",'wb') as f:
+# 	f.write(graph.create_png()
 workspace.CreateNet(eval_net)
-workspace.RunNet(eval_net.Proto().name)
-print(schema.FetchRecord(loss))
-print(schema.FetchRecord(pred))
+
+
+num_iter = 1000
+eval_num_iter = 4
+for i in range(eval_num_iter):
+	print('--------')
+	workspace.RunNet(train_net)
+	# print(schema.FetchRecord(model.input_feature_schema.sig_input).get())
+	# print(schema.FetchRecord(model.input_feature_schema.tanh_input).get())
+	print(schema.FetchRecord(loss).get())
+	# print(schema.FetchRecord(label).get())
+	# print(schema.FetchRecord(pred).get())
+	workspace.RunNet(eval_net)
+	print(schema.FetchRecord(loss).get())
+
+# print(eval_net.Proto())
+# workspace.RunNet(eval_net)
+# print(schema.FetchRecord(loss).get())
+# print(schema.FetchRecord(model.input_feature_schema.sig_input).get())
+# print(schema.FetchRecord(model.input_feature_schema.tanh_input).get())
 
 # # Predict1
 # pred_net = instantiator.generate_predict_net(model)

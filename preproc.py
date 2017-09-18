@@ -19,18 +19,22 @@ def dc_iv_preproc(
     	np.exp(-slope * (vg + threshold)) + 1
     	) if slope > 0 else ids/scale['id']
 
-    def restore_func(vg, vd, ids):
-        ori_vg = vg * scale['vg'] + shift
-        ori_vd = vd * scale['vd']
-        ori_id = ids * scale['id'] / (
+    return preproc_vg, preproc_vd, preproc_id
+
+def get_restore_func(	
+	scale, shift, 
+	slope=0, threshold=0
+):
+	def restore_func(vg, vd, ids):
+		ori_vg = vg * scale['vg'] + shift
+    	ori_vd = vd * scale['vd']
+    	ori_id = ids * scale['id'] / (
  		  	np.exp(-slope*(vg + threshold)) + 1
  			) if slope > 0 else ids * scale['id']
-        return ori_vg, ori_vd, ori_id
-
-    return [preproc_vg, preproc_vd, preproc_id], restore_func
+    	return ori_vg, ori_vd, ori_id
+	return restore_func
 
 def compute_dc_meta(vg, vd, ids):
-
     vg_shift = np.median(vg)-0.0
     vg_scale = max(abs(np.max(vg)-vg_shift)/1.0, abs(np.min(vg)-vg_shift)/1.0)
     vd_scale = max(abs(np.max(vd))/1.0, abs(np.min(vd))/1.0)

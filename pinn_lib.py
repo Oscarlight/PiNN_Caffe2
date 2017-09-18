@@ -1,7 +1,7 @@
 import caffe2_paths
 
 from caffe2.python import (
-	schema, optimizer, net_drawer, workspace, layer_model_helper
+	core, schema, optimizer, net_drawer, workspace, layer_model_helper
 )
 import numpy as np
 
@@ -20,6 +20,15 @@ def build_block(
 		tanh_n,
 		weight_optim=optim,
 		name = 'tanh_fc_layer_{}'.format(block_index),
+	)
+	# TODO: I have to add this dummy layer because a error in eval net.
+	#       In the eval net, for Add (or Concat), sig_input will still be 
+	#       'DBInput_train/sig_input' (i.e. the external input from the 
+	#       train net). I don't know why it happens for now, but a closer 
+	#       look at layer_model_instantiator.py.
+	sig_input = model.NanCheck(
+		sig_input, 
+		'dummy_sig_input_{}'.format(block_index), 
 	)
 	if not linear_activation and tranfer_before_interconnect:
 		tanh_h = model.Tanh(
@@ -105,7 +114,7 @@ def build_pinn(
 	):
 		block_index += 1
 		# Use linear activation function in the last layer for the regression 
-		linear_activation = True if block_index == len(sig_net_dim) else False
+		linear_activation = True if block_index == len(sig_net_dim) - 1 else False
 		sig_h, tanh_h = build_block(
 			model,
 			sig_h, tanh_h,

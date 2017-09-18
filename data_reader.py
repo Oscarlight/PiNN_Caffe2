@@ -39,7 +39,7 @@ def build_input_reader(
 	assert batch_size != 0, 'batch_size cannot be zero'
 	reader_init_net = core.Net('reader_init_net_'+data_type)
 	dbreader = reader_init_net.CreateDB(
-		[], "dbreader", db=db_name, db_type=db_type)
+		[], 'dbreader_'+data_type, db=db_name, db_type=db_type)
 	# need to initialze dbreader ONLY ONCE
 	workspace.RunNetOnce(reader_init_net)
 	if data_type == 'train':
