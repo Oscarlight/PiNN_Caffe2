@@ -17,103 +17,75 @@ import matplotlib.pyplot as plt
 class DCModel:
 	def __init__(
 		self, 
-		model_name, 
-		train_file_name=None,
-		eval_file_name=None,
-		preproc_slope=0,
-		preproc_threshold=0,
-	):
-		self.model = init_model_with_schemas(model_name, 1, 1, 1)
+		model_name,
+		sig_input_dim=1,
+		tanh_input_dim=1,
+		output_dim=1,
+	):	
+		self.model_name = model_name
+		self.model = init_model_with_schemas(
+			model_name, sig_input_dim, tanh_input_dim, output_dim)
 		self.input_data_store = {}
 		self.preproc_param = {}
 		self.net_store = {}
-		self.data_arrays_dict = {}
 		self.reports = {'epoch':[],'train_loss':[], 'eval_loss':[]}
-		self.file_names = {}
-		if train_file_name:
-			self.add_data(
-				'train', file_name=train_file_name, 
-				preproc_slope=preproc_slope,
-				preproc_threshold=preproc_threshold
-			)
-		if eval_file_name:
-			self.add_data(
-				'eval', file_name=eval_file_name,
-			)
-		self.pickle_file_name = self.file_names['train'] + '.p'
 
 
 	def add_data(
 		self,
 		data_tag,
-		data_arrays=[], 
-		file_name=None, 
-		preproc_slope=0, 
-		preproc_threshold=0,
+		data_arrays, 
+		preproc_param,
+		override=True,
 	):
-		if len(data_arrays) > 0:
-			print('>>> Read into data directly from data arrays... ' + 
-				'Note: data are in the order of vg, vd, and id')
-		elif file_name:
-			print('>>> Read in the data from data file : {}...'.format(file_name))
-			file_name_wo_ext, file_ext = os.path.splitext(file_name)
-			if file_ext == '.mdm':
-				data_arrays = parser.read_dc_iv_mdm(file_name)
-			elif file_ext == '.csv':
-				data_arrays = parser.read_dc_iv_csv(file_name)
-			else:
-				raise Exception('Unsupported data format.')
-		else:
-			raise Exception('No data source.')
-
-		# number of examples
+		'''
+		data_arrays are in the order of sig_input, tanh_input, and label
+		'''
+		assert len(data_arrays) == 3, 'Incorrect number of input data'
+		# number of examples and same length assertion
 		num_example = len(data_arrays[0])
 		for data in data_arrays[1:]:
 			assert len(data) == num_example, 'Mismatch dimensions'
-		self.file_names[data_tag] = file_name_wo_ext
-		db_name = file_name_wo_ext + '.minidb'
-		if not os.path.isfile(db_name):
-			print("+++ Create a new database...")	
-			# preproc the data
-			assert len(data_arrays) == 3, 'Incorrect number of input data'
-			if len(self.preproc_param) == 0:
-				# Compute the meta data if not set yet
-				scale, vg_shift = preproc.compute_dc_meta(*data_arrays)
-				self.preproc_param = {
-					'scale' : scale, 
-					'vg_shift' : vg_shift, 
-					'preproc_slope' : preproc_slope, 
-					'preproc_threshold' : preproc_threshold
-				}
-				pickle.dump(
-					self.preproc_param, 
-					open(file_name_wo_ext + '.p', 'wb')
-				)
-			preproc_data_arrays = preproc.dc_iv_preproc(
-				data_arrays[0], data_arrays[1], data_arrays[2], 
-				self.preproc_param['scale'], 
-				self.preproc_param['vg_shift'], 
-				slope=self.preproc_param['preproc_slope'],
-				threshold=self.preproc_param['preproc_threshold']
-			)
-			preproc_data_arrays = [np.expand_dims(
-				x, axis=1) for x in preproc_data_arrays]
-			data_reader.write_db('minidb', db_name, *preproc_data_arrays)
-		else:
-			print("--- The database with the same name already existed.")
+		self.preproc_param = preproc_param
+		self.pickle_file_name = self.model_name + '_preproc_param' + '.p'
+		db_name = self.model_name + '_' + data_tag + '.minidb'
 
+		if os.path.isfile(db_name):
+			if override:
+				print("XXX Delete the old database...")
+				os.remove(db_name)
+				os.remove(self.pickle_file_name)
+			else:
+				raise Exception('Encounter database with the same name. ' +
+					'Choose the other model name or set override to True.')
+		print("+++ Create a new database...")	
+		pickle.dump(
+			self.preproc_param, 
+			open(self.pickle_file_name, 'wb')
+		)
+		preproc_data_arrays = preproc.dc_iv_preproc(
+			data_arrays[0], data_arrays[1], data_arrays[2], 
+			self.preproc_param['scale'], 
+			self.preproc_param['vg_shift'], 
+			slope=self.preproc_param['preproc_slope'],
+			threshold=self.preproc_param['preproc_threshold']
+		)
+		# Only expand the dim if the number of dimension is 1
+		preproc_data_arrays = [np.expand_dims(
+			x, axis=1) if x.ndim == 1 else x for x in preproc_data_arrays]
+		# Write to database
+		data_reader.write_db('minidb', db_name, *preproc_data_arrays)
 		self.input_data_store[data_tag] = [db_name, num_example]
-
 
 	def build_nets(
 		self,
 		hidden_sig_dims, 
 		hidden_tanh_dims,
 		batch_size=1,
-		transfer_before_interconnect=False,
-		interconnect_method='Add',
-		inner_embed_dims=[],
-		optim_param = {'alpha':0.01, 'epsilon':1e-4} 
+		weight_optim_method = 'AdaGrad',
+		weight_optim_param = {'alpha':0.005, 'epsilon':1e-4},
+		bias_optim_method = 'AdaGrad',
+		bias_optim_param = {'alpha':0.05, 'epsilon':1e-4},
 	):
 		assert len(self.input_data_store) > 0, 'Input data store is empty.'
 		assert 'train' in self.input_data_store, 'Missing training data.'
@@ -139,16 +111,7 @@ class DCModel:
 				data_type='eval',
 			)
 
-		# Build the computational net
-		if interconnect_method == 'Add':
-			inner_embed_dims = [1] # sig_net input dim
-			for sig_dim in hidden_sig_dims[:-1]:
-				inner_embed_dims.append(sig_dim)
-		elif interconnect_method == 'Concat':
-			assert len(inner_embed_dims) == len(hidden_sig_dims), 'invalid inner_embed_dims'
-		else:
-			raise Exception('Unsupported data format.')
-
+		# Build the computational nets
 		# Create train net
 		self.model.input_feature_schema.sig_input.set_value(
 			input_data_train[0].get(), unsafe=True)
@@ -159,12 +122,12 @@ class DCModel:
 
 		self.pred, self.loss = build_pinn(
 			self.model,
-			sig_net_dim = hidden_sig_dims,
-			tanh_net_dim = hidden_tanh_dims,
-			inner_embed_dim = inner_embed_dims,
-			optim=optimizer.AdagradOptimizer(**optim_param),
-			tranfer_before_interconnect=transfer_before_interconnect, 
-			interconnect_method=interconnect_method
+			sig_net_dim=hidden_sig_dims,
+			tanh_net_dim=hidden_tanh_dims,
+			weight_optim=_build_optimizer(
+				weight_optim_method, weight_optim_param),
+			bias_optim=_build_optimizer(
+				bias_optim_method, bias_optim_param),
 		)
 
 		train_init_net, train_net = instantiator.generate_training_nets(self.model)
@@ -187,6 +150,7 @@ class DCModel:
 		pred_net = instantiator.generate_predict_net(self.model)
 		workspace.CreateNet(pred_net)
 		self.net_store['pred_net'] = pred_net
+
 
 
 	def train_with_eval(
@@ -281,8 +245,9 @@ class DCModel:
 			self.preproc_param = pickle.load(
 				open(self.pickle_file_name, "rb" )
 			)
+		dummy_ids = np.zeros(len(vg))
 		preproc_data_arrays = preproc.dc_iv_preproc(
-			vg, vd, np.zeros(len(vg)), 
+			vg, vd, dummy_ids, 
 			self.preproc_param['scale'], 
 			self.preproc_param['vg_shift'], 
 			slope=self.preproc_param['preproc_slope'],
@@ -294,17 +259,16 @@ class DCModel:
 		workspace.FeedBlob('DBInput_train/tanh_input', _preproc_data_arrays[1])
 		pred_net = self.net_store['pred_net']
 		workspace.RunNet(pred_net)
-		# vg = schema.FetchRecord(self.model.input_feature_schema.sig_input).get()
-		# vd = schema.FetchRecord(self.model.input_feature_schema.tanh_input).get()
-		ids = np.squeeze(schema.FetchRecord(self.pred).get())
+
+		_ids = np.squeeze(schema.FetchRecord(self.pred).get())
 		restore_id_func = preproc.get_restore_id_func( 
 			self.preproc_param['scale'], 
 			self.preproc_param['vg_shift'], 
 			slope=self.preproc_param['preproc_slope'],
 			threshold=self.preproc_param['preproc_threshold']
 		)
-		ids = restore_id_func(ids)
-		return ids
+		ids = restore_id_func(_ids, preproc_data_arrays[0])
+		return _ids, ids
 
 	def plot_loss_trend(self):
 		plt.plot(self.reports['epoch'], self.reports['train_loss'])
@@ -312,7 +276,10 @@ class DCModel:
 			plt.plot(self.reports['epoch'], self.reports['eval_loss'], 'r--')
 		plt.show()
 
-## Global functions
+# --------------------------------------------------------
+# ----------------   Global functions  -------------------
+# --------------------------------------------------------
+
 def plot_iv( 
 	vg, vd, ids, 
 	vg_comp = None, vd_comp = None, ids_comp = None,
@@ -346,7 +313,19 @@ def plot_iv(
 		visualizer.plot_log_Id_vs_Vg_at_Vd(
 			vg, vd, ids, 
 			vg_comp = vg_comp, vd_comp = vd_comp, ids_comp = ids_comp,
-		)				
+		)
+
+def _build_optimizer(optim_method, optim_param):
+	if optim_method == 'AdaGrad':
+		optim = optimizer.AdagradOptimizer(**optim_param)
+	elif optim_method == 'SgdOptimizer':
+		optim = optimizer.SgdOptimizer(**optim_param)
+	elif optim_method == 'Adam':
+		optim = optimizer.AdamOptimizer(**optim_param)
+	else:
+		raise Exception(
+			'Did you foget to implement {}?'.format(optim_method))
+	return optim
 
 
 		 

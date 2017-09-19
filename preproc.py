@@ -16,7 +16,7 @@ def dc_iv_preproc(
     preproc_vg = (vg-shift) / scale['vg']
     preproc_vd = vd / scale['vd']
     preproc_id = ids / scale['id'] * (
-    	np.exp(-slope * (vg + threshold)) + 1
+    	np.power(10, -slope * (preproc_vg + threshold)) + 1
     	) if slope > 0 else ids/scale['id']
 
     return preproc_vg, preproc_vd, preproc_id
@@ -25,11 +25,11 @@ def get_restore_id_func(
 	scale, shift, 
 	slope=0, threshold=0
 ):
-	def restore_id_func(ids):
+	def restore_id_func(ids, vgs):
 		# ori_vg = vgs * scale['vg'] + shift
 		# ori_vd = vds * scale['vd']
 		ori_id = ids * scale['id'] / (
-			np.exp(-slope*(vgs + threshold)) + 1
+			np.power(10, -slope*(vgs + threshold)) + 1
 		) if slope > 0 else ids * scale['id']
 		# return ori_vg, ori_vd, ori_id
 		return ori_id

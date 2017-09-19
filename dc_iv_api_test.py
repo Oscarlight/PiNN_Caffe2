@@ -1,46 +1,49 @@
 from dc_iv_api import DCModel, plot_iv
+import parser
+import preproc
 import numpy as np
 # TODO: Test on
 # './HEMT_bo/Id_vs_Vd_at_Vg.mdm'
 # './HEMT_bo/Id_vs_Vg_at_Vd.mdm'
 
-# ----------------- Train + Eval time ---------------------
-dc_model = DCModel(
-	'hemt_dc_test_2', 
-	train_file_name='./HEMT_bo/DC_IV.csv',
-)
-
+# ----------------- Preprocessing --------------------
+data_arrays = parser.read_dc_iv_csv('./HEMT_bo/DC_IV.csv')
+scale, vg_shift = preproc.compute_dc_meta(*data_arrays)
+preproc_param = {
+	'scale' : scale, 
+	'vg_shift' : vg_shift, 
+	'preproc_slope' : 5, 
+	'preproc_threshold' : 0.1
+}
+# ----------------- Train + Eval ---------------------
+dc_model = DCModel('hemt_dc_test_2')
+dc_model.add_data('train', data_arrays, preproc_param)
 dc_model.build_nets(
-	hidden_sig_dims=[3, 1],
-	hidden_tanh_dims=[3, 1],
-	batch_size=10,
-	optim_param = {'alpha':0.01, 'epsilon':1e-4} 
+	hidden_sig_dims=[4, 4, 1],
+	hidden_tanh_dims=[3, 3, 1],
+	batch_size=64,
+	weight_optim_method = 'AdaGrad',
+	weight_optim_param = {'alpha':0.005, 'epsilon':1e-4},
+	bias_optim_method = 'AdaGrad',
+	bias_optim_param = {'alpha':0.05, 'epsilon':1e-4} 
 )
-# If you want to take a look at the nets
-# dc_model.draw_nets()
-
 dc_model.train_with_eval(
-	num_epoch=1000, 
+	num_epoch=1000,
 	report_interval=0,
 )
+
+# ----------------- Inspection ---------------------
+# dc_model.draw_nets()
 # dc_model.plot_loss_trend()
 
-# ----------------- Deployment time ---------------------
-dataset = np.genfromtxt('./HEMT_bo/DC_IV.csv', delimiter=",", dtype=None)
-vg = []
-vd = []
-ids = []
-for i in range(1, len(dataset)):
-	vg.append(float(dataset[i][0]))
-	vd.append(float(dataset[i][1]))
-	ids.append(float(dataset[i][2]))
-vg = np.array(vg)
-vd = np.array(vd)
-ids = np.array(ids)
-pred_ids = dc_model.predict_id(vg, vd)
+# ----------------- Deployment ---------------------
+vg = data_arrays[0]
+vd = data_arrays[1]
+ids = data_arrays[2]
+intern_ids, pred_ids = dc_model.predict_id(vg, vd)
 plot_iv(
-	vg, vd, ids, 
-	vg_comp=vg, 
-	vd_comp=vd, 
-	ids_comp=pred_ids
+	vd, vg, ids,
+	vg_comp=vd, 
+	vd_comp=vg, 
+	ids_comp=pred_ids,
 )

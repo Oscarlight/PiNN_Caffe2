@@ -8,90 +8,56 @@ import numpy as np
 def build_block(
 	model,
 	sig_input, tanh_input,
-	sig_n, tanh_n, embed_n,
+	sig_n, tanh_n,
 	block_index,
-	optim=None,
-	tranfer_before_interconnect=False,
-	interconnect_method='Add',
+	weight_optim=None,
+	bias_optim=None,
 	linear_activation = False
 ):
 	tanh_h = model.FCWithoutBias(
 		tanh_input, 
 		tanh_n,
-		weight_optim=optim,
+		weight_optim=weight_optim,
 		name = 'tanh_fc_layer_{}'.format(block_index),
 	)
-	# TODO: I have to add this dummy layer because a error in eval net.
-	#       In the eval net, for Add (or Concat), sig_input will still be 
-	#       'DBInput_train/sig_input' (i.e. the external input from the 
-	#       train net). I don't know why it happens for now, but a closer 
-	#       look at layer_model_instantiator.py.
-	sig_input = model.NanCheck(
-		sig_input, 
-		'dummy_sig_input_{}'.format(block_index), 
-	)
-	if not linear_activation and tranfer_before_interconnect:
-		tanh_h = model.Tanh(
-			[tanh_h],
-			name = 'tanh_tranfer_layer_{}'.format(block_index),
-		)
-	if embed_n > 0:
-		inter_h = model.FCWithoutBias(
-			tanh_h, 
-			embed_n,
-			weight_optim=optim,
-			name = 'inter_embed_layer_{}'.format(block_index),
-		)
-		if interconnect_method == 'Concat':
-			sig_input = model.Concat(
-				[inter_h, sig_input],
-				'inter_concat_layer_{}'.format(block_index),
-				axis = 1
-			)
-		elif interconnect_method == 'Add':
-			sig_input = model.Add(
-				[inter_h, sig_input],
-				'inter_add_layer_{}'.format(block_index),
-			)
-		else:
-			raise Exception('Interconnect method: {} is not implemented.'.format(
-					interconnect_method
-				)
-			)
-
 	sig_h = model.FC(
 		sig_input,
 		sig_n,
-		weight_optim=optim,
-		bias_optim=optim,
+		weight_optim=weight_optim,
+		bias_optim=bias_optim,
 		name = 'sig_fc_layer_{}'.format(block_index),
 	)
-	
+	inter_h = model.FC(
+		tanh_h, 
+		sig_n,
+		weight_optim=weight_optim,
+		bias_optim=bias_optim,
+		name = 'inter_embed_layer_{}'.format(block_index),
+	)
+	sig_h = model.Add(
+		[inter_h, sig_h],
+		'inter_add_layer_{}'.format(block_index),
+	)
 	if not linear_activation:
 		sig_h = model.Sigmoid(
 			[sig_h],
 			'sig_tranfer_layer_{}'.format(block_index),
 		)
-		if not tranfer_before_interconnect:
-			tanh_h = model.Tanh(
-				[tanh_h], 
-				'tanh_tranfer_layer_{}'.format(block_index),
-			)
+		tanh_h = model.Tanh(
+			[tanh_h], 
+			'tanh_tranfer_layer_{}'.format(block_index),
+		)
 	return sig_h, tanh_h
 
 def build_pinn(
 	model,
-	sig_net_dim=[1], tanh_net_dim=[1], inner_embed_dim=[0],
-	optim=None,
-	tranfer_before_interconnect=False,
-	interconnect_method='Add' 
+	sig_net_dim=[1], tanh_net_dim=[1],
+	weight_optim=None,
+	bias_optim=None,
 ):
 	'''
 		sig_net_dim and tanh_net_dim are the lists of dimensions for each hidden
 		layers in the sig_net and tanh_net respectively.
-
-		Precondition: when using Add as the interconncet method, the inner_embed_dim has 
-		to be the same as the dimension of the last sig_net layer.
 	'''
 	assert len(sig_net_dim) * len(tanh_net_dim) > 0, 'arch cannot be empty'
 	assert len(sig_net_dim) == len(tanh_net_dim), 'arch mismatch'
@@ -102,15 +68,14 @@ def build_pinn(
 		model,
 		model.input_feature_schema.sig_input,
 		model.input_feature_schema.tanh_input,
-		sig_net_dim[0], tanh_net_dim[0], inner_embed_dim[0],
+		sig_net_dim[0], tanh_net_dim[0],
 		block_index,
-		optim=optim,
-		tranfer_before_interconnect = tranfer_before_interconnect,
-		interconnect_method = interconnect_method,
+		weight_optim=weight_optim,
+		bias_optim=bias_optim,
 	)
 
-	for sig_n, tanh_n, embed_n in zip(
-		sig_net_dim[1:], tanh_net_dim[1:], inner_embed_dim[1:]
+	for sig_n, tanh_n in zip(
+		sig_net_dim[1:], tanh_net_dim[1:]
 	):
 		block_index += 1
 		# Use linear activation function in the last layer for the regression 
@@ -118,11 +83,10 @@ def build_pinn(
 		sig_h, tanh_h = build_block(
 			model,
 			sig_h, tanh_h,
-			sig_n, tanh_n, embed_n,
+			sig_n, tanh_n,
 			block_index,
-			optim=optim,
-			tranfer_before_interconnect = tranfer_before_interconnect,
-			interconnect_method = interconnect_method,
+			weight_optim=weight_optim,
+			bias_optim=bias_optim,
 			linear_activation = linear_activation,
 		)
 
