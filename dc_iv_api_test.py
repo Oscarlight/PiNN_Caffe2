@@ -41,9 +41,9 @@ vg = data_arrays[0]
 vd = data_arrays[1]
 ids = data_arrays[2]
 intern_ids, pred_ids = dc_model.predict_ids(vg, vd)
-# plot_iv(
-# 	vd, vg, ids,
-# 	vg_comp=vd, 
-# 	vd_comp=vg, 
-# 	ids_comp=pred_ids,
-# )
+plot_iv(
+	vd, vg, ids,
+	vg_comp=vd, 
+	vd_comp=vg, 
+	ids_comp=pred_ids,
+)

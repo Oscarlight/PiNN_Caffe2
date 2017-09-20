@@ -285,30 +285,26 @@ def plot_iv(
 	vg_comp = None, vd_comp = None, ids_comp = None,
 	styles = ['vg_major_linear', 'vd_major_linear', 'vg_major_log', 'vd_major_log']
 ):
-	fid = 0
 	if 'vg_major_linear' in styles:
-		plt.figure(fid)
+		# plt.figure(fid)
 		fid += 1
 		visualizer.plot_linear_Id_vs_Vd_at_Vg(
 			vg, vd, ids, 
 			vg_comp = vg_comp, vd_comp = vd_comp, ids_comp = ids_comp,
 		)
 	if 'vd_major_linear' in styles:
-		plt.figure(fid)
 		fid += 1
 		visualizer.plot_linear_Id_vs_Vg_at_Vd(
 			vg, vd, ids, 
 			vg_comp = vg_comp, vd_comp = vd_comp, ids_comp = ids_comp,
 		)
 	if 'vg_major_log' in styles:
-		plt.figure(fid)
 		fid += 1
 		visualizer.plot_log_Id_vs_Vd_at_Vg(
 			vg, vd, ids, 
 			vg_comp = vg_comp, vd_comp = vd_comp, ids_comp = ids_comp,
 		)
 	if 'vd_major_log' in styles:
-		plt.figure(fid)
 		fid += 1
 		visualizer.plot_log_Id_vs_Vg_at_Vd(
 			vg, vd, ids, 
