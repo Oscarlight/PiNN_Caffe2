@@ -19,7 +19,7 @@ class TestVisualizer(unittest.TestCase):
 		visualizer.write_csv_file('after_pre-process.csv', data_out, 'Row 1: Vg, Row 2: Vd, Row 3: Id')
 		visualizer.plot_linear_Id_vs_Vd_at_Vg (vg, vd, id)
 		visualizer.plot_log_Id_vs_Vg_at_Vd (vg, vd, id)
-		visualizer.plot_linear_Id_vs_Vd_at_Vg (vg, vd, id, preproc_vg, preproc_vd, preproc_id)
+		visualizer.plot_linear_Id_vs_Vd_at_Vg (vg, vd, id, preproc_vg, preproc_vd, preproc_id, save_name='test')
 
 
 
