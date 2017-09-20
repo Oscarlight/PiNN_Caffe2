@@ -44,3 +44,15 @@ def compute_dc_meta(vg, vd, ids):
     scale = {'vg':vg_scale, 'vd':vd_scale, 'id':id_scale}
 
     return scale, vg_shift
+
+def truncate(data_arrays, truncate_range, axis):
+    # The data within the truncate_range will be removed, the rest will be returned.
+    tmp = data_arrays
+    i = 0
+    for e in data_arrays[axis]:
+        if e >= truncate_range[0] and e <= truncate_range[1]:
+            tmp = np.delete(tmp, i, axis = 1)
+            i = i-1
+        i = i+1
+
+    return tmp
