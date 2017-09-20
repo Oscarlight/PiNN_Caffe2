@@ -237,7 +237,7 @@ class DCModel:
 				f.write(graph.create_png())
 				
 
-	def predict_id(self, vg, vd):
+	def predict_ids(self, vg, vd):
 		# preproc the input
 		vg = vg.astype(np.float32)
 		vd = vd.astype(np.float32)

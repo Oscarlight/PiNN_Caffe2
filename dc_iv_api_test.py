@@ -21,29 +21,29 @@ dc_model.add_data('train', data_arrays, preproc_param)
 dc_model.build_nets(
 	hidden_sig_dims=[4, 4, 1],
 	hidden_tanh_dims=[3, 3, 1],
-	batch_size=64,
+	batch_size=1,
 	weight_optim_method = 'AdaGrad',
 	weight_optim_param = {'alpha':0.005, 'epsilon':1e-4},
 	bias_optim_method = 'AdaGrad',
 	bias_optim_param = {'alpha':0.05, 'epsilon':1e-4} 
 )
 dc_model.train_with_eval(
-	num_epoch=1000,
-	report_interval=0,
+	num_epoch=100,
+	report_interval=1,
 )
 
 # ----------------- Inspection ---------------------
 # dc_model.draw_nets()
-# dc_model.plot_loss_trend()
+dc_model.plot_loss_trend()
 
 # ----------------- Deployment ---------------------
 vg = data_arrays[0]
 vd = data_arrays[1]
 ids = data_arrays[2]
-intern_ids, pred_ids = dc_model.predict_id(vg, vd)
-plot_iv(
-	vd, vg, ids,
-	vg_comp=vd, 
-	vd_comp=vg, 
-	ids_comp=pred_ids,
-)
+intern_ids, pred_ids = dc_model.predict_ids(vg, vd)
+# plot_iv(
+# 	vd, vg, ids,
+# 	vg_comp=vd, 
+# 	vd_comp=vg, 
+# 	ids_comp=pred_ids,
+# )
