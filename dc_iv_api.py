@@ -246,7 +246,7 @@ class DCModel:
 				f.write(graph.create_png())
 				
 
-	def predict_id(self, vg, vd):
+	def predict_ids(self, vg, vd):
 		# preproc the input
 		vg = vg.astype(np.float32)
 		vd = vd.astype(np.float32)
@@ -337,21 +337,26 @@ def plot_iv(
 	styles = ['vg_major_linear', 'vd_major_linear', 'vg_major_log', 'vd_major_log']
 ):
 	if 'vg_major_linear' in styles:
+		# plt.figure(fid)
+		fid += 1
 		visualizer.plot_linear_Id_vs_Vd_at_Vg(
 			vg, vd, ids, 
 			vg_comp = vg_comp, vd_comp = vd_comp, ids_comp = ids_comp,
 		)
 	if 'vd_major_linear' in styles:
+		fid += 1
 		visualizer.plot_linear_Id_vs_Vg_at_Vd(
 			vg, vd, ids, 
 			vg_comp = vg_comp, vd_comp = vd_comp, ids_comp = ids_comp,
 		)
 	if 'vg_major_log' in styles:
+		fid += 1
 		visualizer.plot_log_Id_vs_Vd_at_Vg(
 			vg, vd, ids, 
 			vg_comp = vg_comp, vd_comp = vd_comp, ids_comp = ids_comp,
 		)
 	if 'vd_major_log' in styles:
+		fid += 1
 		visualizer.plot_log_Id_vs_Vg_at_Vd(
 			vg, vd, ids, 
 			vg_comp = vg_comp, vd_comp = vd_comp, ids_comp = ids_comp,

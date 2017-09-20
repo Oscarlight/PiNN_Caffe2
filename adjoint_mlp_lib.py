@@ -26,7 +26,7 @@ def build_adjoint_mlp(
 	'''
 	assert len(hidden_dims) >= 1, "at least one hidden dim"
 	with ParameterSharing({'origin' : 'adjoint'}):
-		z = model.input_feature_schema.input_1 
+		z = model.input_feature_schema.origin_input 
 		z_lst = []
 		idx = 0
 		with scope.NameScope('origin'):
@@ -52,7 +52,7 @@ def build_adjoint_mlp(
 
 		with scope.NameScope('adjoint'):
 			with Tags(Tags.EXCLUDE_FROM_PREDICTION):
-				alpha = model.input_feature_schema.input_2
+				alpha = model.input_feature_schema.adjoint_input
 				for hidden_dim in reversed(hidden_dims):
 					gamma_ad = model.FCTransposeW(
 						alpha, 
@@ -99,8 +99,8 @@ def init_model_with_schemas(
 ):
 	workspace.ResetWorkspace()
 	input_record_schema = schema.Struct(
-		('input_1', schema.Scalar((np.float32, (input_dim, )))), # original
-		('input_2', schema.Scalar((np.float32, (output_dim, )))) # adjoint
+		('original_input', schema.Scalar((np.float32, (input_dim, )))),
+		('adjoint_input', schema.Scalar((np.float32, (output_dim, ))))
 	)
 	output_record_schema = schema.Struct(
 		('loss', schema.Scalar((np.float32, (input_dim, )))),

@@ -31,7 +31,6 @@ def save_net(net, model, INIT_NET, PREDICT_NET):
     init_net = caffe2_pb2.NetDef()
     for param in model.get_parameter_blobs():
         blob = workspace.FetchBlob(param)
-        # print(blob)
         shape = blob.shape
         op = core.CreateOperator("GivenTensorFill", [], [param],arg=[ utils.MakeArgument("shape", shape),utils.MakeArgument("values", blob)])
         init_net.op.extend([op])
