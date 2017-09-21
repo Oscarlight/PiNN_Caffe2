@@ -1,7 +1,8 @@
-from dc_iv_api import DCModel, plot_iv
+from dc_iv_api import DCModel, plot_iv, predict_id_test
 import parser
 import preproc
 import numpy as np
+import exporter
 # TODO: Test on
 # './HEMT_bo/Id_vs_Vd_at_Vg.mdm'
 # './HEMT_bo/Id_vs_Vg_at_Vd.mdm'
@@ -33,6 +34,7 @@ dc_model.build_nets(
 	bias_optim_method = 'AdaGrad',
 	bias_optim_param = {'alpha':0.1, 'epsilon':1e-4} 
 )
+
 dc_model.train_with_eval(
 	num_epoch=500,
 	report_interval=0,
@@ -50,3 +52,7 @@ plot_iv(
 	vd_comp=vg, 
 	ids_comp=pred_ids,
 )
+
+
+#exporter.load_net(dc_model.model_name+'_init', dc_model.model_name+'_predict')
+
