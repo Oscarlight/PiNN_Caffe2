@@ -10,3 +10,7 @@ if user_dir == '/home/oscar':
 if user_dir == '/Users/Mingda':
 	sys.path.append(user_dir + '/Documents/Caffe2/caffe2/build/')
 # Xiang
+
+#Jashan
+if user_dir == '/Users/jashansinghal':
+	sys.path.append(user_dir + '/Box Sync/PINNGit/caffe2/build')
