@@ -6,12 +6,12 @@ from caffe2.python import (
 )
 import caffe2.python.layer_model_instantiator as instantiator
 import numpy as np
-from pinn_lib import build_pinn, init_model_with_schemas
-import data_reader
-import preproc
-import parser
-import visualizer
-import exporter
+from pinn.pinn_lib import build_pinn, init_model_with_schemas
+import pinn.data_reader as data_reader
+import pinn.preproc as preproc
+import pinn.parser as parser
+import pinn.visualizer as visualizer
+import pinn.exporter as exporter
 # import logging
 import matplotlib.pyplot as plt
 

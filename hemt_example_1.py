@@ -1,10 +1,13 @@
 from dc_iv_api import DCModel, plot_iv, predict_id_test
-import parser
-import preproc
+import pinn.parser as parser
+import pinn.preproc as preproc
+import pinn.exporter as exporter
 import numpy as np
-import exporter
-# TODO: Test on
+
+# TODO: 
+# Train on
 # './HEMT_bo/Id_vs_Vd_at_Vg.mdm'
+# Test on
 # './HEMT_bo/Id_vs_Vg_at_Vd.mdm'
 
 # ----------------- Preprocessing --------------------
@@ -36,7 +39,7 @@ dc_model.build_nets(
 )
 
 dc_model.train_with_eval(
-	num_epoch=5000000,
+	num_epoch=500,
 	report_interval=0,
 )
 
@@ -52,7 +55,6 @@ plot_iv(
 	vd_comp=vg, 
 	ids_comp=pred_ids,
 )
-
 
 #exporter.load_net(dc_model.model_name+'_init', dc_model.model_name+'_predict')
 
