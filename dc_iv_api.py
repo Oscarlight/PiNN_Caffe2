@@ -6,12 +6,12 @@ from caffe2.python import (
 )
 import caffe2.python.layer_model_instantiator as instantiator
 import numpy as np
-from pinn_lib import build_pinn, init_model_with_schemas
-import data_reader
-import preproc
-import parser
-import visualizer
-import exporter
+from pinn.pinn_lib import build_pinn, init_model_with_schemas
+import pinn.data_reader as data_reader
+import pinn.preproc as preproc
+import pinn.parser as parser
+import pinn.visualizer as visualizer
+import pinn.exporter as exporter
 # import logging
 import matplotlib.pyplot as plt
 
@@ -71,6 +71,7 @@ class DCModel:
 			slope=self.preproc_param['preproc_slope'],
 			threshold=self.preproc_param['preproc_threshold']
 		)
+		# self.preproc_data_arrays=preproc_data_arrays
 		# Only expand the dim if the number of dimension is 1
 		preproc_data_arrays = [np.expand_dims(
 			x, axis=1) if x.ndim == 1 else x for x in preproc_data_arrays]
@@ -206,6 +207,14 @@ class DCModel:
 				train_net, 
 				num_iter=num_epoch * num_batch_per_epoch
 			)
+			
+		print('>>> Saving test model')
+
+		exporter.save_net(
+			self.net_store['pred_net'], 
+			self.model, 
+			self.model_name+'_init', self.model_name+'_predict'
+		)
 
 		print('Saving test model')
 
@@ -337,26 +346,21 @@ def plot_iv(
 	styles = ['vg_major_linear', 'vd_major_linear', 'vg_major_log', 'vd_major_log']
 ):
 	if 'vg_major_linear' in styles:
-		# plt.figure(fid)
-		fid += 1
 		visualizer.plot_linear_Id_vs_Vd_at_Vg(
 			vg, vd, ids, 
 			vg_comp = vg_comp, vd_comp = vd_comp, ids_comp = ids_comp,
 		)
 	if 'vd_major_linear' in styles:
-		fid += 1
 		visualizer.plot_linear_Id_vs_Vg_at_Vd(
 			vg, vd, ids, 
 			vg_comp = vg_comp, vd_comp = vd_comp, ids_comp = ids_comp,
 		)
 	if 'vg_major_log' in styles:
-		fid += 1
 		visualizer.plot_log_Id_vs_Vd_at_Vg(
 			vg, vd, ids, 
 			vg_comp = vg_comp, vd_comp = vd_comp, ids_comp = ids_comp,
 		)
 	if 'vd_major_log' in styles:
-		fid += 1
 		visualizer.plot_log_Id_vs_Vg_at_Vd(
 			vg, vd, ids, 
 			vg_comp = vg_comp, vd_comp = vd_comp, ids_comp = ids_comp,
