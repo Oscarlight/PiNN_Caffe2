@@ -70,6 +70,7 @@ class DCModel:
 			slope=self.preproc_param['preproc_slope'],
 			threshold=self.preproc_param['preproc_threshold']
 		)
+		# self.preproc_data_arrays=preproc_data_arrays
 		# Only expand the dim if the number of dimension is 1
 		preproc_data_arrays = [np.expand_dims(
 			x, axis=1) if x.ndim == 1 else x for x in preproc_data_arrays]
@@ -286,26 +287,21 @@ def plot_iv(
 	styles = ['vg_major_linear', 'vd_major_linear', 'vg_major_log', 'vd_major_log']
 ):
 	if 'vg_major_linear' in styles:
-		# plt.figure(fid)
-		fid += 1
 		visualizer.plot_linear_Id_vs_Vd_at_Vg(
 			vg, vd, ids, 
 			vg_comp = vg_comp, vd_comp = vd_comp, ids_comp = ids_comp,
 		)
 	if 'vd_major_linear' in styles:
-		fid += 1
 		visualizer.plot_linear_Id_vs_Vg_at_Vd(
 			vg, vd, ids, 
 			vg_comp = vg_comp, vd_comp = vd_comp, ids_comp = ids_comp,
 		)
 	if 'vg_major_log' in styles:
-		fid += 1
 		visualizer.plot_log_Id_vs_Vd_at_Vg(
 			vg, vd, ids, 
 			vg_comp = vg_comp, vd_comp = vd_comp, ids_comp = ids_comp,
 		)
 	if 'vd_major_log' in styles:
-		fid += 1
 		visualizer.plot_log_Id_vs_Vg_at_Vd(
 			vg, vd, ids, 
 			vg_comp = vg_comp, vd_comp = vd_comp, ids_comp = ids_comp,

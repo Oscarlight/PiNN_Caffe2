@@ -51,16 +51,11 @@ def truncate(data_arrays, truncate_range, axis):
     assert (truncate_range[0] <= np.max(data_arrays[axis]) and truncate_range[1] > np.min(data_arrays[axis])),\
         'Truncate range is out of data range, abort!'
 
-    tmp = data_arrays
-    i = 0
-    for e in data_arrays[axis]:
-        if e > truncate_range[0] and e <= truncate_range[1]:
-            tmp_new = []
-            for line in tmp:
-                line = np.delete(line, i)
-                tmp_new.append(line)
-            i = i-1
-            tmp = tmp_new
-        i = i+1
+    index = np.logical_not(
+        np.logical_and(
+            data_arrays[axis] > truncate_range[0],
+            data_arrays[axis] <= truncate_range[1]
+        )
+    )
 
-    return tmp
+    return [e[index] for e in data_arrays]
