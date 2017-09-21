@@ -11,6 +11,7 @@ import data_reader
 import preproc
 import parser
 import visualizer
+import exporter
 # import logging
 import matplotlib.pyplot as plt
 
@@ -206,6 +207,14 @@ class DCModel:
 				train_net, 
 				num_iter=num_epoch * num_batch_per_epoch
 			)
+			
+		print('>>> Saving test model')
+
+		exporter.save_net(
+			self.net_store['pred_net'], 
+			self.model, 
+			self.model_name+'_init', self.model_name+'_predict'
+		)
 
 
 	def avg_loss_full_epoch(self, net_name):

@@ -22,11 +22,11 @@ preproc_param = {
 permu = np.random.permutation(len(data_arrays[0]))
 data_arrays = [e[permu] for e in data_arrays]
 # # ----------------- Train + Eval ---------------------
-dc_model = DCModel('hemt_dc_test')
+dc_model = DCModel('HEMT_DC_1')
 dc_model.add_data('train', data_arrays, preproc_param)
 dc_model.build_nets(
-	hidden_sig_dims=[4, 3, 1],
-	hidden_tanh_dims=[3, 2, 1],
+	hidden_sig_dims=[3, 1],
+	hidden_tanh_dims=[2, 1],
 	batch_size=256,
 	weight_optim_method = 'AdaGrad',
 	weight_optim_param = {'alpha':0.01, 'epsilon':1e-4},
@@ -34,7 +34,7 @@ dc_model.build_nets(
 	bias_optim_param = {'alpha':0.1, 'epsilon':1e-4} 
 )
 dc_model.train_with_eval(
-	num_epoch=500,
+	num_epoch=5000000,
 	report_interval=0,
 )
 
