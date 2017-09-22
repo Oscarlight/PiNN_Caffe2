@@ -39,7 +39,7 @@ def compute_dc_meta(vg, vd, ids):
     vg_shift = np.median(vg)-0.0
     vg_scale = max(abs(np.max(vg)-vg_shift)/1.0, abs(np.min(vg)-vg_shift)/1.0)
     vd_scale = max(abs(np.max(vd))/1.0, abs(np.min(vd))/1.0)
-    id_scale = max(abs(np.max(ids))/0.85, abs(np.min(ids))/0.85)
+    id_scale = max(abs(np.max(ids))/0.75, abs(np.min(ids))/0.75)
 
     scale = {'vg':vg_scale, 'vd':vd_scale, 'id':id_scale}
 

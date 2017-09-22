@@ -40,7 +40,7 @@ dc_model.build_nets(
 )
 
 dc_model.train_with_eval(
-	num_epoch=int(1e7),  # several hrs training time
+	num_epoch=int(1e1),  # several hrs training time
 	report_interval=0,
 )
 

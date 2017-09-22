@@ -11,7 +11,6 @@ import numpy as np
 
 def build_adjoint_mlp(
 	model,
-	label,
 	input_dim = 1,
 	hidden_dims = [5, 5],
 	output_dim = 1,
@@ -99,7 +98,7 @@ def init_model_with_schemas(
 ):
 	workspace.ResetWorkspace()
 	input_record_schema = schema.Struct(
-		('original_input', schema.Scalar((np.float32, (input_dim, )))),
+		('origin_input', schema.Scalar((np.float32, (input_dim, )))),
 		('adjoint_input', schema.Scalar((np.float32, (output_dim, ))))
 	)
 	output_record_schema = schema.Struct(

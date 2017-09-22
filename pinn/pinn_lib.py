@@ -79,7 +79,8 @@ def build_pinn(
 	):
 		block_index += 1
 		# Use linear activation function in the last layer for the regression 
-		linear_activation = True if block_index == len(sig_net_dim) - 1 else False
+		# But in our case, sig_input should not change the input sign. Use 
+		# linear activation function as the last layer breaks the invariance.
 		sig_h, tanh_h = build_block(
 			model,
 			sig_h, tanh_h,
@@ -87,7 +88,7 @@ def build_pinn(
 			block_index,
 			weight_optim=weight_optim,
 			bias_optim=bias_optim,
-			linear_activation = linear_activation,
+			linear_activation = False,
 		)
 
 	pred = model.Mul([sig_h, tanh_h], model.trainer_extra_schema.prediction)
