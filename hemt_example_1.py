@@ -30,8 +30,8 @@ dc_model = DCModel('HEMT_DC_1')
 dc_model.add_data('train', data_arrays, preproc_param)
 # plot_iv(*dc_model.preproc_data_arrays, styles=['vd_major_log'])
 dc_model.build_nets(
-	hidden_sig_dims=[5, 1],  # Need to be fine-tuned
-	hidden_tanh_dims=[7, 1],
+	hidden_sig_dims=[7, 7, 1],  # Need to be fine-tuned
+	hidden_tanh_dims=[7, 7, 1],
 	batch_size=256,
 	weight_optim_method = 'AdaGrad',
 	weight_optim_param = {'alpha':0.005, 'epsilon':1e-4},
@@ -40,12 +40,12 @@ dc_model.build_nets(
 )
 
 dc_model.train_with_eval(
-	num_epoch=int(5e5),  # several hrs training time
+	num_epoch=int(1e7),  # several hrs training time
 	report_interval=0,
 )
 
 # ----------------- Inspection ---------------------
-# dc_model.draw_nets()
+dc_model.draw_nets()
 # dc_model.plot_loss_trend()
 
 # ----------------- Deployment ---------------------
@@ -61,5 +61,5 @@ plot_iv(
 vg_pred = np.linspace(-1.2, 0, 1000)
 vd_pred = np.array([0.6]*1000)
 _, pred_ids = predict_ids('HEMT_DC_1', vg_pred, vd_pred)
-plot_iv(vg, vd, pred_ids, styles=['vd_major_log'])
+plot_iv(vg, vd, pred_ids, styles=['vg_major_log'])
 
