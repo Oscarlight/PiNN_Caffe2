@@ -18,6 +18,10 @@ In order to make advantage of multi-core CPU, you need to install NNPack (Follow
 10. python ./configure.py
 11. ninja
 
+If you consider data reading is the bottleneck, you could install rocksdb from https://github.com/facebook/rocksdb/blob/master/INSTALL.md.
+
+Remember to re-build caffe2 after install NNPack and RocksDB.
+
 ## What can it do?
 - DC IV modeling using Pi-NN (Completed)
 - AC IV and QV modeling using adjoint neural network (Coming soon)
