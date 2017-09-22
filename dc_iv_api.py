@@ -71,7 +71,7 @@ class DCModel:
 			slope=self.preproc_param['preproc_slope'],
 			threshold=self.preproc_param['preproc_threshold']
 		)
-		# self.preproc_data_arrays=preproc_data_arrays
+		self.preproc_data_arrays=preproc_data_arrays
 		# Only expand the dim if the number of dimension is 1
 		preproc_data_arrays = [np.expand_dims(
 			x, axis=1) if x.ndim == 1 else x for x in preproc_data_arrays]
@@ -303,7 +303,7 @@ class DCModel:
 # --------------------------------------------------------
 
 
-def predict_id_test(model, vg, vd):
+def predict_ids(model_name, vg, vd):
 	workspace.ResetWorkspace()
 
 	# preproc the input
@@ -311,7 +311,7 @@ def predict_id_test(model, vg, vd):
 	vd = vd.astype(np.float32)
 	#if len(self.preproc_param) == 0:
 	preproc_param = pickle.load(
-			open(model.model_name+'_preproc_param.p', "rb" )
+			open(model_name+'_preproc_param.p', "rb" )
 		)
 	dummy_ids = np.zeros(len(vg))
 	preproc_data_arrays = preproc.dc_iv_preproc(
@@ -325,7 +325,7 @@ def predict_id_test(model, vg, vd):
 		x, axis=1) for x in preproc_data_arrays]
 	workspace.FeedBlob('DBInput_train/sig_input', _preproc_data_arrays[0])
 	workspace.FeedBlob('DBInput_train/tanh_input', _preproc_data_arrays[1])
-	pred_net = exporter.load_net(model.model_name+'_init', model.model_name+'_predict')
+	pred_net = exporter.load_net(model_name+'_init', model_name+'_predict')
 	#print(type(pred_net.name))
 
 	workspace.RunNet(pred_net)
