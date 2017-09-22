@@ -137,6 +137,10 @@ class DCModel:
 		workspace.CreateNet(train_net)
 		self.net_store['train_net'] = train_net
 
+		pred_net = instantiator.generate_predict_net(self.model)
+		workspace.CreateNet(pred_net)
+		self.net_store['pred_net'] = pred_net
+		
 		if 'eval' in self.input_data_store:
 			# Create eval net
 			self.model.input_feature_schema.sig_input.set_value(
@@ -148,10 +152,6 @@ class DCModel:
 			eval_net = instantiator.generate_eval_net(self.model)
 			workspace.CreateNet(eval_net)
 			self.net_store['eval_net'] = eval_net
-
-		pred_net = instantiator.generate_predict_net(self.model)
-		workspace.CreateNet(pred_net)
-		self.net_store['pred_net'] = pred_net
 
 
 	def train_with_eval(
@@ -209,14 +209,6 @@ class DCModel:
 			)
 			
 		print('>>> Saving test model')
-
-		exporter.save_net(
-			self.net_store['pred_net'], 
-			self.model, 
-			self.model_name+'_init', self.model_name+'_predict'
-		)
-
-		print('Saving test model')
 
 		exporter.save_net(
 			self.net_store['pred_net'], 
