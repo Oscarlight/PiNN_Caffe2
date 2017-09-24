@@ -76,7 +76,7 @@ class DCModel:
 		preproc_data_arrays = [np.expand_dims(
 			x, axis=1) if x.ndim == 1 else x for x in preproc_data_arrays]
 		# Write to database
-		data_reader.write_db('minidb', db_name, *preproc_data_arrays)
+		data_reader.write_db('minidb', db_name, preproc_data_arrays)
 		self.input_data_store[data_tag] = [db_name, num_example]
 
 	def build_nets(

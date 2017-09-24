@@ -1,7 +1,7 @@
 import caffe2_paths
 
 from caffe2.python import (
-	core, workspace, layer_model_helper, schema, optimizer, net_drawer, scope
+	core, workspace, layer_model_helper, schema, optimizer, scope
 )
 from caffe2.python.modeling.parameter_sharing import (
     ParameterSharing,
@@ -71,9 +71,12 @@ def build_adjoint_mlp(
 					)
 					multiplier = model.Mul(
 						[z, model.Sub([one_vector, z], 'sub{}'.format(idx))],
-							'multiplier{}'.format(idx),
+						'multiplier{}'.format(idx),
 					)
-					alpha = model.Mul([gamma_ad, multiplier], 'adjoint_layer{}'.format(idx))
+					alpha = model.Mul(
+						[gamma_ad, multiplier], 
+						'adjoint_layer{}'.format(idx)
+					)
 					idx -= 1
 				adjoint_pred = model.FCTransposeW(
 					alpha, 

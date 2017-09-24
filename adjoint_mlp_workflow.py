@@ -28,7 +28,7 @@ db_name = 'adjoint_nn.db'
 if not os.path.isfile(db_name):
 	print(">>> Create a new database...")
 	write_db('minidb', db_name, 
-		origin_input, adjoint_input, adjoint_label)
+		[origin_input, adjoint_input, adjoint_label])
 else:
 	print(">>> The database with the same name already existed.")
 origin_input, adjoint_input, label = build_input_reader(
