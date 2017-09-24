@@ -1,5 +1,4 @@
-# PiNN
-A easy-to-use interface for efficient device compact modeling using neural neworks.
+# PiNN2: device compact modeling using neural neworks
 
 ## Install
 Install Caffe2 from https://github.com/Oscarlight/caffe2.git. The forked repo contains some new layers created for this project. The instruction about how to install caffe2 is in https://caffe2.ai.
