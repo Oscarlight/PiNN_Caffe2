@@ -97,7 +97,7 @@ class DCModel:
 			self.model, 
 			self.input_data_store['train'][0], 
 			'minidb', 
-			['sig_input', 'tanh_input'], 
+			['sig_input', 'tanh_input', 'label'], 
 			batch_size=batch_size,
 			data_type='train',
 		)

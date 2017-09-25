@@ -77,12 +77,12 @@ def build_adjoint_block(
 	)
 	beta = model.Mul(
 		[delta_ad, sig_multiplier],
-		'sig_adjoint_layer_{}'.format(block_index)
+		'sig_output_beta_{}'.format(block_index)
 	)
 	# tanh_net_adjoint
 	gamma_ad = model.FCTransposeW(
 		alpha,
-		sig_n,
+		tanh_n,
 		weight_optim=weight_optim,
 		name='tanh_fc_layer_{}'.format(block_index),
 	)
@@ -99,7 +99,17 @@ def build_adjoint_block(
 	alpha = model.Mul(
 		[gamma_ad, tanh_multiplier],
 		'tanh_adjoint_layer_{}'.format(block_index)
-	)	
+	)
+	inter = model.FCTransposeW(
+		beta,
+		tanh_n,
+		weight_optim=weight_optim,
+		name='inter_embed_layer_{}'.format(block_index-1),		
+	)
+	alpha = model.Add(
+		[alpha, inter],
+		'tanh_output_alpha_{}'.format(block_index)
+	)
 	return beta, alpha
 
 def build_adjoint_pinn(
@@ -158,8 +168,8 @@ def build_adjoint_pinn(
 					[tanh_h, model.Mul(
 						[sig_h, model.Sub([output_ones, sig_h], 
 							'sig_output_sub_{}'.format(block_index)
-						)], 'sig_output_mul_0_{}'.format(block_index)
-					)], 'sig_output_mul_1_{}'.format(block_index)
+						)], 'sig_output_mul_{}'.format(block_index)
+					)], 'sig_output_beta_{}'.format(block_index)
 				)
 				alpha = model.Mul(
 					[sig_h, model.Sub(
@@ -167,6 +177,16 @@ def build_adjoint_pinn(
 							'tanh_output_sq_{}'.format(block_index)
 						)], 'tanh_output_sub_{}'.format(block_index)
 					)], 'tanh_output_mul_{}'.format(block_index)
+				)
+				inter = model.FCTransposeW(
+					beta,
+					tanh_net_dim[-1],
+					weight_optim=weight_optim,
+					name='inter_embed_layer_{}'.format(block_index-1)					
+				)
+				alpha = model.Add(
+					[alpha, inter],
+					'tanh_output_alpha_{}'.format(block_index)
 				)
 				for sig_n, tanh_n in zip(
 					reversed(sig_net_dim[:-1]), 
@@ -182,38 +202,45 @@ def build_adjoint_pinn(
 						block_index,
 						weight_optim=weight_optim,
 					)
-				adjoint_pred_sig = model.FCTransposeW(
+				sig_adjoint_pred = model.FCTransposeW(
 					beta,
 					sig_input_dim,
 					weight_optim=weight_optim,
-					name='sig_fc_layer_{}'.format(block_index)
+					name='sig_fc_layer_{}'.format(block_index-1)
 				)
-				adjoint_pred_tanh = model.FCTransposeW(
+				tanh_adjoint_pred = model.FCTransposeW(
 					alpha,
 					tanh_input_dim,
 					weight_optim=weight_optim,
-					name='tanh_fc_layer_{}'.format(block_index)
+					name='tanh_fc_layer_{}'.format(block_index-1)
 				)
-				adjoint_pred_record = schema.Struct(
-    				('adjoint_pred_sig', adjoint_pred_sig),
-    				('adjoint_pred_tanh', adjoint_pred_tanh)
-    			)
-				adjoint_pred = model.Concat(
-					adjoint_pred_record, axis=1,
-					name='adjoint_pred_concat',
-				)
-				print(block_index)
-				print(adjoint_pred)
-		# Add loss
-		model.trainer_extra_schema.prediction.set_value(adjoint_pred.get(), unsafe=True)
-		loss = model.BatchDirectMSELoss(model.trainer_extra_schema)
-		model.add_loss(loss)
-		# Set output
-		model.output_schema.origin_pred.set_value(origin_pred.get(), unsafe=True)
-		model.output_schema.adjoint_pred.set_value(adjoint_pred.get(), unsafe=True)
-		model.output_schema.loss.set_value(loss.get(), unsafe=True)
 
-	return origin_pred, adjoint_pred, loss
+		# Add loss
+		model.trainer_extra_schema.sig_loss_record.prediction.set_value(
+			sig_adjoint_pred.get(), unsafe=True)
+		model.trainer_extra_schema.tanh_loss_record.prediction.set_value(
+			tanh_adjoint_pred.get(), unsafe=True)		
+		# CAUTIONS: BatchDirectMSELoss calls SquaredL2Distance op, which assume 
+		# the input are 1D vector
+		sig_loss = model.BatchDirectMSELoss(
+			model.trainer_extra_schema.sig_loss_record)
+		tanh_loss = model.BatchDirectMSELoss(
+			model.trainer_extra_schema.tanh_loss_record)
+		total_loss = model.Add([sig_loss, tanh_loss], 'total_loss')
+		# model.add_loss(total_loss)
+		model.add_loss(sig_loss)
+		model.add_loss(tanh_loss)
+		# Set output
+		model.output_schema.origin_pred.set_value(
+			origin_pred.get(), unsafe=True)
+		model.output_schema.sig_adjoint_pred.set_value(
+			sig_adjoint_pred.get(), unsafe=True)
+		model.output_schema.tanh_adjoint_pred.set_value(
+			tanh_adjoint_pred.get(), unsafe=True)
+		model.output_schema.loss.set_value(
+			total_loss.get(), unsafe=True)
+
+	return origin_pred, sig_adjoint_pred, tanh_adjoint_pred, total_loss
 
 
 def init_model_with_schemas(
@@ -230,12 +257,25 @@ def init_model_with_schemas(
 	output_record_schema = schema.Struct(
 		('loss', schema.Scalar((np.float32, (1, )))),
 		('origin_pred', schema.Scalar((np.float32, (pred_dim, )))),
-		('adjoint_pred', schema.Scalar((np.float32, (sig_input_dim + tanh_input_dim, )))),
+		('sig_adjoint_pred', schema.Scalar((np.float32, (sig_input_dim, )))),
+		('tanh_adjoint_pred', schema.Scalar((np.float32, (tanh_input_dim, )))),
 	)
 	# use trainer_extra_schema as the loss input record
 	trainer_extra_schema = schema.Struct(
-		('label', schema.Scalar((np.float32, (pred_dim, )))),
-		('prediction', schema.Scalar((np.float32, (pred_dim, ))))
+		('sig_loss_record', schema.Struct(
+			('label', schema.Scalar((np.float32, 
+				(sig_input_dim, )))),
+			('prediction', schema.Scalar((np.float32, 
+				(sig_input_dim, ))))
+			)
+		),
+		('tanh_loss_record', schema.Struct(
+			('label', schema.Scalar((np.float32, 
+				(tanh_input_dim, )))),
+			('prediction', schema.Scalar((np.float32, 
+				(tanh_input_dim, ))))
+			)
+		)		
 	)
 	model = layer_model_helper.LayerModelHelper(
 		model_name,

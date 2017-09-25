@@ -30,8 +30,8 @@ dc_model = DCModel('HEMT_DC_1')
 dc_model.add_data('train', data_arrays, preproc_param)
 # plot_iv(*dc_model.preproc_data_arrays, styles=['vd_major_log'])
 dc_model.build_nets(
-	hidden_sig_dims=[3,1],  # Need to be fine-tuned
-	hidden_tanh_dims=[3,1],
+	hidden_sig_dims=[8,1],  # Need to be fine-tuned
+	hidden_tanh_dims=[10,1],
 	batch_size=732,
 	weight_optim_method = 'AdaGrad',
 	weight_optim_param = {'alpha':0.01, 'epsilon':1e-4},
@@ -40,7 +40,7 @@ dc_model.build_nets(
 )
 
 dc_model.train_with_eval(
-	num_epoch=int(1e5),  # several hrs training time
+	num_epoch=int(1e4),  # several hrs training time
 	report_interval=0,
 )
 

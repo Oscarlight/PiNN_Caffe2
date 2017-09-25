@@ -32,7 +32,8 @@ if not os.path.isfile(db_name):
 else:
 	print(">>> The database with the same name already existed.")
 origin_input, adjoint_input, label = build_input_reader(
-	model, db_name, 'minidb', ['origin_input', 'adjoint_input'], batch_size=100
+	model, db_name, 'minidb', ['origin_input', 'adjoint_input', 'label'], 
+	batch_size=100
 )
 model.input_feature_schema.origin_input.set_value(
 	origin_input.get(), unsafe=True)
