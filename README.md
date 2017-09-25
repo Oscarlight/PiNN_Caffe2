@@ -29,3 +29,9 @@ Remember to re-build caffe2 after install NNPack and RocksDB.
 - DC IV APIs
   - DCModel class
   examples: hemt_example_1.py (more examples are coming soon)
+
+## Reference:
+- Jianjun Xu, M. C. E. Yagoub, Runtao Ding and Qi Jun Zhang, "Exact adjoint sensitivity analysis for neural-based microwave modeling and design," in IEEE Transactions on Microwave Theory and Techniques, vol. 51, no. 1, pp. 226-237, Jan 2003.
+doi: 10.1109/TMTT.2002.806910
+- M. Li, O. İrsoy, C. Cardie and H. G. Xing, "Physics-Inspired Neural Networks for Efficient Device Compact Modeling," in IEEE Journal on Exploratory Solid-State Computational Devices and Circuits, vol. 2, no. , pp. 44-49, Dec. 2016.
+doi: 10.1109/JXCDC.2016.2636161
