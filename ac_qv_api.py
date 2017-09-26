@@ -15,20 +15,20 @@ import pinn.exporter as exporter
 # import logging
 import matplotlib.pyplot as plt
 
-class ACModel:
+class ACQVModel:
 	def __init__(
 		self, 
 		model_name,
-		input_dim=1,
+		input_dim = 1,
 		output_dim=1,
 	):	
 		self.model_name = model_name
-		self.model = init_model_with_schemas(
-			model_name, input_dim, output_dim)
 		self.input_dim = input_dim
 		self.output_dim = output_dim
+		self.model = init_model_with_schemas(
+			model_name, self.input_dim, self.output_dim)
 		self.input_data_store = {}
-		#self.preproc_param = {}
+		self.preproc_param = {}
 		self.net_store = {}
 		self.reports = {'epoch':[],'train_loss':[], 'eval_loss':[]}
 
@@ -37,18 +37,18 @@ class ACModel:
 		self,
 		data_tag,
 		data_arrays, 
-		#preproc_param,
+		preproc_param,
 		override=True,
 	):
 		'''
-		data_arrays are in the order of origin_input, adjoint_input, and adjoint_label
+		data_arrays are in the order of sig_input, tanh_input, and label
 		'''
 		assert len(data_arrays) == 3, 'Incorrect number of input data'
 		# number of examples and same length assertion
 		num_example = len(data_arrays[0])
 		for data in data_arrays[1:]:
 			assert len(data) == num_example, 'Mismatch dimensions'
-		#self.preproc_param = preproc_param
+		self.preproc_param = preproc_param
 		self.pickle_file_name = self.model_name + '_preproc_param' + '.p'
 		db_name = self.model_name + '_' + data_tag + '.minidb'
 
@@ -62,16 +62,27 @@ class ACModel:
 					'Choose the other model name or set override to True.')
 		print("+++ Create a new database...")	
 		pickle.dump(
-			#self.preproc_param, 
+			self.preproc_param, 
 			open(self.pickle_file_name, 'wb')
 		)
+		preproc_data_arrays = preproc.ac_qv_preproc(
+			data_arrays[0], data_arrays[1], data_arrays[2], 
+			self.preproc_param['scale'], 
+			self.preproc_param['vg_shift'], 
+			slope=self.preproc_param['preproc_slope'],
+			threshold=self.preproc_param['preproc_threshold']
+		)
+		self.preproc_data_arrays=preproc_data_arrays
+		# Only expand the dim if the number of dimension is 1
+		preproc_data_arrays = [np.expand_dims(
+			x, axis=1) if x.ndim == 1 else x for x in preproc_data_arrays]
 		# Write to database
-		data_reader.write_db('minidb', db_name, data_arrays)
+		data_reader.write_db('minidb', db_name, preproc_data_arrays)
 		self.input_data_store[data_tag] = [db_name, num_example]
 
 	def build_nets(
 		self,
-		hidden_dims,
+		hidden_dims, 
 		batch_size=1,
 		weight_optim_method = 'AdaGrad',
 		weight_optim_param = {'alpha':0.005, 'epsilon':1e-4},
@@ -86,7 +97,7 @@ class ACModel:
 			self.model, 
 			self.input_data_store['train'][0], 
 			'minidb', 
-			['origin_input', 'adjoint_input'], 
+			['origin_input', 'adjoint_input', 'label'], 
 			batch_size=batch_size,
 			data_type='train',
 		)
@@ -111,15 +122,12 @@ class ACModel:
 		self.model.trainer_extra_schema.label.set_value(
 			input_data_train[2].get(), unsafe=True)
 
-		self.origin_pred, self.loss = build_adjoint_mlp(
+		self.pred, self.loss = build_adjoint_mlp(
 			self.model,
-			self.input_dim,
-			hidden_dims,
-			self.output_dim,
-			weight_optim=_build_optimizer(
-				weight_optim_method, weight_optim_param),
-			bias_optim=_build_optimizer(
-				bias_optim_method, bias_optim_param),
+			input_dim = self.input_dim,
+			hidden_dims = hidden_dims,
+			output_dim = self.output_dim,
+			optim = optimizer.AdagradOptimizer(alpha=0.01, epsilon = 1e-4)
 		)
 
 		train_init_net, train_net = instantiator.generate_training_nets(self.model)
@@ -237,15 +245,22 @@ class ACModel:
 				f.write(graph.create_png())
 				
 
-	def predict_ids(self, origin_input, adjoint_input):
+	def predict_qs(self, vg, vd):
 		# preproc the input
-		origin_input = origin_input.astype(np.float32)
-		#if len(self.preproc_param) == 0:
-		#	self.preproc_param = pickle.load(
-		#		open(self.pickle_file_name, "rb" )
-		#	)
-		dummy_ids = np.zeros(len(vg))
-		preproc_data_arrays = [origin_input, adjoint_input, dummy_ids]
+		vg = vg.astype(np.float32)
+		vd = vd.astype(np.float32)
+		if len(self.preproc_param) == 0:
+			self.preproc_param = pickle.load(
+				open(self.pickle_file_name, "rb" )
+			)
+		dummy_qs = np.zeros(len(vg))
+		preproc_data_arrays = preproc.ac_qv_preproc(
+			vg, vd, dummy_qs, 
+			self.preproc_param['scale'], 
+			self.preproc_param['vg_shift'], 
+			slope=self.preproc_param['preproc_slope'],
+			threshold=self.preproc_param['preproc_threshold']
+		)
 		_preproc_data_arrays = [np.expand_dims(
 			x, axis=1) for x in preproc_data_arrays]
 		workspace.FeedBlob('DBInput_train/origin_input', _preproc_data_arrays[0])
@@ -253,15 +268,15 @@ class ACModel:
 		pred_net = self.net_store['pred_net']
 		workspace.RunNet(pred_net)
 
-		_ids = np.squeeze(schema.FetchRecord(self.pred).get())
-		#restore_id_func = preproc.get_restore_id_func( 
-		#	self.preproc_param['scale'], 
-		#	self.preproc_param['vg_shift'], 
-		#	slope=self.preproc_param['preproc_slope'],
-		#	threshold=self.preproc_param['preproc_threshold']
-		#)
-		#ids = restore_id_func(_ids, preproc_data_arrays[0])
-		return _ids
+		_qs = np.squeeze(schema.FetchRecord(self.pred).get())
+		restore_q_func = preproc.get_restore_q_func( 
+			self.preproc_param['scale'], 
+			self.preproc_param['vg_shift'], 
+			slope=self.preproc_param['preproc_slope'],
+			threshold=self.preproc_param['preproc_threshold']
+		)
+		qs = restore_q_func(_q, preproc_data_arrays[0])
+		return _qs, qs
 
 	def plot_loss_trend(self):
 		plt.plot(self.reports['epoch'], self.reports['train_loss'])

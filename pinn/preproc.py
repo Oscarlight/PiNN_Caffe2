@@ -45,6 +45,7 @@ def compute_dc_meta(vg, vd, ids):
 
     return scale, vg_shift
 
+
 def truncate(data_arrays, truncate_range, axis):
     # The data within the truncate_range will be removed, the rest will be returned.
 
@@ -59,3 +60,44 @@ def truncate(data_arrays, truncate_range, axis):
     )
 
     return [e[index] for e in data_arrays]
+
+#AC QV preproc
+def ac_qv_preproc(vg, vd, gradient, scale, shift, slope = 0, threshold = 0):
+    preproc_vg = (vg-shift) / scale['vg']
+    preproc_vd = vd / scale['vd']
+    preproc_gradient = gradient / scale['q'] * (
+        np.power(10, -slope * (preproc_vg + threshold)) + 1
+        ) if slope > 0 else gradient/scale['q']
+
+    return preproc_vg, preproc_vd, preproc_gradient
+
+def get_restore_q_func(
+        scale, shift,
+        slope=0, threshold=0
+):
+        def restore_q_func(gradient, vgs):
+                # ori_vg = vgs * scale['vg'] + shift
+                # ori_vd = vds * scale['vd']
+                ori_gradient = gradient * scale['q'] / (
+                        np.power(10, -slope*(vgs + threshold)) + 1
+                ) if slope > 0 else gradient * scale['q']
+                # return ori_vg, ori_vd, ori_id
+                return ori_gradient
+        return restore_q_func
+	
+def compute_ac_meta(vg, vd, gradient):
+    vg_shift = np.median(vg)-0.0
+    vg_scale = max(abs(np.max(vg)-vg_shift)/1.0, abs(np.min(vg)-vg_shift)/1.0)
+    vd_scale = max(abs(np.max(vd))/1.0, abs(np.min(vd))/1.0)
+    integral = integrate(vg, vd, gradient)
+    q_scale = max(abs(np.max(integral))/0.75, abs(np.min(integral))/0.75)	
+    scale = {'vg':vg_scale, 'vd':vd_scale, 'q':q_scale}
+    return scale, vg_shift
+
+def integrate(vg, vd, gradient):
+    qs = np.zeros(len(vg))
+    for i in range(1, len(qs)):
+        qs[i] = qs[i-1]+(vg[i]*gradient[i][0]+vd[i]*gradient[i][1]) 
+    return qs
+
+   
