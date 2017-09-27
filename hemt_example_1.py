@@ -20,8 +20,10 @@ scale, vg_shift = preproc.compute_dc_meta(*data_arrays)
 preproc_param = {
 	'scale' : scale, 
 	'vg_shift' : vg_shift, 
-	'preproc_slope' : 4, 
-	'preproc_threshold' : 0.6
+	'preproc_slope_vg' : 4, 
+	'preproc_threshold_vg' : 0.6,
+	'preproc_slope_vd' : 0, 
+	'preproc_threshold_vd' : 0,	
 }
 permu = np.random.permutation(len(data_arrays[0]))
 data_arrays = [e[permu] for e in data_arrays]
