@@ -3,7 +3,8 @@ import numpy as np
 def dc_iv_preproc(
 	vg, vd, ids, 
 	scale, shift, 
-	slope=0, threshold=0
+    slope_vg=0, thre_vg=0,
+    slope_vd=0, thre_vd=0,
 ):
     '''
     inputs:
@@ -15,22 +16,25 @@ def dc_iv_preproc(
     '''
     preproc_vg = (vg-shift) / scale['vg']
     preproc_vd = vd / scale['vd']
-    preproc_id = ids / scale['id'] * (
-    	np.power(10, -slope * (preproc_vg + threshold)) + 1
-    	) if slope > 0 else ids/scale['id']
+    preproc_id = (ids / scale['id'] * 
+    	(np.power(10, -slope_vg*(vg + thre_vg)) + 1) * 
+        (np.power(10, -slope_vd*(abs(vd) - thre_vd)) + 1)
+    	) if slope_vg > 0 or slope_vd > 0 else ids/scale['id']
 
     return preproc_vg, preproc_vd, preproc_id
 
 def get_restore_id_func(	
 	scale, shift, 
-	slope=0, threshold=0
+	slope_vg=0, thre_vg=0,
+    slope_vd=0, thre_vd=0,
 ):
-	def restore_id_func(ids, vgs):
+	def restore_id_func(ids, vg, vd):
 		# ori_vg = vgs * scale['vg'] + shift
 		# ori_vd = vds * scale['vd']
 		ori_id = ids * scale['id'] / (
-			np.power(10, -slope*(vgs + threshold)) + 1
-		) if slope > 0 else ids * scale['id']
+        (np.power(10, -slope_vg*(vg + thre_vg)) + 1) * 
+        (np.power(10, -slope_vd*(abs(vd) - thre_vd)) + 1)
+		) if slope_vg > 0 or slope_vd > 0 else ids * scale['id']
 		# return ori_vg, ori_vd, ori_id
 		return ori_id
 	return restore_id_func
