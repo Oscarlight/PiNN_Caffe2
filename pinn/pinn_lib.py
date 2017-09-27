@@ -64,22 +64,11 @@ def build_pinn(
 	assert sig_net_dim[-1] == tanh_net_dim[-1], 'last dim mismatch'
 
 	block_index = 0
-	sig_h, tanh_h = build_block(
-		model,
-		model.input_feature_schema.sig_input,
-		model.input_feature_schema.tanh_input,
-		sig_net_dim[0], tanh_net_dim[0],
-		block_index,
-		weight_optim=weight_optim,
-		bias_optim=bias_optim,
-	)
-
+	sig_h = model.input_feature_schema.sig_input
+	tanh_h = model.input_feature_schema.tanh_input
 	for sig_n, tanh_n in zip(
-		sig_net_dim[1:], tanh_net_dim[1:]
+		sig_net_dim, tanh_net_dim
 	):
-		block_index += 1
-		# Use linear activation function in the last layer for the regression 
-		linear_activation = True if block_index == len(sig_net_dim) - 1 else False
 		sig_h, tanh_h = build_block(
 			model,
 			sig_h, tanh_h,
@@ -87,8 +76,8 @@ def build_pinn(
 			block_index,
 			weight_optim=weight_optim,
 			bias_optim=bias_optim,
-			linear_activation = linear_activation,
 		)
+		block_index += 1
 
 	pred = model.Mul([sig_h, tanh_h], model.trainer_extra_schema.prediction)
 	# Add loss

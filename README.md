@@ -1,5 +1,4 @@
-# PiNN
-A easy-to-use interface for efficient device compact modeling using neural neworks.
+# PiNN2: device compact modeling using neural neworks
 
 ## Install
 Install Caffe2 from https://github.com/Oscarlight/caffe2.git. The forked repo contains some new layers created for this project. The instruction about how to install caffe2 is in https://caffe2.ai.
@@ -30,3 +29,9 @@ Remember to re-build caffe2 after install NNPack and RocksDB.
 - DC IV APIs
   - DCModel class
   examples: hemt_example_1.py (more examples are coming soon)
+
+## Reference:
+- Jianjun Xu, M. C. E. Yagoub, Runtao Ding and Qi Jun Zhang, "Exact adjoint sensitivity analysis for neural-based microwave modeling and design," in IEEE Transactions on Microwave Theory and Techniques, vol. 51, no. 1, pp. 226-237, Jan 2003.
+doi: 10.1109/TMTT.2002.806910
+- M. Li, O. İrsoy, C. Cardie and H. G. Xing, "Physics-Inspired Neural Networks for Efficient Device Compact Modeling," in IEEE Journal on Exploratory Solid-State Computational Devices and Circuits, vol. 2, no. , pp. 44-49, Dec. 2016.
+doi: 10.1109/JXCDC.2016.2636161

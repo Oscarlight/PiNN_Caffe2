@@ -4,8 +4,8 @@ from caffe2.python import (
 	core, workspace, layer_model_helper, schema, optimizer, net_drawer
 )
 import caffe2.python.layer_model_instantiator as instantiator
-from preproc import write_db, add_two_inputs_and_label
-from adjoint_mlp_lib import (
+from pinn.data_reader import write_db, build_input_reader
+from pinn.adjoint_mlp_lib import (
 	build_adjoint_mlp, init_model_with_schemas
 )
 import numpy as np
@@ -28,16 +28,22 @@ db_name = 'adjoint_nn.db'
 if not os.path.isfile(db_name):
 	print(">>> Create a new database...")
 	write_db('minidb', db_name, 
-		origin_input, adjoint_input, adjoint_label)
+		[origin_input, adjoint_input, adjoint_label])
 else:
 	print(">>> The database with the same name already existed.")
-origin_input, adjoint_input, label = add_two_inputs_and_label(
-	model, db_name, 'minidb', 'origin_input', 'adjoint_input', batch_size=100
+origin_input, adjoint_input, label = build_input_reader(
+	model, db_name, 'minidb', ['origin_input', 'adjoint_input', 'label'], 
+	batch_size=100
 )
+model.input_feature_schema.origin_input.set_value(
+	origin_input.get(), unsafe=True)
+model.input_feature_schema.adjoint_input.set_value(
+	adjoint_input.get(), unsafe=True)
+model.trainer_extra_schema.label.set_value(
+	label.get(), unsafe=True)
 # Build model
 origin_pred, adjoint_pred, loss = build_adjoint_mlp(
 	model, 
-	adjoint_label,
 	input_dim=input_dim,
 	hidden_dims=hidden_dims,
 	output_dim=output_dim,
@@ -47,7 +53,7 @@ origin_pred, adjoint_pred, loss = build_adjoint_mlp(
 train_init_net, train_net = instantiator.generate_training_nets(model)
 workspace.RunNetOnce(train_init_net)
 workspace.CreateNet(train_net)
-num_iter = 100000
+num_iter = 10000
 eval_num_iter = 1
 for i in range(eval_num_iter):
 	workspace.RunNet(train_net.Proto().name, num_iter=num_iter)
@@ -59,15 +65,19 @@ plt.plot(x_array, origin_pred_array, 'r')
 plt.plot(x_array, schema.FetchRecord(adjoint_pred).get(), 'b')
 plt.plot(x_array, adjoint_label, 'b--')
 plt.show() 
-
+# Eval
+eval_net = instantiator.generate_eval_net(model)
+graph = net_drawer.GetPydotGraph(eval_net.Proto().op, rankdir='TB')
+with open(eval_net.Name() + ".png",'wb') as f:
+	f.write(graph.create_png())
 # Predict1
-pred_net = instantiator.generate_predict_net(model)
+# pred_net = instantiator.generate_predict_net(model)
 # graph = net_drawer.GetPydotGraph(pred_net.Proto().op, rankdir='TB')
 # with open(pred_net.Name() + ".png",'wb') as f:
 # 	f.write(graph.create_png())
-origin_input = np.array([[0.0]], dtype=np.float32 )
-adjoint_input = np.array([[1.0]], dtype=np.float32 )
-schema.FeedRecord(model.input_feature_schema, [origin_input, adjoint_input])
-workspace.CreateNet(pred_net)
-workspace.RunNet(pred_net.Proto().name)
+# origin_input = np.array([[0.0]], dtype=np.float32 )
+# adjoint_input = np.array([[1.0]], dtype=np.float32 )
+# schema.FeedRecord(model.input_feature_schema, [origin_input, adjoint_input])
+# workspace.CreateNet(pred_net)
+# workspace.RunNet(pred_net.Proto().name)
 # print(schema.FetchRecord(origin_pred))

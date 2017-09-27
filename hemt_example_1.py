@@ -20,8 +20,8 @@ scale, vg_shift = preproc.compute_dc_meta(*data_arrays)
 preproc_param = {
 	'scale' : scale, 
 	'vg_shift' : vg_shift, 
-	'preproc_slope' : 10, 
-	'preproc_threshold' : 0.8
+	'preproc_slope' : 4, 
+	'preproc_threshold' : 0.6
 }
 permu = np.random.permutation(len(data_arrays[0]))
 data_arrays = [e[permu] for e in data_arrays]
@@ -30,13 +30,13 @@ dc_model = DCModel('HEMT_DC_1')
 dc_model.add_data('train', data_arrays, preproc_param)
 # plot_iv(*dc_model.preproc_data_arrays, styles=['vd_major_log'])
 dc_model.build_nets(
-	hidden_sig_dims=[7, 7, 1],  # Need to be fine-tuned
-	hidden_tanh_dims=[7, 7, 1],
-	batch_size=256,
+	hidden_sig_dims=[8,1],  # Need to be fine-tuned
+	hidden_tanh_dims=[10,1],
+	batch_size=732,
 	weight_optim_method = 'AdaGrad',
-	weight_optim_param = {'alpha':0.005, 'epsilon':1e-4},
+	weight_optim_param = {'alpha':0.01, 'epsilon':1e-4},
 	bias_optim_method = 'AdaGrad',
-	bias_optim_param = {'alpha':0.05, 'epsilon':1e-4} 
+	bias_optim_param = {'alpha':0.1, 'epsilon':1e-4} 
 )
 
 dc_model.train_with_eval(
@@ -48,7 +48,7 @@ dc_model.train_with_eval(
 dc_model.draw_nets()
 # dc_model.plot_loss_trend()
 
-# ----------------- Deployment ---------------------
+# # ----------------- Deployment ---------------------
 _, pred_ids = dc_model.predict_ids(vg, vd)
 plot_iv(
 	vg, vd, ids,

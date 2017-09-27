@@ -6,19 +6,17 @@ from caffe2.python import (
 from caffe2.proto import caffe2_pb2
 from caffe2.python.layers.tags import Tags
 
-def write_db(db_type, db_name, input_1, input_2, labels):
+def write_db(db_type, db_name, data_lst):
 	''' The minidb datebase seems immutable.
 	'''
 	db = core.C.create_db(db_type, db_name, core.C.Mode.write)
 	transaction = db.new_transaction()
-	assert input_1.shape == input_2.shape, 'two inputs have the same size.'
-	for i in range(input_1.shape[0]):
+	for i in range(data_lst[0].shape[0]):
 		tensor = caffe2_pb2.TensorProtos()
-		tensor.protos.extend(
-				[utils.NumpyArrayToCaffe2Tensor(input_1[i]),
-				 utils.NumpyArrayToCaffe2Tensor(input_2[i]),
-				 utils.NumpyArrayToCaffe2Tensor(labels[i])]
-		)
+		temp_lst = []
+		for data in data_lst:
+			temp_lst.append(utils.NumpyArrayToCaffe2Tensor(data[i]))
+		tensor.protos.extend(temp_lst)
 		transaction.put(str(i), tensor.SerializeToString())
 	del transaction
 	del db
@@ -52,7 +50,7 @@ def build_input_reader(
 		# the last one is the label
 		input_data_struct = model.TensorProtosDBInput(
 			[dbreader], 
-			input_names_lst + ["label"],
+			input_names_lst,
 			name = 'DBInput_' + data_type,
 			batch_size=batch_size
 		)

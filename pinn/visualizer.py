@@ -85,7 +85,8 @@ def plot_linear_Id_vs_Vd_at_Vg(vg, vd, ids, vg_comp = None, vd_comp = None, ids_
 
     else:
         sort_vg_comp, sort_vd_comp, sort_ids_comp = sort_vg_func (vg_comp, vd_comp, ids_comp)
-        plot_data(sort_vg_comp, sort_vd_comp, sort_ids_comp, vg_count, vd_count, '--')
+        vg_count_comp, vd_count_comp = VgVd_counter(vg_comp, vd_comp)
+        plot_data(sort_vg_comp, sort_vd_comp, sort_ids_comp, vg_count_comp, vd_count_comp, '--')
         plot_linear_fig(fig, ax,'vd','id', save_name)
         plt.show()
 
@@ -104,7 +105,8 @@ def plot_linear_Id_vs_Vg_at_Vd(vg, vd, ids, vg_comp = None, vd_comp = None, ids_
 
     else:
         sort_vg_comp, sort_vd_comp, sort_ids_comp = sort_vd_func (vg_comp, vd_comp, ids_comp)
-        plot_data (sort_vd_comp, sort_vg_comp, sort_ids_comp, vd_count, vg_count, '--')
+        vg_count_comp, vd_count_comp = VgVd_counter(vg_comp, vd_comp)
+        plot_data (sort_vd_comp, sort_vg_comp, sort_ids_comp, vd_count_comp, vg_count_comp, '--')
         plot_linear_fig(fig, ax, 'vg', 'id', save_name)
         plt.show()
 
@@ -122,7 +124,8 @@ def plot_log_Id_vs_Vd_at_Vg(vg, vd, ids, vg_comp = None, vd_comp = None, ids_com
 
     else:
         sort_vg_comp, sort_vd_comp, sort_ids_comp = sort_vg_func(vg_comp, vd_comp, ids_comp)
-        plot_data(sort_vg_comp, sort_vd_comp, sort_ids_comp, vg_count, vd_count, '--')
+        vg_count_comp, vd_count_comp = VgVd_counter(vg_comp, vd_comp)
+        plot_data(sort_vg_comp, sort_vd_comp, sort_ids_comp, vg_count_comp, vd_count_comp, '--')
         plot_log_fig(fig, ax, 'vd','log(id)', save_name)
         plt.show()
 
@@ -140,6 +143,7 @@ def plot_log_Id_vs_Vg_at_Vd(vg, vd, ids, vg_comp = None, vd_comp = None, ids_com
 
     else:
         sort_vg_comp, sort_vd_comp, sort_ids_comp = sort_vd_func(vg_comp, vd_comp, ids_comp)
-        plot_data(sort_vd_comp, sort_vg_comp, sort_ids_comp, vd_count, vg_count, '--')
+        vg_count_comp, vd_count_comp = VgVd_counter(vg_comp, vd_comp)
+        plot_data(sort_vd_comp, sort_vg_comp, sort_ids_comp, vd_count_comp, vg_count_comp, '--')
         plot_log_fig(fig, ax, 'vg','log(id)', save_name)
         plt.show()

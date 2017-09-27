@@ -76,7 +76,7 @@ class DCModel:
 		preproc_data_arrays = [np.expand_dims(
 			x, axis=1) if x.ndim == 1 else x for x in preproc_data_arrays]
 		# Write to database
-		data_reader.write_db('minidb', db_name, *preproc_data_arrays)
+		data_reader.write_db('minidb', db_name, preproc_data_arrays)
 		self.input_data_store[data_tag] = [db_name, num_example]
 
 	def build_nets(
@@ -97,7 +97,7 @@ class DCModel:
 			self.model, 
 			self.input_data_store['train'][0], 
 			'minidb', 
-			['sig_input', 'tanh_input'], 
+			['sig_input', 'tanh_input', 'label'], 
 			batch_size=batch_size,
 			data_type='train',
 		)
@@ -209,14 +209,6 @@ class DCModel:
 			)
 			
 		print('>>> Saving test model')
-
-		exporter.save_net(
-			self.net_store['pred_net'], 
-			self.model, 
-			self.model_name+'_init', self.model_name+'_predict'
-		)
-
-		print('Saving test model')
 
 		exporter.save_net(
 			self.net_store['pred_net'], 
