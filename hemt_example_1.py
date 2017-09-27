@@ -45,7 +45,7 @@ dc_model.train_with_eval(
 )
 
 # ----------------- Inspection ---------------------
-dc_model.draw_nets()
+# dc_model.draw_nets()
 # dc_model.plot_loss_trend()
 
 # # ----------------- Deployment ---------------------
