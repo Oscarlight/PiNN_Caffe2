@@ -18,13 +18,15 @@ data_arrays_test = parser.read_dc_iv_mdm('./HEMT_bo/Id_vs_Vg_at_Vd.mdm')
 vg, vd, ids = data_arrays[0], data_arrays[1], data_arrays[2]
 vgtest, vdtest, idstest = data_arrays_test[0], data_arrays_test[1], data_arrays_test[2]
 # plot_iv(vg, vd, ids)
-# quit
+# quit()
 scale, vg_shift = preproc.compute_dc_meta(*data_arrays)
 preproc_param = {
 	'scale' : scale, 
 	'vg_shift' : vg_shift, 
-	'preproc_slope' : 2, 
-	'preproc_threshold' : 0.8
+	'preproc_slope_vg' : 3, 
+	'preproc_threshold_vg' : 0.9,
+	'preproc_slope_vd' : 0, 
+	'preproc_threshold_vd' : -0.2,	
 }
 permu = np.random.permutation(len(data_arrays[0]))
 data_arrays = [e[permu] for e in data_arrays]
@@ -34,12 +36,13 @@ dc_model.add_data('train', data_arrays, preproc_param)
 # plot_iv(dc_model.preproc_data_arrays[0], 
 # 	dc_model.preproc_data_arrays[1],
 # 	dc_model.preproc_data_arrays[2],
-# 	styles=['vd_major_log'])
+# 	# styles=['vd_major_log']
+# 	)
 # quit()
-dc_model.add_data('eval', data_arrays_test, preproc_param)
+# dc_model.add_data('eval', data_arrays_test, preproc_param)
 dc_model.build_nets(
-	hidden_sig_dims=[5, 1],
-	hidden_tanh_dims=[5, 1],
+	hidden_sig_dims=[3, 1],
+	hidden_tanh_dims=[2, 1],
 	batch_size=512,
 	weight_optim_method = 'AdaGrad',
 	weight_optim_param = {'alpha':0.01, 'epsilon':1e-4},
@@ -48,21 +51,21 @@ dc_model.build_nets(
 )
 
 dc_model.train_with_eval(
-	num_epoch=10000,
+	num_epoch=1000,
 	report_interval=10,
 	eval_during_training=False
 )
 
 # # ----------------- Inspection ---------------------
-dc_model.draw_nets()
-#dc_model.plot_loss_trend()
+# dc_model.draw_nets()
+# dc_model.plot_loss_trend()
 
 # # ----------------- Deployment ---------------------
-_, pred_ids = dc_model.predict_ids(vgtest, vdtest)
+_, pred_ids = dc_model.predict_ids(vg, vd)
 plot_iv(
-	vd, vg, ids,
-	vg_comp=vdtest, 
-	vd_comp=vgtest, 
+	vg, vd, ids,
+	vg_comp=vg, 
+	vd_comp=vd, 
 	ids_comp=pred_ids,
 )
 # _, pred_ids = dc_model.predict_ids(vg, vd)

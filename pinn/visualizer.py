@@ -4,6 +4,8 @@ import matplotlib.colors as colors
 from pylab import rcParams
 from matplotlib.ticker import AutoMinorLocator
 
+FIGURE_SIZE = (6, 8)
+
 def write_csv_file(file_name, data, description):
     ''' Write data to .csv file.'''
     np.savetxt(file_name, data, delimiter=',', newline='\n', header=description)
@@ -73,7 +75,7 @@ def sort_vd_func (vg, vd, ids):
 def plot_linear_Id_vs_Vd_at_Vg(vg, vd, ids, vg_comp = None, vd_comp = None, ids_comp = None, save_name = None):
 
     vg_count, vd_count = VgVd_counter(vg, vd)
-    rcParams['figure.figsize'] = 6.5, 10
+    rcParams['figure.figsize'] = FIGURE_SIZE
     rcParams['axes.linewidth'] = 2
     fig, ax = plt.subplots()
     sort_vg, sort_vd, sort_ids = sort_vg_func (vg, vd, ids)
@@ -93,7 +95,7 @@ def plot_linear_Id_vs_Vd_at_Vg(vg, vd, ids, vg_comp = None, vd_comp = None, ids_
 def plot_linear_Id_vs_Vg_at_Vd(vg, vd, ids, vg_comp = None, vd_comp = None, ids_comp = None, save_name = None):
 
     vg_count, vd_count = VgVd_counter(vg, vd)
-    rcParams['figure.figsize'] = 6.5, 10
+    rcParams['figure.figsize'] = FIGURE_SIZE
     rcParams['axes.linewidth'] = 2
     fig, ax = plt.subplots()
     sort_vg, sort_vd, sort_ids = sort_vd_func (vg, vd, ids)
@@ -112,7 +114,7 @@ def plot_linear_Id_vs_Vg_at_Vd(vg, vd, ids, vg_comp = None, vd_comp = None, ids_
 
 def plot_log_Id_vs_Vd_at_Vg(vg, vd, ids, vg_comp = None, vd_comp = None, ids_comp = None, save_name = None):
     vg_count, vd_count = VgVd_counter(vg, vd)
-    rcParams['figure.figsize'] = 6.5, 10
+    rcParams['figure.figsize'] = FIGURE_SIZE
     rcParams['axes.linewidth'] = 2
     fig, ax = plt.subplots()
     sort_vg, sort_vd, sort_ids = sort_vg_func(vg, vd, ids)
@@ -131,7 +133,7 @@ def plot_log_Id_vs_Vd_at_Vg(vg, vd, ids, vg_comp = None, vd_comp = None, ids_com
 
 def plot_log_Id_vs_Vg_at_Vd(vg, vd, ids, vg_comp = None, vd_comp = None, ids_comp = None, save_name = None):
     vg_count, vd_count = VgVd_counter(vg, vd)
-    rcParams['figure.figsize'] = 6.5, 10
+    rcParams['figure.figsize'] = FIGURE_SIZE
     rcParams['axes.linewidth'] = 2
     fig, ax = plt.subplots()
     sort_vg, sort_vd, sort_ids = sort_vd_func(vg, vd, ids)

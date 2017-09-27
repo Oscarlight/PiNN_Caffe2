@@ -68,8 +68,10 @@ class DCModel:
 			data_arrays[0], data_arrays[1], data_arrays[2], 
 			self.preproc_param['scale'], 
 			self.preproc_param['vg_shift'], 
-			slope=self.preproc_param['preproc_slope'],
-			threshold=self.preproc_param['preproc_threshold']
+			slope_vg=self.preproc_param['preproc_slope_vg'],
+			thre_vg=self.preproc_param['preproc_threshold_vg'],
+			slope_vd=self.preproc_param['preproc_slope_vd'],
+			thre_vd=self.preproc_param['preproc_threshold_vd'],
 		)
 		self.preproc_data_arrays=preproc_data_arrays
 		# Only expand the dim if the number of dimension is 1
@@ -260,8 +262,10 @@ class DCModel:
 			vg, vd, dummy_ids, 
 			self.preproc_param['scale'], 
 			self.preproc_param['vg_shift'], 
-			slope=self.preproc_param['preproc_slope'],
-			threshold=self.preproc_param['preproc_threshold']
+			slope_vg=self.preproc_param['preproc_slope_vg'],
+			thre_vg=self.preproc_param['preproc_threshold_vg'],
+			slope_vd=self.preproc_param['preproc_slope_vd'],
+			thre_vd=self.preproc_param['preproc_threshold_vd'],
 		)
 		_preproc_data_arrays = [np.expand_dims(
 			x, axis=1) for x in preproc_data_arrays]
@@ -274,10 +278,12 @@ class DCModel:
 		restore_id_func = preproc.get_restore_id_func( 
 			self.preproc_param['scale'], 
 			self.preproc_param['vg_shift'], 
-			slope=self.preproc_param['preproc_slope'],
-			threshold=self.preproc_param['preproc_threshold']
+			slope_vg=self.preproc_param['preproc_slope_vg'],
+			thre_vg=self.preproc_param['preproc_threshold_vg'],
+			slope_vd=self.preproc_param['preproc_slope_vd'],
+			thre_vd=self.preproc_param['preproc_threshold_vd'],
 		)
-		ids = restore_id_func(_ids, preproc_data_arrays[0])
+		ids = restore_id_func(_ids, preproc_data_arrays[0], preproc_data_arrays[1])
 		return _ids, ids
 
 	def plot_loss_trend(self):
@@ -310,8 +316,10 @@ def predict_ids(model_name, vg, vd):
 		vg, vd, dummy_ids, 
 		preproc_param['scale'], 
 		preproc_param['vg_shift'], 
-		slope=preproc_param['preproc_slope'],
-		threshold=preproc_param['preproc_threshold']
+		slope_vg=preproc_param['preproc_slope_vg'],
+		thre_vg=preproc_param['preproc_threshold_vg'],
+		slope_vd=preproc_param['preproc_slope_vd'],
+		thre_vd=preproc_param['preproc_threshold_vd'],
 	)
 	_preproc_data_arrays = [np.expand_dims(
 		x, axis=1) for x in preproc_data_arrays]
@@ -326,10 +334,12 @@ def predict_ids(model_name, vg, vd):
 	restore_id_func = preproc.get_restore_id_func( 
 		preproc_param['scale'], 
 		preproc_param['vg_shift'], 
-		slope=preproc_param['preproc_slope'],
-		threshold=preproc_param['preproc_threshold']
+		slope_vg=preproc_param['preproc_slope_vg'],
+		thre_vg=preproc_param['preproc_threshold_vg'],
+		slope_vd=preproc_param['preproc_slope_vd'],
+		thre_vd=preproc_param['preproc_threshold_vd'],
 	)
-	ids = restore_id_func(_ids, preproc_data_arrays[0])
+	ids = restore_id_func(_ids, preproc_data_arrays[0], preproc_data_arrays[1])
 	return _ids, ids
 
 def plot_iv( 
