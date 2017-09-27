@@ -40,7 +40,7 @@ dc_model.build_nets(
 )
 
 dc_model.train_with_eval(
-	num_epoch=int(1e7),  # several hrs training time
+	num_epoch=int(1000),  # several hrs training time
 	report_interval=0,
 )
 
@@ -58,7 +58,8 @@ plot_iv(
 )
 
 # -------------- Load Saved Model ------------------
-vg_pred = np.linspace(-1.2, 0, 1000)
-vd_pred = np.array([0.6]*1000)
-_, pred_ids = predict_ids('HEMT_DC_1', vg_pred, vd_pred)
-plot_iv(vg, vd, pred_ids, styles=['vg_major_log'])
+# vg_pred = np.linspace(-1.2, 0, 1000)
+# vd_pred = np.array([0.6]*1000)
+# _, pred_ids = predict_ids('HEMT_DC_1', vg_pred, vd_pred)
+# plot_iv(vg, vd, pred_ids, styles=['vg_major_log'])
+
