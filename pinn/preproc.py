@@ -1,4 +1,5 @@
 import numpy as np
+from scipy.integrate import simps
 
 def dc_iv_preproc(
 	vg, vd, ids, 
@@ -85,19 +86,115 @@ def get_restore_q_func(
                 return ori_gradient
         return restore_q_func
 	
-def compute_ac_meta(vg, vd, gradient):
+def compute_ac_meta(vg, vd, gradient, checkaccuracy = False):
     vg_shift = np.median(vg)-0.0
     vg_scale = max(abs(np.max(vg)-vg_shift)/1.0, abs(np.min(vg)-vg_shift)/1.0)
     vd_scale = max(abs(np.max(vd))/1.0, abs(np.min(vd))/1.0)
-    integral = integrate(vg, vd, gradient)
+    integral, max_error, avg_error  = integrate(vg, vd, gradient, checkaccuracy)
+    if (checkaccuracy):
+        print("Max integration error: ", max_error)
+        print("Average integration error: ", avg_error)
     q_scale = max(abs(np.max(integral))/0.75, abs(np.min(integral))/0.75)	
     scale = {'vg':vg_scale, 'vd':vd_scale, 'q':q_scale}
     return scale, vg_shift
 
-def integrate(vg, vd, gradient):
-    qs = np.zeros(len(vg))
-    for i in range(1, len(qs)):
-        qs[i] = qs[i-1]+(vg[i]*gradient[i][0]+vd[i]*gradient[i][1]) 
-    return qs
+def integrate(vg, vd, gradient, checkaccuracy):
+    assert(len(vg) == len(vd)), "Fatal dimension mismatch"
+    gradient = np.asarray(gradient)
+    dqdvg = gradient[:, 0]
+    dqdvd = gradient[:, 1]
+    assert(len(dqdvg) == len(vg)), "Fatal dimension mismatch"
+    assert(len(dqdvd) == len(vg)), "Fatal dimension mismatch"  
+ 
+    #Determine dimensions of q matrix
+    vg_x = True
+    if (vg[0] == vg[1]):
+	vg_x = False
+        i = 1
+	try:
+	    while (vg[i] == vg[i-1]):
+                i = i+1
+            columns = i
+        except IndexError:
+	    print("Data not formatted well.")
+	    columns = len(vg)
+        i = 1
+    else:
+        i = 1
+        try: 
+            while (vd[i] == vd[i-1]):
+                i=i+1
+            columns = i
+        except IndexError:
+            print("Data not formatted well.")
+            columns = len(vd)
+    rows = len(vg)/columns
+    
+    #Reshape arrays and create dummy matrix 
+    vd = np.reshape(vd, (rows, columns))
+    vg = np.reshape(vg, (rows, columns))
+    dqdvg = np.reshape(dqdvg, (rows, columns))
+    dqdvd = np.reshape(dqdvd, (rows, columns))
+    qs = np.zeros((rows, columns), dtype = np.float32)
+    
+    #Calculate integral using scipy's simps method
+    if (vg_x): 
+        for j in range(0, columns):
+            for i in range(0, rows):
+                if (i == 0):
+                    if (j != 0):
+                        qs[i,j] = qs[i, j-1] + simps(dqdvg[i,j-1:j+1], vg[i,j-1:j+1])
+                else:
+                    if (j == 0):
+                        qs[i,j] = qs[i-1,j] + simps(dqdvd[i-1:i+1,j], vd[i-1:i+1,j])
+                    else:
+                        qs[i,j] = 0.5* (qs[i-1,j] + simps(dqdvd[i-1:i+1,j], vd[i-1:i+1,j])) + 0.5*(qs[i,j-1] + simps(dqdvg[i,j-1:j+1],vg[i,j-1:j+1]))
+    else: 
+      for j in range(0, columns):
+            for i in range(0, rows):
+                if (i == 0):
+                    if (j != 0):
+                        qs[i,j] = qs[i,j-1] + simps(dqdvd[i,j-1:j+1], vd[i,j-1:j+1])
+                else:
+                    if (j == 0):
+                        qs[i,j] = qs[i-1,j] + simps(dqdvg[i-1:i+1,j], vg[i-1:i+1,j])
+                    else:
+                        qs[i,j] = 0.5*(qs[i,j-1] + simps(dqdvd[i,j-1:j+1],                                     vd[i,j-1:j+1])) + 0.5*(qs[i-1,j] + simps(                                       dqdvg[i-1:i+1,j], vg[i-1:i+1,j]))
+    if (checkaccuracy):
+        max_error, avg_error = checkAccuracy(qs, vg, vd, dqdvg, dqdvd, vg_x)
+    else:
+        max_error = 0
+        avg_error = 0 
+    return qs, max_error, avg_error
 
-   
+def checkAccuracy(qs, vg, vd, dqdvg, dqdvd, vg_x):
+    dqdvg_calc = np.zeros(dqdvg.shape)
+    dqdvd_calc = np.zeros(dqdvd.shape)
+    if (vg_x): 
+        x_axis = vg[0,:]
+        y_axis = vd[:,0]
+        gradient = np.gradient(qs, y_axis, x_axis)
+        dqdvg_calc = gradient[1]
+        dqdvd_calc = gradient[0]
+    else:
+        x_axis = vd[0,:]
+        y_axis = vg[:,0]
+        gradient = np.gradient(qs, y_axis, x_axis)
+        dqdvg_calc = gradient[0]
+        dqdvd_calc = gradient[1]
+    (rows, columns) = dqdvg.shape
+    max_error = 0
+    avg_error = 0
+    for j in range (0, columns): 
+       for i in range (0, rows):
+           dqdvg_error = abs((dqdvg_calc[i,j] - dqdvg[i, j])/ dqdvg[i,j])
+           dqdvd_error = abs((dqdvd_calc[i,j] - dqdvd[i, j])/ dqdvd[i,j])
+           if (dqdvg_error > max_error):
+               max_error = dqdvg_error
+           if (dqdvd_error > max_error):
+               max_error = dqdvd_error
+           print(dqdvg_error)
+           print(dqdvd_error)
+           avg_error = avg_error + dqdvd_error + dqdvg_error
+    avg_error = avg_error/(rows*columns)    
+    return max_error, avg_error   
