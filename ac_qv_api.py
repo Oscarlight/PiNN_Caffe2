@@ -72,10 +72,13 @@ class ACQVModel:
 			slope=self.preproc_param['preproc_slope'],
 			threshold=self.preproc_param['preproc_threshold']
 		)
-		self.preproc_data_arrays=preproc_data_arrays
+		#self.preproc_data_arrays=preproc_data_arrays
 		# Only expand the dim if the number of dimension is 1
 		preproc_data_arrays = [np.expand_dims(
 			x, axis=1) if x.ndim == 1 else x for x in preproc_data_arrays]
+		preproc_data_arrays[0] = preproc_data_arrays[0].astype(np.float32)
+		preproc_data_arrays[1] = preproc_data_arrays[1].astype(np.float32)
+		preproc_data_arrays[2] = preproc_data_arrays[2].astype(np.float32)
 		# Write to database
 		data_reader.write_db('minidb', db_name, preproc_data_arrays)
 		self.input_data_store[data_tag] = [db_name, num_example]
@@ -122,7 +125,7 @@ class ACQVModel:
 		self.model.trainer_extra_schema.label.set_value(
 			input_data_train[2].get(), unsafe=True)
 
-		self.pred, self.loss = build_adjoint_mlp(
+		self.origin_pred, self.adjoint_pred, self.loss = build_adjoint_mlp(
 			self.model,
 			input_dim = self.input_dim,
 			hidden_dims = hidden_dims,
@@ -201,9 +204,10 @@ class ACQVModel:
 					self.reports['eval_loss'].append(eval_loss)
 		else:
 			print('>>> Training without Reports (Fastest mode)')
+			num_iter = num_epoch*num_batch_per_epoch
 			workspace.RunNet(
 				train_net, 
-				num_iter=num_epoch * num_batch_per_epoch
+				num_iter=num_iter
 			)
 			
 		print('>>> Saving test model')
@@ -268,14 +272,14 @@ class ACQVModel:
 		pred_net = self.net_store['pred_net']
 		workspace.RunNet(pred_net)
 
-		_qs = np.squeeze(schema.FetchRecord(self.pred).get())
+		_qs = np.squeeze(schema.FetchRecord(self.origin_pred).get())
 		restore_q_func = preproc.get_restore_q_func( 
 			self.preproc_param['scale'], 
 			self.preproc_param['vg_shift'], 
 			slope=self.preproc_param['preproc_slope'],
 			threshold=self.preproc_param['preproc_threshold']
 		)
-		qs = restore_q_func(_q, preproc_data_arrays[0])
+		qs = restore_q_func(_qs, preproc_data_arrays[0])
 		return _qs, qs
 
 	def plot_loss_trend(self):
