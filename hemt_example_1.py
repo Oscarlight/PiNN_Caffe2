@@ -30,17 +30,17 @@ dc_model.add_data('train', data_arrays, preproc_param)
 # plot_iv(*dc_model.preproc_data_arrays)
 # quit()
 dc_model.build_nets(
-	hidden_sig_dims=[8,1],  # Need to be fine-tuned
-	hidden_tanh_dims=[10,1],
+	hidden_sig_dims=[15,1],  # Need to be fine-tuned
+	hidden_tanh_dims=[15,1],
 	batch_size=732,
 	weight_optim_method = 'AdaGrad',
-	weight_optim_param = {'alpha':0.2, 'epsilon':1e-4},
+	weight_optim_param = {'alpha':0.4, 'epsilon':1e-4},
 	bias_optim_method = 'AdaGrad',
-	bias_optim_param = {'alpha':0.2, 'epsilon':1e-4} 
+	bias_optim_param = {'alpha':0.4, 'epsilon':1e-4} 
 )
 
 dc_model.train_with_eval(
-	num_epoch=int(1e4),  # several hrs training time
+	num_epoch=int(1e4),
 	report_interval=0,
 )
 

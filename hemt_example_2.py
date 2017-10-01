@@ -34,8 +34,8 @@ dc_model.add_data('train', data_arrays, preproc_param)
 # quit()
 # dc_model.add_data('eval', data_arrays_test, preproc_param)
 dc_model.build_nets(
-	hidden_sig_dims=[15, 1],
-	hidden_tanh_dims=[15, 1],
+	hidden_sig_dims=[20, 1],
+	hidden_tanh_dims=[20, 1],
 	batch_size=561,
 	weight_optim_method = 'AdaGrad',
 	weight_optim_param = {'alpha':0.4, 'epsilon':1e-4},
