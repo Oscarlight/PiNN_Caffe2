@@ -47,7 +47,15 @@ class DCModel:
 		num_example = len(data_arrays[0])
 		for data in data_arrays[1:]:
 			assert len(data) == num_example, 'Mismatch dimensions'
+
+		# set default values in preproc_param if not set
+		preproc_param.setdefault('preproc_slope_vg', -1.0)
+		preproc_param.setdefault('preproc_threshold_vg', 0.0)
+		preproc_param.setdefault('preproc_slope_vd', -1.0)
+		preproc_param.setdefault('preproc_threshold_vd', 0.0)
+		preproc_param.setdefault('max_loss_scale', 1.)		
 		self.preproc_param = preproc_param
+
 		self.pickle_file_name = self.model_name + '_preproc_param' + '.p'
 		db_name = self.model_name + '_' + data_tag + '.minidb'
 
@@ -132,6 +140,7 @@ class DCModel:
 				weight_optim_method, weight_optim_param),
 			bias_optim=_build_optimizer(
 				bias_optim_method, bias_optim_param),
+			max_loss_scale=self.preproc_param['max_loss_scale']
 		)
 
 		train_init_net, train_net = instantiator.generate_training_nets(self.model)

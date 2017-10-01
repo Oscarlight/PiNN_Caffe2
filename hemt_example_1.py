@@ -20,29 +20,27 @@ scale, vg_shift = preproc.compute_dc_meta(*data_arrays)
 preproc_param = {
 	'scale' : scale, 
 	'vg_shift' : vg_shift, 
-	'preproc_slope_vg' : 4, 
-	'preproc_threshold_vg' : 0.6,
-	'preproc_slope_vd' : 0, 
-	'preproc_threshold_vd' : 0,	
+	'max_loss_scale' : 1e4,
 }
 permu = np.random.permutation(len(data_arrays[0]))
 data_arrays = [e[permu] for e in data_arrays]
 # ----------------- Train + Eval ---------------------
-dc_model = DCModel('HEMT_DC_1')
+dc_model = DCModel('HEMT_DC_1_L1_Weighted')
 dc_model.add_data('train', data_arrays, preproc_param)
-# plot_iv(*dc_model.preproc_data_arrays, styles=['vd_major_log'])
+# plot_iv(*dc_model.preproc_data_arrays)
+# quit()
 dc_model.build_nets(
 	hidden_sig_dims=[8,1],  # Need to be fine-tuned
 	hidden_tanh_dims=[10,1],
 	batch_size=732,
 	weight_optim_method = 'AdaGrad',
-	weight_optim_param = {'alpha':0.01, 'epsilon':1e-4},
+	weight_optim_param = {'alpha':0.2, 'epsilon':1e-4},
 	bias_optim_method = 'AdaGrad',
-	bias_optim_param = {'alpha':0.1, 'epsilon':1e-4} 
+	bias_optim_param = {'alpha':0.2, 'epsilon':1e-4} 
 )
 
 dc_model.train_with_eval(
-	num_epoch=int(1000),  # several hrs training time
+	num_epoch=int(1e4),  # several hrs training time
 	report_interval=0,
 )
 

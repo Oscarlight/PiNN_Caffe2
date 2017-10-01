@@ -23,36 +23,29 @@ scale, vg_shift = preproc.compute_dc_meta(*data_arrays)
 preproc_param = {
 	'scale' : scale, 
 	'vg_shift' : vg_shift, 
-	'preproc_slope_vg' : 3, 
-	'preproc_threshold_vg' : 0.9,
-	'preproc_slope_vd' : 0, 
-	'preproc_threshold_vd' : -0.2,	
+	'max_loss_scale' : 1e4,	# to improve subthreshold modeling accuracy	
 }
 permu = np.random.permutation(len(data_arrays[0]))
 data_arrays = [e[permu] for e in data_arrays]
 # # ----------------- Train + Eval ---------------------
-dc_model = DCModel('HEMT_DC_2')
+dc_model = DCModel('HEMT_DC_2_L1_Weighted')
 dc_model.add_data('train', data_arrays, preproc_param)
-# plot_iv(dc_model.preproc_data_arrays[0], 
-# 	dc_model.preproc_data_arrays[1],
-# 	dc_model.preproc_data_arrays[2],
-# 	# styles=['vd_major_log']
-# 	)
+# plot_iv(*dc_model.preproc_data_arrays)
 # quit()
 # dc_model.add_data('eval', data_arrays_test, preproc_param)
 dc_model.build_nets(
-	hidden_sig_dims=[3, 1],
-	hidden_tanh_dims=[2, 1],
-	batch_size=512,
+	hidden_sig_dims=[15, 1],
+	hidden_tanh_dims=[15, 1],
+	batch_size=561,
 	weight_optim_method = 'AdaGrad',
-	weight_optim_param = {'alpha':0.01, 'epsilon':1e-4},
+	weight_optim_param = {'alpha':0.4, 'epsilon':1e-4},
 	bias_optim_method = 'AdaGrad',
-	bias_optim_param = {'alpha':0.1, 'epsilon':1e-4} 
+	bias_optim_param = {'alpha':0.4, 'epsilon':1e-4} 
 )
 
 dc_model.train_with_eval(
-	num_epoch=1000,
-	report_interval=10,
+	num_epoch=int(1e4),
+	report_interval=0,
 	eval_during_training=False
 )
 
