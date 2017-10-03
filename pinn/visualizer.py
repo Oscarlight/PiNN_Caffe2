@@ -27,22 +27,18 @@ def VgVd_counter (vg, vd):
 def plot_data (tag, x, y, tag_count, x_count, line_style, y_scale):
     i = 0
     if (y_scale == 'log'):
-        while (i < tag_count):
-            x_tmp = x[i*x_count : (i+1)*x_count]
-            y_tmp = np.abs(y[i*x_count : (i+1)*x_count])
-            # vg_label = 'vg='+str(vg[i*vd_count])
-            plt.plot(x_tmp, y_tmp, ls = line_style, color = colors.cnames.keys()[i])
-            i = i+1
+        y_in = np.abs(y)
     elif (y_scale == 'linear'):
-        while (i < tag_count):
-            x_tmp = x[i*x_count : (i+1)*x_count]
-            y_tmp = y[i*x_count : (i+1)*x_count]
-            # vg_label = 'vg='+str(vg[i*vd_count])
-            plt.plot(x_tmp, y_tmp, ls = line_style, color = colors.cnames.keys()[i])
-            i = i+1
+        y_in = y
     else:
         raise Exception('Please choose linear or log for y-scale!')
 
+    while (i < tag_count):
+        x_tmp = x[i * x_count: (i + 1) * x_count]
+        y_tmp = y_in[i * x_count: (i + 1) * x_count]
+        # vg_label = 'vg='+str(vg[i*vd_count])
+        plt.plot(x_tmp, y_tmp, ls=line_style, color=colors.cnames.keys()[i])
+        i = i + 1
 
 def plot_linear_fig (fig, ax, x_name, y_name, save_name):
     xminorLocator = AutoMinorLocator()
