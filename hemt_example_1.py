@@ -3,12 +3,10 @@ import pinn.parser as parser
 import pinn.preproc as preproc
 import pinn.exporter as exporter
 import numpy as np
+import time
 
-# TODO: 
-# Train on
-# './HEMT_bo/Id_vs_Vd_at_Vg.mdm'
-# Test on
-# './HEMT_bo/Id_vs_Vg_at_Vd.mdm'
+TRAIN = True
+TEST_ONLY = not TRAIN
 
 # ----------------- Preprocessing --------------------
 # data_arrays format: [vg, vd, ids]
@@ -24,42 +22,56 @@ preproc_param = {
 }
 permu = np.random.permutation(len(data_arrays[0]))
 data_arrays = [e[permu] for e in data_arrays]
+
 # ----------------- Train + Eval ---------------------
-dc_model = DCModel('HEMT_DC_1_L1_Weighted')
-dc_model.add_data('train', data_arrays, preproc_param)
-# plot_iv(*dc_model.preproc_data_arrays)
-# quit()
-dc_model.build_nets(
-	hidden_sig_dims=[15,1],  # Need to be fine-tuned
-	hidden_tanh_dims=[15,1],
-	batch_size=732,
-	weight_optim_method = 'AdaGrad',
-	weight_optim_param = {'alpha':0.4, 'epsilon':1e-4},
-	bias_optim_method = 'AdaGrad',
-	bias_optim_param = {'alpha':0.4, 'epsilon':1e-4} 
-)
+if TRAIN:
+	dc_model = DCModel('HEMT_DC_1_L1_Weighted')
+	dc_model.add_data('train', data_arrays, preproc_param)
+	# plot_iv(*dc_model.preproc_data_arrays)
+	# quit()
+	dc_model.build_nets(
+		hidden_sig_dims=[15,1],  # Need to be fine-tuned
+		hidden_tanh_dims=[15,1],
+		batch_size=732,
+		weight_optim_method = 'AdaGrad',
+		weight_optim_param = {'alpha':0.1, 'epsilon':1e-4},
+		bias_optim_method = 'AdaGrad',
+		bias_optim_param = {'alpha':0.1, 'epsilon':1e-4} 
+	)
+	start = time.time()
+	dc_model.train_with_eval(
+		num_epoch=int(5e4),
+		report_interval=1000,
+	)
+	end = time.time()
+	print('Elapsed time: ' + str(end - start))
+	# ----------------- Inspection ---------------------
+	# dc_model.draw_nets()
+	dc_model.plot_loss_trend()
 
-dc_model.train_with_eval(
-	num_epoch=int(1e4),
-	report_interval=0,
-)
-
-# ----------------- Inspection ---------------------
-# dc_model.draw_nets()
-# dc_model.plot_loss_trend()
-
-# # ----------------- Deployment ---------------------
-_, pred_ids = dc_model.predict_ids(vg, vd)
-plot_iv(
-	vg, vd, ids,
-	vg_comp=vg, 
-	vd_comp=vd,
-	ids_comp=pred_ids,
-)
+	# # ----------------- Deployment ---------------------
+	_, pred_ids = dc_model.predict_ids(vg, vd)
+	plot_iv(
+		vg, vd, ids,
+		vg_comp=vg, 
+		vd_comp=vd,
+		ids_comp=pred_ids,
+		save_name='HEMT_DC_1_L1_Weighted'
+	)
 
 # -------------- Load Saved Model ------------------
-# vg_pred = np.linspace(-1.2, 0, 1000)
-# vd_pred = np.array([0.6]*1000)
-# _, pred_ids = predict_ids('HEMT_DC_1', vg_pred, vd_pred)
-# plot_iv(vg, vd, pred_ids, styles=['vg_major_log'])
+if TEST_ONLY:
+	from itertools import product
+	iter_lst = list(product(
+		np.linspace(-1.2, 0, 100),
+		np.linspace(0, 6, 100)
+	))
+	vg_pred = np.array([e[0] for e in iter_lst])
+	vd_pred = np.array([e[1] for e in iter_lst])
+	vg_pred, vd_pred = vg, vd
+	_, pred_ids = predict_ids('HEMT_DC_1_L1_Weighted', vg_pred, vd_pred)
+	plot_iv(vg_pred, vd_pred, pred_ids,
+		vg_comp=vg, 
+		vd_comp=vd,
+		ids_comp=ids)
 

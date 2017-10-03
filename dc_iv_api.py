@@ -29,7 +29,10 @@ class DCModel:
 		self.input_data_store = {}
 		self.preproc_param = {}
 		self.net_store = {}
-		self.reports = {'epoch':[],'train_loss':[], 'eval_loss':[]}
+		self.reports = {
+			'epoch':[],
+			'train_loss':[], 'eval_loss':[],
+			'train_l2_metric':[], 'eval_l2_metric':[],}
 
 
 	def add_data(
@@ -206,12 +209,18 @@ class DCModel:
 				self.reports['epoch'].append((i + 1) * report_interval)
 				train_loss = np.asscalar(schema.FetchRecord(self.loss).get())
 				self.reports['train_loss'].append(train_loss)
+				train_l2_metric = np.asscalar(schema.FetchRecord(
+					self.model.metrics_schema.l2_metric).get())
+				self.reports['train_l2_metric'].append(train_l2_metric)
 				if eval_during_training and 'eval_net' in self.net_store:
 					workspace.RunNet(
 						eval_net.Proto().name,
 						num_iter=num_unit_iter)
 					eval_loss = np.asscalar(schema.FetchRecord(self.loss).get())
 					self.reports['eval_loss'].append(eval_loss)
+					eval_l2_metric = np.asscalar(schema.FetchRecord(
+						self.model.metrics_schema.l2_metric).get())
+					self.reports['eval_metric'].append(eval_l2_metric)
 		else:
 			print('>>> Training without Reports (Fastest mode)')
 			workspace.RunNet(
@@ -296,9 +305,28 @@ class DCModel:
 		return _ids, ids
 
 	def plot_loss_trend(self):
-		plt.plot(self.reports['epoch'], self.reports['train_loss'])
+		plt.plot(
+			self.reports['epoch'], 
+			self.reports['train_loss'], 'r', 
+			label='train error'
+		)
+		plt.plot(
+			self.reports['epoch'], 
+			self.reports['train_l2_metric'], 'b', 
+			label='train l2 metric'
+		)
 		if len(self.reports['eval_loss']) > 0:
-			plt.plot(self.reports['epoch'], self.reports['eval_loss'], 'r--')
+			plt.plot(
+				self.reports['epoch'], 
+				self.reports['eval_loss'], 'r--',
+				label='eval error'
+			)
+			plt.plot(
+				self.reports['epoch'], 
+				self.reports['eval_l2_metric'], 'b--',
+				label='eval l2 metric'
+			)
+		plt.legend()
 		plt.show()
 
 	
@@ -354,27 +382,32 @@ def predict_ids(model_name, vg, vd):
 def plot_iv( 
 	vg, vd, ids, 
 	vg_comp = None, vd_comp = None, ids_comp = None,
+	save_name = '',
 	styles = ['vg_major_linear', 'vd_major_linear', 'vg_major_log', 'vd_major_log']
 ):
 	if 'vg_major_linear' in styles:
 		visualizer.plot_linear_Id_vs_Vd_at_Vg(
 			vg, vd, ids, 
 			vg_comp = vg_comp, vd_comp = vd_comp, ids_comp = ids_comp,
+			save_name = save_name + 'vg_major_linear'
 		)
 	if 'vd_major_linear' in styles:
 		visualizer.plot_linear_Id_vs_Vg_at_Vd(
 			vg, vd, ids, 
 			vg_comp = vg_comp, vd_comp = vd_comp, ids_comp = ids_comp,
+			save_name = save_name + 'vd_major_linear'
 		)
 	if 'vg_major_log' in styles:
 		visualizer.plot_log_Id_vs_Vd_at_Vg(
 			vg, vd, ids, 
 			vg_comp = vg_comp, vd_comp = vd_comp, ids_comp = ids_comp,
+			save_name = save_name + 'vg_major_log'
 		)
 	if 'vd_major_log' in styles:
 		visualizer.plot_log_Id_vs_Vg_at_Vd(
 			vg, vd, ids, 
 			vg_comp = vg_comp, vd_comp = vd_comp, ids_comp = ids_comp,
+			save_name = save_name + 'vd_major_log'
 		)
 
 def _build_optimizer(optim_method, optim_param):

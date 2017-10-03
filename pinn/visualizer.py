@@ -4,7 +4,7 @@ import matplotlib.colors as colors
 from pylab import rcParams
 from matplotlib.ticker import AutoMinorLocator
 
-FIGURE_SIZE = (6, 8)
+FIGURE_SIZE = (7, 8)
 
 def write_csv_file(file_name, data, description):
     ''' Write data to .csv file.'''
@@ -37,9 +37,9 @@ def plot_linear_fig (fig, ax, x_name, y_name, save_name):
     xminorLocator = AutoMinorLocator()
     yminorLocator = AutoMinorLocator()
 
-    plt.xlabel(x_name)
-    plt.ylabel(y_name)
-    plt.tick_params(axis='both', which='major', labelsize=12)
+    plt.xlabel(x_name, fontsize=16)
+    plt.ylabel(y_name, fontsize=16)
+    plt.tick_params(axis='both', which='major', labelsize=14)
     plt.tick_params(axis='both', which='minor', labelsize=0)
     ax.xaxis.set_minor_locator(xminorLocator)
     ax.yaxis.set_minor_locator(yminorLocator)
@@ -51,9 +51,9 @@ def plot_log_fig (fig, ax, x_name, y_name, save_name):
     xminorLocator = AutoMinorLocator()
     yminorLocator = AutoMinorLocator()
 
-    plt.xlabel(x_name)
-    plt.ylabel(y_name)
-    plt.tick_params(axis='both', which='major', labelsize=12)
+    plt.xlabel(x_name, fontsize=16)
+    plt.ylabel(y_name, fontsize=16)
+    plt.tick_params(axis='both', which='major', labelsize=14)
     plt.tick_params(axis='both', which='minor', labelsize=0)
     ax.xaxis.set_minor_locator(xminorLocator)
     ax.yaxis.set_minor_locator(yminorLocator)
@@ -82,14 +82,14 @@ def plot_linear_Id_vs_Vd_at_Vg(vg, vd, ids, vg_comp = None, vd_comp = None, ids_
     plot_data(sort_vg, sort_vd, sort_ids, vg_count, vd_count, 'solid')
 
     if (vg_comp is None or vd_comp is None or ids_comp is None):
-        plot_linear_fig(fig, ax,'vd','id', save_name)
+        plot_linear_fig(fig, ax,'Vd','Id', save_name)
         plt.show()
 
     else:
         sort_vg_comp, sort_vd_comp, sort_ids_comp = sort_vg_func (vg_comp, vd_comp, ids_comp)
         vg_count_comp, vd_count_comp = VgVd_counter(vg_comp, vd_comp)
         plot_data(sort_vg_comp, sort_vd_comp, sort_ids_comp, vg_count_comp, vd_count_comp, '--')
-        plot_linear_fig(fig, ax,'vd','id', save_name)
+        plot_linear_fig(fig, ax,'Vd','Id', save_name)
         plt.show()
 
 def plot_linear_Id_vs_Vg_at_Vd(vg, vd, ids, vg_comp = None, vd_comp = None, ids_comp = None, save_name = None):
@@ -102,14 +102,14 @@ def plot_linear_Id_vs_Vg_at_Vd(vg, vd, ids, vg_comp = None, vd_comp = None, ids_
     plot_data(sort_vd, sort_vg, sort_ids, vd_count, vg_count, 'solid')
 
     if (vg_comp is None or vd_comp is None or ids_comp is None):
-        plot_linear_fig(fig, ax, 'vg', 'id', save_name)
+        plot_linear_fig(fig, ax, 'Vg', 'Id', save_name)
         plt.show()
 
     else:
         sort_vg_comp, sort_vd_comp, sort_ids_comp = sort_vd_func (vg_comp, vd_comp, ids_comp)
         vg_count_comp, vd_count_comp = VgVd_counter(vg_comp, vd_comp)
         plot_data (sort_vd_comp, sort_vg_comp, sort_ids_comp, vd_count_comp, vg_count_comp, '--')
-        plot_linear_fig(fig, ax, 'vg', 'id', save_name)
+        plot_linear_fig(fig, ax, 'Vg', 'Id', save_name)
         plt.show()
 
 def plot_log_Id_vs_Vd_at_Vg(vg, vd, ids, vg_comp = None, vd_comp = None, ids_comp = None, save_name = None):
@@ -121,14 +121,14 @@ def plot_log_Id_vs_Vd_at_Vg(vg, vd, ids, vg_comp = None, vd_comp = None, ids_com
     plot_data(sort_vg, sort_vd, sort_ids, vg_count, vd_count, 'solid')
 
     if (vg_comp is None or vd_comp is None or ids_comp is None):
-        plot_log_fig(fig, ax, 'vd','log(id)', save_name)
+        plot_log_fig(fig, ax, 'Vd','Id', save_name)
         plt.show()
 
     else:
         sort_vg_comp, sort_vd_comp, sort_ids_comp = sort_vg_func(vg_comp, vd_comp, ids_comp)
         vg_count_comp, vd_count_comp = VgVd_counter(vg_comp, vd_comp)
         plot_data(sort_vg_comp, sort_vd_comp, sort_ids_comp, vg_count_comp, vd_count_comp, '--')
-        plot_log_fig(fig, ax, 'vd','log(id)', save_name)
+        plot_log_fig(fig, ax, 'Vd','Id', save_name)
         plt.show()
 
 def plot_log_Id_vs_Vg_at_Vd(vg, vd, ids, vg_comp = None, vd_comp = None, ids_comp = None, save_name = None):
@@ -140,12 +140,12 @@ def plot_log_Id_vs_Vg_at_Vd(vg, vd, ids, vg_comp = None, vd_comp = None, ids_com
     plot_data(sort_vd, sort_vg, sort_ids, vd_count, vg_count, 'solid')
 
     if (vg_comp is None or vd_comp is None or ids_comp is None):
-        plot_log_fig(fig, ax, 'vg','log(id)', save_name)
+        plot_log_fig(fig, ax, 'Vg','Id', save_name)
         plt.show()
 
     else:
         sort_vg_comp, sort_vd_comp, sort_ids_comp = sort_vd_func(vg_comp, vd_comp, ids_comp)
         vg_count_comp, vd_count_comp = VgVd_counter(vg_comp, vd_comp)
         plot_data(sort_vd_comp, sort_vg_comp, sort_ids_comp, vd_count_comp, vg_count_comp, '--')
-        plot_log_fig(fig, ax, 'vg','log(id)', save_name)
+        plot_log_fig(fig, ax, 'vg','Id', save_name)
         plt.show()
