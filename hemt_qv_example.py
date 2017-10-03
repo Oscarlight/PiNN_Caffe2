@@ -25,7 +25,7 @@ ac_model.build_nets([5, 5], batch_size = 10)
 ac_model.train_with_eval(num_epoch = 10, report_interval = 0)
 ac_model.draw_nets() 
 
-_, pred_qs = ac_model.predict_qs(data_arrays[0], data_arrays[1])
+pred_qs, ori_gradient = ac_model.predict_qs(data_arrays[0], data_arrays[1])
 plot_iv(
 	data_arrays[0], data_arrays[1], data_arrays[2],
 	vg_comp = data_arrays[0],

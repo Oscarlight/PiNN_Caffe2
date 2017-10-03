@@ -61,6 +61,9 @@ class ACQVModel:
 				raise Exception('Encounter database with the same name. ' +
 					'Choose the other model name or set override to True.')
 		print("+++ Create a new database...")	
+		
+		self.preproc_param.setdefault('max_loss_scale', 1.)
+		
 		pickle.dump(
 			self.preproc_param, 
 			open(self.pickle_file_name, 'wb')
@@ -68,9 +71,7 @@ class ACQVModel:
 		preproc_data_arrays = preproc.ac_qv_preproc(
 			data_arrays[0], data_arrays[1], data_arrays[2], 
 			self.preproc_param['scale'], 
-			self.preproc_param['vg_shift'], 
-			slope=self.preproc_param['preproc_slope'],
-			threshold=self.preproc_param['preproc_threshold']
+			self.preproc_param['vg_shift']
 		)
 		#self.preproc_data_arrays=preproc_data_arrays
 		# Only expand the dim if the number of dimension is 1
@@ -273,14 +274,16 @@ class ACQVModel:
 		workspace.RunNet(pred_net)
 
 		_qs = np.squeeze(schema.FetchRecord(self.origin_pred).get())
-		restore_q_func = preproc.get_restore_q_func( 
+		restore_integral_func, restore_gradient_func = 
+		preproc.get_restore_q_func( 
 			self.preproc_param['scale'], 
 			self.preproc_param['vg_shift'], 
 			slope=self.preproc_param['preproc_slope'],
 			threshold=self.preproc_param['preproc_threshold']
 		)
-		qs = restore_q_func(_qs, preproc_data_arrays[0])
-		return _qs, qs
+		qs = restore_q_func(_qs)
+		gradients = restore_gradeint_func(preproc_data_arrays[2])
+		return qs, gradients
 
 	def plot_loss_trend(self):
 		plt.plot(self.reports['epoch'], self.reports['train_loss'])
