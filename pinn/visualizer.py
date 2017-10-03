@@ -4,7 +4,11 @@ import matplotlib.colors as colors
 from pylab import rcParams
 from matplotlib.ticker import AutoMinorLocator
 
-FIGURE_SIZE = (6,8)
+FIGURE_SIZE = (7, 8)
+FONT_SIZE = 16
+LINE_WIDTH = 2
+MAJOR_LABEL_SIZE = 14
+MINOR_LABEL_SIZE = 0
 
 def write_csv_file(file_name, data, description):
     ''' Write data to .csv file.'''
@@ -44,10 +48,10 @@ def plot_linear_fig (fig, ax, x_name, y_name, save_name):
     xminorLocator = AutoMinorLocator()
     yminorLocator = AutoMinorLocator()
 
-    plt.xlabel(x_name)
-    plt.ylabel(y_name)
-    plt.tick_params(axis='both', which='major', labelsize=12)
-    plt.tick_params(axis='both', which='minor', labelsize=0)
+    plt.xlabel(x_name, fontsize=FONT_SIZE)
+    plt.ylabel(y_name, fontsize=FONT_SIZE)
+    plt.tick_params(axis='both', which='major', labelsize=MAJOR_LABEL_SIZE)
+    plt.tick_params(axis='both', which='minor', labelsize=MINOR_LABEL_SIZE)
     ax.xaxis.set_minor_locator(xminorLocator)
     ax.yaxis.set_minor_locator(yminorLocator)
     # plt.legend(loc = 'upper left')
@@ -58,10 +62,10 @@ def plot_log_fig (fig, ax, x_name, y_name, save_name):
     xminorLocator = AutoMinorLocator()
     yminorLocator = AutoMinorLocator()
 
-    plt.xlabel(x_name)
-    plt.ylabel(y_name)
-    plt.tick_params(axis='both', which='major', labelsize=12)
-    plt.tick_params(axis='both', which='minor', labelsize=0)
+    plt.xlabel(x_name, fontsize=FONT_SIZE)
+    plt.ylabel(y_name, fontsize=FONT_SIZE)
+    plt.tick_params(axis='both', which='major', labelsize=MAJOR_LABEL_SIZE)
+    plt.tick_params(axis='both', which='minor', labelsize=MINOR_LABEL_SIZE)
     ax.xaxis.set_minor_locator(xminorLocator)
     ax.yaxis.set_minor_locator(yminorLocator)
     plt.yscale('log')
@@ -83,76 +87,76 @@ def plot_linear_Id_vs_Vd_at_Vg(vg, vd, ids, vg_comp = None, vd_comp = None, ids_
 
     vg_count, vd_count = VgVd_counter(vg, vd)
     rcParams['figure.figsize'] = FIGURE_SIZE
-    rcParams['axes.linewidth'] = 2
+    rcParams['axes.linewidth'] = LINE_WIDTH
     fig, ax = plt.subplots()
     sort_vg, sort_vd, sort_ids = sort_vg_func (vg, vd, ids)
     plot_data(sort_vg, sort_vd, sort_ids, vg_count, vd_count, 'solid', 'linear')
 
     if (vg_comp is None or vd_comp is None or ids_comp is None):
-        plot_linear_fig(fig, ax,'vd','id', save_name)
+        plot_linear_fig(fig, ax,'V$_d$','I$_d$', save_name)
         plt.show()
 
     else:
         sort_vg_comp, sort_vd_comp, sort_ids_comp = sort_vg_func (vg_comp, vd_comp, ids_comp)
         vg_count_comp, vd_count_comp = VgVd_counter(vg_comp, vd_comp)
         plot_data(sort_vg_comp, sort_vd_comp, sort_ids_comp, vg_count_comp, vd_count_comp, '--', 'linear')
-        plot_linear_fig(fig, ax,'vd','id', save_name)
+        plot_linear_fig(fig, ax,'V$_d$','I$_d$', save_name)
         plt.show()
 
 def plot_linear_Id_vs_Vg_at_Vd(vg, vd, ids, vg_comp = None, vd_comp = None, ids_comp = None, save_name = None):
 
     vg_count, vd_count = VgVd_counter(vg, vd)
     rcParams['figure.figsize'] = FIGURE_SIZE
-    rcParams['axes.linewidth'] = 2
+    rcParams['axes.linewidth'] = LINE_WIDTH
     fig, ax = plt.subplots()
     sort_vg, sort_vd, sort_ids = sort_vd_func (vg, vd, ids)
     plot_data(sort_vd, sort_vg, sort_ids, vd_count, vg_count, 'solid', 'linear')
 
     if (vg_comp is None or vd_comp is None or ids_comp is None):
-        plot_linear_fig(fig, ax, 'vg', 'id', save_name)
+        plot_linear_fig(fig, ax, 'V$_g$', 'I$_d$', save_name)
         plt.show()
 
     else:
         sort_vg_comp, sort_vd_comp, sort_ids_comp = sort_vd_func (vg_comp, vd_comp, ids_comp)
         vg_count_comp, vd_count_comp = VgVd_counter(vg_comp, vd_comp)
         plot_data (sort_vd_comp, sort_vg_comp, sort_ids_comp, vd_count_comp, vg_count_comp, '--', 'linear')
-        plot_linear_fig(fig, ax, 'vg', 'id', save_name)
+        plot_linear_fig(fig, ax, 'V$_g$', 'I$_d$', save_name)
         plt.show()
 
 def plot_log_Id_vs_Vd_at_Vg(vg, vd, ids, vg_comp = None, vd_comp = None, ids_comp = None, save_name = None):
     vg_count, vd_count = VgVd_counter(vg, vd)
     rcParams['figure.figsize'] = FIGURE_SIZE
-    rcParams['axes.linewidth'] = 2
+    rcParams['axes.linewidth'] = LINE_WIDTH
     fig, ax = plt.subplots()
     sort_vg, sort_vd, sort_ids = sort_vg_func(vg, vd, ids)
     plot_data(sort_vg, sort_vd, sort_ids, vg_count, vd_count, 'solid', 'log')
 
     if (vg_comp is None or vd_comp is None or ids_comp is None):
-        plot_log_fig(fig, ax, 'vd','log(id)', save_name)
+        plot_log_fig(fig, ax, 'V$_d$','I$_d$', save_name)
         plt.show()
 
     else:
         sort_vg_comp, sort_vd_comp, sort_ids_comp = sort_vg_func(vg_comp, vd_comp, ids_comp)
         vg_count_comp, vd_count_comp = VgVd_counter(vg_comp, vd_comp)
         plot_data(sort_vg_comp, sort_vd_comp, sort_ids_comp, vg_count_comp, vd_count_comp, '--', 'log')
-        plot_log_fig(fig, ax, 'vd','log(id)', save_name)
+        plot_log_fig(fig, ax, 'V$_d$','I$_d$', save_name)
         plt.show()
 
 def plot_log_Id_vs_Vg_at_Vd(vg, vd, ids, vg_comp = None, vd_comp = None, ids_comp = None, save_name = None):
     vg_count, vd_count = VgVd_counter(vg, vd)
     rcParams['figure.figsize'] = FIGURE_SIZE
-    rcParams['axes.linewidth'] = 2
+    rcParams['axes.linewidth'] = LINE_WIDTH
     fig, ax = plt.subplots()
     sort_vg, sort_vd, sort_ids = sort_vd_func(vg, vd, ids)
     plot_data(sort_vd, sort_vg, sort_ids, vd_count, vg_count, 'solid', 'log')
 
     if (vg_comp is None or vd_comp is None or ids_comp is None):
-        plot_log_fig(fig, ax, 'vg','log(id)', save_name)
+        plot_log_fig(fig, ax, 'V$_g$','I$_d$', save_name)
         plt.show()
 
     else:
         sort_vg_comp, sort_vd_comp, sort_ids_comp = sort_vd_func(vg_comp, vd_comp, ids_comp)
         vg_count_comp, vd_count_comp = VgVd_counter(vg_comp, vd_comp)
         plot_data(sort_vd_comp, sort_vg_comp, sort_ids_comp, vd_count_comp, vg_count_comp, '--', 'log')
-        plot_log_fig(fig, ax, 'vg','log(id)', save_name)
+        plot_log_fig(fig, ax, 'V$_g$','I$_d$', save_name)
         plt.show()
