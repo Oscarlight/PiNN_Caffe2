@@ -1,7 +1,7 @@
 (dp0
-S'preproc_threshold'
+S'max_loss_scale'
 p1
-I0
+F1.0
 sS'scale'
 p2
 (dp3
@@ -26,7 +26,7 @@ NNNI-1
 I-1
 I0
 tp11
-bS'\x00\x00\x00@\xb7i\x13>'
+bS'4\xf6&1\xa9\xa9Y>'
 p12
 tp13
 Rp14
@@ -54,7 +54,4 @@ S'\x00\x00\x00\x00\x00\x00\xe8?'
 p24
 tp25
 Rp26
-sS'preproc_slope'
-p27
-I0
 s.

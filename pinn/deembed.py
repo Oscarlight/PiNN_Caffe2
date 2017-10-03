@@ -1,8 +1,8 @@
 import numpy as np
-from scipy import linalg
+import scipy.linalg as linalg
 
-def deembed(read_data,file_name,lg,ld,rg,rd):
-    s11arr,s12arr,s21arr,s22arr,freq,vg,vd,id = read_data(file_name)
+def deembed(read_data_fun,file_name,lg,ld,rg,rd):
+    s11arr,s12arr,s21arr,s22arr,freq,vg,vd,id = read_data_fun(file_name)
     yfinal = []
     y11re = []
     y12re = []
@@ -44,7 +44,7 @@ def deembed(read_data,file_name,lg,ld,rg,rd):
     qdinput = listcombine(y21im,y22im)
     qginput = listcombine(y11im,y12im)
 
-    return vg, vd, id, idcinput,iacinput,qdinput,qginput
+    return vg,vd,id,idcinput,iacinput,qdinput,qginput
 
 def listcombine(list1,list2):
     result = []
@@ -57,5 +57,4 @@ def listcombine(list1,list2):
 
 if __name__ == '__main__':
     pass
-
 

@@ -15,20 +15,22 @@ scale, vg_shift = preproc.compute_ac_meta(data_arrays[0], data_arrays[1], data_a
 preproc_param = {
 	'scale': scale,
 	'vg_shift': vg_shift,
-	'preproc_slope': 0,
-	'preproc_threshold': 0
 }
 data_arrays[2] = np.asarray(data_arrays[2])[:,0]
 ac_model = ACQVModel('ac_model')
 ac_model.add_data('train', data_arrays, preproc_param)
-ac_model.build_nets([5, 5], batch_size = 10)
-ac_model.train_with_eval(num_epoch = 10, report_interval = 0)
+ac_model.build_nets([10, 10, 10], batch_size = 1275)
+ac_model.train_with_eval(num_epoch = 10000, report_interval = 0)
 ac_model.draw_nets() 
 
 pred_qs, ori_gradient = ac_model.predict_qs(data_arrays[0], data_arrays[1])
+ac_model.plot_loss_trend()
+
 plot_iv(
 	data_arrays[0], data_arrays[1], data_arrays[2],
 	vg_comp = data_arrays[0],
 	vd_comp = data_arrays[1],
 	ids_comp = pred_qs
 )
+
+

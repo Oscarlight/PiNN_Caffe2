@@ -68,27 +68,17 @@ def truncate(data_arrays, truncate_range, axis):
 def ac_qv_preproc(vg, vd, gradient, scale, shift):
     preproc_vg = (vg-shift) / scale['vg']
     preproc_vd = vd / scale['vd']
-    preproc_gradient = gradient / scale['q'] * (
-        np.power(10, -slope * (preproc_vg + threshold)) + 1
-        ) if slope > 0 else gradient/scale['q']
-
+    preproc_gradient = gradient/scale['q']
     return preproc_vg, preproc_vd, preproc_gradient
 
 def get_restore_q_func(
-        scale, shift,
-        slope=0, threshold=0
+        scale, shift
 ):
         def restore_integral_func(integrals):
-            ori_integral = integrals * scale ['q'] * scale['vg'] *
-                            scale['vd']/ (np.power(10, -slope*
-                            (vgs+threshold)) + 1)
-                        if slope > 0 else integrals*scale['q']*
-                        scale['vd']*scale['vg']
+            ori_integral = integrals*scale['q']#* scale['vd']*scale['vg']
             return ori_integral
         def restore_gradient_func(gradient):
-                ori_gradient = gradient * scale['q'] / (
-                        np.power(10, -slope*(vgs + threshold)) + 1
-                ) if slope > 0 else gradient * scale['q']
+                ori_gradient =  gradient * scale['q']
                 return ori_gradient
         return restore_integral_func, restore_gradient_func
 	

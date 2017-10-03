@@ -88,10 +88,6 @@ class ACQVModel:
 		self,
 		hidden_dims, 
 		batch_size=1,
-		weight_optim_method = 'AdaGrad',
-		weight_optim_param = {'alpha':0.005, 'epsilon':1e-4},
-		bias_optim_method = 'AdaGrad',
-		bias_optim_param = {'alpha':0.05, 'epsilon':1e-4},
 	):
 		assert len(self.input_data_store) > 0, 'Input data store is empty.'
 		assert 'train' in self.input_data_store, 'Missing training data.'
@@ -129,7 +125,7 @@ class ACQVModel:
 		self.origin_pred, self.adjoint_pred, self.loss = build_adjoint_mlp(
 			self.model,
 			input_dim = self.input_dim,
-			hidden_dims = hidden_dims,
+			hidden_dims = self.hidden_dims,
 			output_dim = self.output_dim,
 			optim = optimizer.AdagradOptimizer(alpha=0.01, epsilon = 1e-4)
 		)
@@ -262,9 +258,7 @@ class ACQVModel:
 		preproc_data_arrays = preproc.ac_qv_preproc(
 			vg, vd, dummy_qs, 
 			self.preproc_param['scale'], 
-			self.preproc_param['vg_shift'], 
-			slope=self.preproc_param['preproc_slope'],
-			threshold=self.preproc_param['preproc_threshold']
+			self.preproc_param['vg_shift']
 		)
 		_preproc_data_arrays = [np.expand_dims(
 			x, axis=1) for x in preproc_data_arrays]
@@ -274,15 +268,12 @@ class ACQVModel:
 		workspace.RunNet(pred_net)
 
 		_qs = np.squeeze(schema.FetchRecord(self.origin_pred).get())
-		restore_integral_func, restore_gradient_func = 
-		preproc.get_restore_q_func( 
+		restore_integral_func, restore_gradient_func = preproc.get_restore_q_func( 
 			self.preproc_param['scale'], 
-			self.preproc_param['vg_shift'], 
-			slope=self.preproc_param['preproc_slope'],
-			threshold=self.preproc_param['preproc_threshold']
+			self.preproc_param['vg_shift']
 		)
-		qs = restore_q_func(_qs)
-		gradients = restore_gradeint_func(preproc_data_arrays[2])
+		qs = restore_integral_func(_qs)
+		gradients = restore_gradient_func(preproc_data_arrays[2])
 		return qs, gradients
 
 	def plot_loss_trend(self):
