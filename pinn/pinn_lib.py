@@ -54,6 +54,7 @@ def build_pinn(
 	sig_net_dim=[1], tanh_net_dim=[1],
 	weight_optim=None,
 	bias_optim=None,
+	max_loss_scale=1.0,
 ):
 	'''
 		sig_net_dim and tanh_net_dim are the lists of dimensions for each hidden
@@ -81,12 +82,19 @@ def build_pinn(
 
 	pred = model.Mul([sig_h, tanh_h], model.trainer_extra_schema.prediction)
 	# Add loss
-	loss = model.BatchDirectMSELoss(model.trainer_extra_schema)
+	loss = model.BatchDirectWeightedL1Loss(
+		model.trainer_extra_schema,
+		max_scale=max_loss_scale,
+	)
 	model.add_loss(loss)
 	# Set output
 	model.output_schema.pred.set_value(pred.get(), unsafe=True)
 	model.output_schema.loss.set_value(loss.get(), unsafe=True)
-
+	# Add metric
+	l2_metric = model.BatchDirectMSELoss(
+		model.trainer_extra_schema,
+	)
+	model.add_metric_field('l2_metric', l2_metric)
 	return pred, loss
 
 def init_model_with_schemas(

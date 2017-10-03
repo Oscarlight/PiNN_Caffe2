@@ -29,7 +29,10 @@ class DCModel:
 		self.input_data_store = {}
 		self.preproc_param = {}
 		self.net_store = {}
-		self.reports = {'epoch':[],'train_loss':[], 'eval_loss':[]}
+		self.reports = {
+			'epoch':[],
+			'train_loss':[], 'eval_loss':[],
+			'train_l2_metric':[], 'eval_l2_metric':[],}
 
 
 	def add_data(
@@ -47,7 +50,15 @@ class DCModel:
 		num_example = len(data_arrays[0])
 		for data in data_arrays[1:]:
 			assert len(data) == num_example, 'Mismatch dimensions'
+
+		# set default values in preproc_param if not set
+		preproc_param.setdefault('preproc_slope_vg', -1.0)
+		preproc_param.setdefault('preproc_threshold_vg', 0.0)
+		preproc_param.setdefault('preproc_slope_vd', -1.0)
+		preproc_param.setdefault('preproc_threshold_vd', 0.0)
+		preproc_param.setdefault('max_loss_scale', 1.)		
 		self.preproc_param = preproc_param
+
 		self.pickle_file_name = self.model_name + '_preproc_param' + '.p'
 		db_name = self.model_name + '_' + data_tag + '.minidb'
 
@@ -68,8 +79,10 @@ class DCModel:
 			data_arrays[0], data_arrays[1], data_arrays[2], 
 			self.preproc_param['scale'], 
 			self.preproc_param['vg_shift'], 
-			slope=self.preproc_param['preproc_slope'],
-			threshold=self.preproc_param['preproc_threshold']
+			slope_vg=self.preproc_param['preproc_slope_vg'],
+			thre_vg=self.preproc_param['preproc_threshold_vg'],
+			slope_vd=self.preproc_param['preproc_slope_vd'],
+			thre_vd=self.preproc_param['preproc_threshold_vd'],
 		)
 		self.preproc_data_arrays=preproc_data_arrays
 		# Only expand the dim if the number of dimension is 1
@@ -130,6 +143,7 @@ class DCModel:
 				weight_optim_method, weight_optim_param),
 			bias_optim=_build_optimizer(
 				bias_optim_method, bias_optim_param),
+			max_loss_scale=self.preproc_param['max_loss_scale']
 		)
 
 		train_init_net, train_net = instantiator.generate_training_nets(self.model)
@@ -140,7 +154,7 @@ class DCModel:
 		pred_net = instantiator.generate_predict_net(self.model)
 		workspace.CreateNet(pred_net)
 		self.net_store['pred_net'] = pred_net
-		
+
 		if 'eval' in self.input_data_store:
 			# Create eval net
 			self.model.input_feature_schema.sig_input.set_value(
@@ -195,12 +209,18 @@ class DCModel:
 				self.reports['epoch'].append((i + 1) * report_interval)
 				train_loss = np.asscalar(schema.FetchRecord(self.loss).get())
 				self.reports['train_loss'].append(train_loss)
+				train_l2_metric = np.asscalar(schema.FetchRecord(
+					self.model.metrics_schema.l2_metric).get())
+				self.reports['train_l2_metric'].append(train_l2_metric)
 				if eval_during_training and 'eval_net' in self.net_store:
 					workspace.RunNet(
 						eval_net.Proto().name,
 						num_iter=num_unit_iter)
 					eval_loss = np.asscalar(schema.FetchRecord(self.loss).get())
 					self.reports['eval_loss'].append(eval_loss)
+					eval_l2_metric = np.asscalar(schema.FetchRecord(
+						self.model.metrics_schema.l2_metric).get())
+					self.reports['eval_metric'].append(eval_l2_metric)
 		else:
 			print('>>> Training without Reports (Fastest mode)')
 			workspace.RunNet(
@@ -260,8 +280,10 @@ class DCModel:
 			vg, vd, dummy_ids, 
 			self.preproc_param['scale'], 
 			self.preproc_param['vg_shift'], 
-			slope=self.preproc_param['preproc_slope'],
-			threshold=self.preproc_param['preproc_threshold']
+			slope_vg=self.preproc_param['preproc_slope_vg'],
+			thre_vg=self.preproc_param['preproc_threshold_vg'],
+			slope_vd=self.preproc_param['preproc_slope_vd'],
+			thre_vd=self.preproc_param['preproc_threshold_vd'],
 		)
 		_preproc_data_arrays = [np.expand_dims(
 			x, axis=1) for x in preproc_data_arrays]
@@ -274,16 +296,37 @@ class DCModel:
 		restore_id_func = preproc.get_restore_id_func( 
 			self.preproc_param['scale'], 
 			self.preproc_param['vg_shift'], 
-			slope=self.preproc_param['preproc_slope'],
-			threshold=self.preproc_param['preproc_threshold']
+			slope_vg=self.preproc_param['preproc_slope_vg'],
+			thre_vg=self.preproc_param['preproc_threshold_vg'],
+			slope_vd=self.preproc_param['preproc_slope_vd'],
+			thre_vd=self.preproc_param['preproc_threshold_vd'],
 		)
-		ids = restore_id_func(_ids, preproc_data_arrays[0])
+		ids = restore_id_func(_ids, preproc_data_arrays[0], preproc_data_arrays[1])
 		return _ids, ids
 
 	def plot_loss_trend(self):
-		plt.plot(self.reports['epoch'], self.reports['train_loss'])
+		plt.plot(
+			self.reports['epoch'], 
+			self.reports['train_loss'], 'r', 
+			label='train error'
+		)
+		plt.plot(
+			self.reports['epoch'], 
+			self.reports['train_l2_metric'], 'b', 
+			label='train l2 metric'
+		)
 		if len(self.reports['eval_loss']) > 0:
-			plt.plot(self.reports['epoch'], self.reports['eval_loss'], 'r--')
+			plt.plot(
+				self.reports['epoch'], 
+				self.reports['eval_loss'], 'r--',
+				label='eval error'
+			)
+			plt.plot(
+				self.reports['epoch'], 
+				self.reports['eval_l2_metric'], 'b--',
+				label='eval l2 metric'
+			)
+		plt.legend()
 		plt.show()
 
 	
@@ -310,8 +353,10 @@ def predict_ids(model_name, vg, vd):
 		vg, vd, dummy_ids, 
 		preproc_param['scale'], 
 		preproc_param['vg_shift'], 
-		slope=preproc_param['preproc_slope'],
-		threshold=preproc_param['preproc_threshold']
+		slope_vg=preproc_param['preproc_slope_vg'],
+		thre_vg=preproc_param['preproc_threshold_vg'],
+		slope_vd=preproc_param['preproc_slope_vd'],
+		thre_vd=preproc_param['preproc_threshold_vd'],
 	)
 	_preproc_data_arrays = [np.expand_dims(
 		x, axis=1) for x in preproc_data_arrays]
@@ -326,36 +371,43 @@ def predict_ids(model_name, vg, vd):
 	restore_id_func = preproc.get_restore_id_func( 
 		preproc_param['scale'], 
 		preproc_param['vg_shift'], 
-		slope=preproc_param['preproc_slope'],
-		threshold=preproc_param['preproc_threshold']
+		slope_vg=preproc_param['preproc_slope_vg'],
+		thre_vg=preproc_param['preproc_threshold_vg'],
+		slope_vd=preproc_param['preproc_slope_vd'],
+		thre_vd=preproc_param['preproc_threshold_vd'],
 	)
-	ids = restore_id_func(_ids, preproc_data_arrays[0])
+	ids = restore_id_func(_ids, preproc_data_arrays[0], preproc_data_arrays[1])
 	return _ids, ids
 
 def plot_iv( 
 	vg, vd, ids, 
 	vg_comp = None, vd_comp = None, ids_comp = None,
+	save_name = '',
 	styles = ['vg_major_linear', 'vd_major_linear', 'vg_major_log', 'vd_major_log']
 ):
 	if 'vg_major_linear' in styles:
 		visualizer.plot_linear_Id_vs_Vd_at_Vg(
 			vg, vd, ids, 
 			vg_comp = vg_comp, vd_comp = vd_comp, ids_comp = ids_comp,
+			save_name = save_name + 'vg_major_linear'
 		)
 	if 'vd_major_linear' in styles:
 		visualizer.plot_linear_Id_vs_Vg_at_Vd(
 			vg, vd, ids, 
 			vg_comp = vg_comp, vd_comp = vd_comp, ids_comp = ids_comp,
+			save_name = save_name + 'vd_major_linear'
 		)
 	if 'vg_major_log' in styles:
 		visualizer.plot_log_Id_vs_Vd_at_Vg(
 			vg, vd, ids, 
 			vg_comp = vg_comp, vd_comp = vd_comp, ids_comp = ids_comp,
+			save_name = save_name + 'vg_major_log'
 		)
 	if 'vd_major_log' in styles:
 		visualizer.plot_log_Id_vs_Vg_at_Vd(
 			vg, vd, ids, 
 			vg_comp = vg_comp, vd_comp = vd_comp, ids_comp = ids_comp,
+			save_name = save_name + 'vd_major_log'
 		)
 
 def _build_optimizer(optim_method, optim_param):
