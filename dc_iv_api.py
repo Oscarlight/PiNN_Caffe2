@@ -329,8 +329,10 @@ class DCModel:
 		plt.legend()
 		plt.show()
 
-	
-
+	def save_loss_trend(self, save_name):
+		# Jashan: please implement this function, save self.report 
+		# to a csv file with headers.
+		pass
 
 	
 # --------------------------------------------------------
