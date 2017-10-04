@@ -18,18 +18,23 @@ preproc_param = {
 	'scale' : scale, 
 	'vg_shift' : vg_shift, 
 }
+numpy.random.seed = 7
 permu = np.random.permutation(len(data_arrays[0]))
 data_arrays = [e[permu] for e in data_arrays]
-# # ----------------- Train + Eval ---------------------
+data_arrays_eval = [e[0:100] for e in data_arrays]
+data_arrays_train = [e[100:] for e in data_arrays]
+
+# ----------------- Train + Eval ---------------------
 dc_model = DCModel('HEMT_DC_2_L1_Weighted')
-dc_model.add_data('train', data_arrays, preproc_param)
+dc_model.add_data('train', data_arrays_train, preproc_param)
+dc_model.add_data('eval',data_arrays_eval, preproc_param)
 # plot_iv(*dc_model.preproc_data_arrays)
-# quit()
-# dc_model.add_data('eval', data_arrays_test, preproc_param)
+
 dc_model.build_nets(
 	hidden_sig_dims=[16, 1],
 	hidden_tanh_dims=[16, 1],
-	batch_size=561,
+	train_batch_size=461,
+	eval_batch_size=100,
 	weight_optim_method = 'AdaGrad',
 	weight_optim_param = {'alpha':0.02, 'epsilon':1e-4},
 	bias_optim_method = 'AdaGrad',
@@ -38,9 +43,9 @@ dc_model.build_nets(
 )
 
 dc_model.train_with_eval(
-	num_epoch=int(1e6),
+	num_epoch=int(1e5),
 	report_interval=1000,
-	eval_during_training=False
+	eval_during_training=True
 )
 
 # # ----------------- Inspection ---------------------
