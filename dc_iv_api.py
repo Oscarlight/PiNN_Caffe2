@@ -56,7 +56,7 @@ class DCModel:
 		preproc_param.setdefault('preproc_threshold_vg', 0.0)
 		preproc_param.setdefault('preproc_slope_vd', -1.0)
 		preproc_param.setdefault('preproc_threshold_vd', 0.0)
-		preproc_param.setdefault('max_loss_scale', 1.)		
+	
 		self.preproc_param = preproc_param
 
 		self.pickle_file_name = self.model_name + '_preproc_param' + '.p'
@@ -98,9 +98,10 @@ class DCModel:
 		hidden_tanh_dims,
 		batch_size=1,
 		weight_optim_method = 'AdaGrad',
-		weight_optim_param = {'alpha':0.005, 'epsilon':1e-4},
+		weight_optim_param = {'alpha':0.01, 'epsilon':1e-4},
 		bias_optim_method = 'AdaGrad',
-		bias_optim_param = {'alpha':0.05, 'epsilon':1e-4},
+		bias_optim_param = {'alpha':0.01, 'epsilon':1e-4},
+		max_loss_scale = 1e6,
 	):
 		assert len(self.input_data_store) > 0, 'Input data store is empty.'
 		assert 'train' in self.input_data_store, 'Missing training data.'
@@ -143,7 +144,7 @@ class DCModel:
 				weight_optim_method, weight_optim_param),
 			bias_optim=_build_optimizer(
 				bias_optim_method, bias_optim_param),
-			max_loss_scale=self.preproc_param['max_loss_scale']
+			max_loss_scale=max_loss_scale
 		)
 
 		train_init_net, train_net = instantiator.generate_training_nets(self.model)

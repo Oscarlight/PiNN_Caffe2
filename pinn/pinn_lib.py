@@ -86,14 +86,15 @@ def build_pinn(
 		model.trainer_extra_schema,
 		max_scale=max_loss_scale,
 	)
+	l2_metric = model.BatchDirectMSELoss(
+		model.trainer_extra_schema,
+	)
+	# loss = model.Add([loss, l2_metric], 'total_loss')
 	model.add_loss(loss)
 	# Set output
 	model.output_schema.pred.set_value(pred.get(), unsafe=True)
 	model.output_schema.loss.set_value(loss.get(), unsafe=True)
 	# Add metric
-	l2_metric = model.BatchDirectMSELoss(
-		model.trainer_extra_schema,
-	)
 	model.add_metric_field('l2_metric', l2_metric)
 	return pred, loss
 
