@@ -96,7 +96,8 @@ class DCModel:
 		self,
 		hidden_sig_dims, 
 		hidden_tanh_dims,
-		batch_size=1,
+		train_batch_size=1,
+		eval_batch_size=1,
 		weight_optim_method = 'AdaGrad',
 		weight_optim_param = {'alpha':0.01, 'epsilon':1e-4},
 		bias_optim_method = 'AdaGrad',
@@ -105,14 +106,14 @@ class DCModel:
 	):
 		assert len(self.input_data_store) > 0, 'Input data store is empty.'
 		assert 'train' in self.input_data_store, 'Missing training data.'
-		self.batch_size = batch_size
+		self.batch_size = train_batch_size
 		# Build the date reader net for train net
 		input_data_train = data_reader.build_input_reader(
 			self.model, 
 			self.input_data_store['train'][0], 
 			'minidb', 
 			['sig_input', 'tanh_input', 'label'], 
-			batch_size=batch_size,
+			batch_size=train_batch_size,
 			data_type='train',
 		)
 
@@ -122,8 +123,8 @@ class DCModel:
 				self.model, 
 				self.input_data_store['eval'][0], 
 				'minidb', 
-				['sig_input', 'tanh_input'], 
-				batch_size=batch_size,
+				['eval_sig_input', 'eval_tanh_input', 'eval_label'], 
+				batch_size=eval_batch_size,
 				data_type='eval',
 			)
 
@@ -221,7 +222,7 @@ class DCModel:
 					self.reports['eval_loss'].append(eval_loss)
 					eval_l2_metric = np.asscalar(schema.FetchRecord(
 						self.model.metrics_schema.l2_metric).get())
-					self.reports['eval_metric'].append(eval_l2_metric)
+					self.reports['eval_l2_metric'].append(eval_l2_metric)
 		else:
 			print('>>> Training without Reports (Fastest mode)')
 			workspace.RunNet(
@@ -238,6 +239,7 @@ class DCModel:
 		)
 
 
+	# Depreciate
 	def avg_loss_full_epoch(self, net_name):
 		num_batch_per_epoch = int(
 			self.input_data_store['train'][1] / 
