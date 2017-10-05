@@ -50,9 +50,9 @@ def build_input_reader(
 		# the last one is the label
 		input_data_struct = model.TensorProtosDBInput(
 			[dbreader], 
-			input_names_lst, 
+			input_names_lst,
 			name = 'DBInput_' + data_type,
-			batch_size = batch_size
+			batch_size=batch_size
 		)
 		input_data_lst = [input_data for input_data in input_data_struct]
 		for i in range(len(input_data_lst)-1):
