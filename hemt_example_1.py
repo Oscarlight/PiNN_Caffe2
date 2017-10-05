@@ -30,18 +30,18 @@ if TRAIN:
 	# plot_iv(*dc_model.preproc_data_arrays)
 	# quit()
 	dc_model.build_nets(
-		hidden_sig_dims=[15,1],  # Need to be fine-tuned
-		hidden_tanh_dims=[15,1],
+		hidden_sig_dims=[16,1],  # Need to be fine-tuned
+		hidden_tanh_dims=[16,1],
 		batch_size=732,
 		weight_optim_method = 'AdaGrad',
-		weight_optim_param = {'alpha':0.1, 'epsilon':1e-4},
+		weight_optim_param = {'alpha':0.2, 'epsilon':1e-4},
 		bias_optim_method = 'AdaGrad',
-		bias_optim_param = {'alpha':0.1, 'epsilon':1e-4} 
+		bias_optim_param = {'alpha':0.2, 'epsilon':1e-4} 
 	)
 	start = time.time()
 	dc_model.train_with_eval(
-		num_epoch=int(5e4),
-		report_interval=1000,
+		num_epoch=int(1e6),
+		report_interval=100,
 	)
 	end = time.time()
 	print('Elapsed time: ' + str(end - start))

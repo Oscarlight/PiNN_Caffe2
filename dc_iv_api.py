@@ -32,8 +32,9 @@ class DCModel:
 		self.reports = {
 			'epoch':[],
 			'train_loss':[], 'eval_loss':[],
-			'train_l2_metric':[], 'eval_l2_metric':[],}
-
+			'train_l1_metric':[], 'eval_l1_metric':[],
+			'train_scaled_l1_metric':[], 'eval_scaled_l1_metric':[]
+		}
 
 	def add_data(
 		self,
@@ -56,7 +57,7 @@ class DCModel:
 		preproc_param.setdefault('preproc_threshold_vg', 0.0)
 		preproc_param.setdefault('preproc_slope_vd', -1.0)
 		preproc_param.setdefault('preproc_threshold_vd', 0.0)
-		preproc_param.setdefault('max_loss_scale', 1.)		
+	
 		self.preproc_param = preproc_param
 
 		self.pickle_file_name = self.model_name + '_preproc_param' + '.p'
@@ -96,22 +97,24 @@ class DCModel:
 		self,
 		hidden_sig_dims, 
 		hidden_tanh_dims,
-		batch_size=1,
+		train_batch_size=1,
+		eval_batch_size=1,
 		weight_optim_method = 'AdaGrad',
-		weight_optim_param = {'alpha':0.005, 'epsilon':1e-4},
+		weight_optim_param = {'alpha':0.01, 'epsilon':1e-4},
 		bias_optim_method = 'AdaGrad',
-		bias_optim_param = {'alpha':0.05, 'epsilon':1e-4},
+		bias_optim_param = {'alpha':0.01, 'epsilon':1e-4},
+		max_loss_scale = 1e6,
 	):
 		assert len(self.input_data_store) > 0, 'Input data store is empty.'
 		assert 'train' in self.input_data_store, 'Missing training data.'
-		self.batch_size = batch_size
+		self.batch_size = train_batch_size
 		# Build the date reader net for train net
 		input_data_train = data_reader.build_input_reader(
 			self.model, 
 			self.input_data_store['train'][0], 
 			'minidb', 
 			['sig_input', 'tanh_input', 'label'], 
-			batch_size=batch_size,
+			batch_size=train_batch_size,
 			data_type='train',
 		)
 
@@ -121,8 +124,8 @@ class DCModel:
 				self.model, 
 				self.input_data_store['eval'][0], 
 				'minidb', 
-				['sig_input', 'tanh_input'], 
-				batch_size=batch_size,
+				['eval_sig_input', 'eval_tanh_input', 'eval_label'], 
+				batch_size=eval_batch_size,
 				data_type='eval',
 			)
 
@@ -143,7 +146,7 @@ class DCModel:
 				weight_optim_method, weight_optim_param),
 			bias_optim=_build_optimizer(
 				bias_optim_method, bias_optim_param),
-			max_loss_scale=self.preproc_param['max_loss_scale']
+			max_loss_scale=max_loss_scale
 		)
 
 		train_init_net, train_net = instantiator.generate_training_nets(self.model)
@@ -209,18 +212,29 @@ class DCModel:
 				self.reports['epoch'].append((i + 1) * report_interval)
 				train_loss = np.asscalar(schema.FetchRecord(self.loss).get())
 				self.reports['train_loss'].append(train_loss)
-				train_l2_metric = np.asscalar(schema.FetchRecord(
-					self.model.metrics_schema.l2_metric).get())
-				self.reports['train_l2_metric'].append(train_l2_metric)
+				# Add metrics
+				train_l1_metric = np.asscalar(schema.FetchRecord(
+					self.model.metrics_schema.l1_metric).get())
+				self.reports['train_l1_metric'].append(train_l1_metric)
+				train_scaled_l1_metric = np.asscalar(schema.FetchRecord(
+					self.model.metrics_schema.scaled_l1_metric).get())
+				self.reports['train_scaled_l1_metric'].append(
+					train_scaled_l1_metric)
+
 				if eval_during_training and 'eval_net' in self.net_store:
 					workspace.RunNet(
 						eval_net.Proto().name,
 						num_iter=num_unit_iter)
 					eval_loss = np.asscalar(schema.FetchRecord(self.loss).get())
+					# Add metrics
 					self.reports['eval_loss'].append(eval_loss)
-					eval_l2_metric = np.asscalar(schema.FetchRecord(
-						self.model.metrics_schema.l2_metric).get())
-					self.reports['eval_metric'].append(eval_l2_metric)
+					eval_l1_metric = np.asscalar(schema.FetchRecord(
+						self.model.metrics_schema.l1_metric).get())
+					self.reports['eval_l1_metric'].append(eval_l1_metric)
+					eval_scaled_l1_metric = np.asscalar(schema.FetchRecord(
+						self.model.metrics_schema.scaled_l1_metric).get())
+					self.reports['eval_scaled_l1_metric'].append(
+						eval_scaled_l1_metric)
 		else:
 			print('>>> Training without Reports (Fastest mode)')
 			workspace.RunNet(
@@ -237,6 +251,7 @@ class DCModel:
 		)
 
 
+	# Depreciate
 	def avg_loss_full_epoch(self, net_name):
 		num_batch_per_epoch = int(
 			self.input_data_store['train'][1] / 
@@ -312,8 +327,13 @@ class DCModel:
 		)
 		plt.plot(
 			self.reports['epoch'], 
-			self.reports['train_l2_metric'], 'b', 
-			label='train l2 metric'
+			self.reports['train_scaled_l1_metric'], 'b', 
+			label='train_scaled_l1_metric'
+		)
+		plt.plot(
+			self.reports['epoch'], 
+			self.reports['train_l1_metric'], 'g', 
+			label='train_l1_metric'
 		)
 		if len(self.reports['eval_loss']) > 0:
 			plt.plot(
@@ -323,14 +343,21 @@ class DCModel:
 			)
 			plt.plot(
 				self.reports['epoch'], 
-				self.reports['eval_l2_metric'], 'b--',
-				label='eval l2 metric'
+				self.reports['eval_scaled_l1_metric'], 'b--',
+				label='eval_scaled_l1_metric'
+			)
+			plt.plot(
+				self.reports['epoch'], 
+				self.reports['eval_l1_metric'], 'g--', 
+				label='eval_l1_metric'
 			)
 		plt.legend()
 		plt.show()
 
-	
-
+	def save_loss_trend(self, save_name):
+		# Jashan: please implement this function, save self.report 
+		# to a csv file with headers.
+		pass
 
 	
 # --------------------------------------------------------
