@@ -1,4 +1,13 @@
 # PiNN2: device compact modeling using neural neworks
+## Why PiNN2
+PiNN2 is the **ONLY** platform can model both ON region and subthreshold region of a transistor very accurately and efficiently. It is written in Python and provides easy-to-use APIs.
+
+An example HEMT model is shown below. The dash line is the model and the solid line is the experimental data. The training time is only several minutes using a Macbook Pro Laptop (with NNPACK).
+
+![alt text](exmaple_pics/vd_major_linear.png)
+![alt text](exmaple_pics/vd_major_log.png)
+![alt text](exmaple_pics/vg_major_linear.png)
+![alt text](exmaple_pics/vg_major_log.png)
 
 ## Install
 Install Caffe2 from https://github.com/Oscarlight/caffe2.git. The forked repo contains some new layers created for this project. The instruction about how to install caffe2 is in https://caffe2.ai.

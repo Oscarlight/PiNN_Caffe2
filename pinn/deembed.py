@@ -41,7 +41,7 @@ def deembed(read_data_fun,file_name,lg,ld,rg,rd):
 
     idcinput = listcombine(y11re,y12re)
     iacinput = listcombine(y21re,y22re)
-    qdinput = listcombine(y21im,y22im)
+    qdinput = listcombine(y21im,y22im) # [dQ/dVg, dQ/dVd]
     qginput = listcombine(y11im,y12im)
 
     return vg,vd,id,idcinput,iacinput,qdinput,qginput
@@ -57,5 +57,3 @@ def listcombine(list1,list2):
 
 if __name__ == '__main__':
     pass
-
-
