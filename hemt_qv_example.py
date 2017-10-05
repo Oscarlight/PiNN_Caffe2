@@ -26,27 +26,25 @@ voltage = np.concatenate(
 )
 capas = np.array(data_arrays[6])
 
-scale, vg_shift = preproc.compute_ac_meta(data_arrays[0], data_arrays[1], capas)
+scale, vg_shift = preproc.compute_ac_meta(voltage, capas)
 
 preproc_param = {
 	'scale': scale,
 	'vg_shift': vg_shift,
 }
+
 ac_model = ACQVModel('ac_model', input_dim=2, output_dim=1)
-ac_model.add_data('train', [voltage, capas], preproc_param)
+ac_model.add_data('train', [voltage, np.ones((capas.shape[0],1)), capas], preproc_param)
 ac_model.build_nets([10, 10, 10], batch_size = 1275)
-ac_model.train_with_eval(num_epoch = 10000, report_interval = 0)
+ac_model.train_with_eval(num_epoch = 1000, report_interval = 0)
 ac_model.draw_nets() 
-ac_model.plot_loss_trend()
+# ac_model.plot_loss_trend()
 
 pred_qs, ori_qs = ac_model.predict_qs(data_arrays[0], data_arrays[1])
 
 
 plot_iv(
-	data_arrays[0], data_arrays[1], data_arrays[2],
-	vg_comp = data_arrays[0],
-	vd_comp = data_arrays[1],
-	ids_comp = ori_qs
+	data_arrays[0], data_arrays[1], ori_qs,
 )
 
 

@@ -72,13 +72,12 @@ def truncate(data_arrays, truncate_range, axis):
     return [e[index] for e in data_arrays]
 
 #AC QV preproc
-def ac_qv_preproc(vg, vd, gradient, scale, shift):
-    preproc_vg = (vg-shift) / scale['vg']
-    preproc_vd = vd / scale['vd']
-    gradient_scale =  1/scale['q']
-    preproc_gradient = gradient_scale*gradient
-    #plotgradient(preproc_vg, preproc_vd, preproc_gradient)
-    return preproc_vg, preproc_vd, preproc_gradient
+def ac_qv_preproc(voltages, gradient, scale, shift):
+    preproc_voltages=voltages
+    preproc_voltages[:,0] = (preproc_voltages[:,0]-shift) / scale['vg']
+    preproc_voltages[:,1] /= scale['vd']
+    preproc_gradient = gradient/scale['q']
+    return preproc_voltages, preproc_gradient
 
 def get_restore_q_func(
         scale, shift
@@ -91,12 +90,12 @@ def get_restore_q_func(
                 return ori_gradient
         return restore_integral_func, restore_gradient_func
     
-def compute_ac_meta(vg, vd, gradient):
+def compute_ac_meta(voltage, gradient):
+    vg = voltage[:, 0]
+    vd = voltage[:, 1]
     vg_shift = np.median(vg)-0.0
     vg_scale = max(abs(np.max(vg)-vg_shift)/1.0, abs(np.min(vg)-vg_shift)/1.0)
     vd_scale = max(abs(np.max(vd))/1.0, abs(np.min(vd))/1.0)
-    print(gradient[0])
-    print(np.max(gradient))
     q_scale = max(abs(np.max(gradient))/0.75, abs(np.min(gradient))/0.75)   
     scale = {'vg':vg_scale, 'vd':vd_scale, 'q':q_scale}
     return scale, vg_shift
