@@ -19,7 +19,7 @@ class ACQVModel:
 	def __init__(
 		self, 
 		model_name,
-		input_dim = 1,
+		input_dim=1,
 		output_dim=1,
 	):	
 		self.model_name = model_name

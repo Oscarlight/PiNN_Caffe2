@@ -19,17 +19,21 @@ data_arrays = deembed.deembed(parser.read_s_par_mdm, './HEMT_bo/s_at_f_vs_VgVd.m
 #	dtype = np.float32
 #)
 #adjoint_input = np.ones((100,1), dtype = np.float32)
+voltage = np.concatenate(
+	(np.expand_dims(data_arrays[0], axis=1),
+	 np.expand_dims(data_arrays[1], axis=1)), 
+	axis=1
+)
+capas = np.array(data_arrays[6])
 
-data_arrays = [data_arrays[0]] + [data_arrays[1]] + [data_arrays[6]]
+scale, vg_shift = preproc.compute_ac_meta(data_arrays[0], data_arrays[1], capas)
 
-scale, vg_shift = preproc.compute_ac_meta(data_arrays[0], data_arrays[1], data_arrays[2], checkaccuracy = True)
 preproc_param = {
 	'scale': scale,
 	'vg_shift': vg_shift,
 }
-data_arrays[2] = np.asarray(data_arrays[2])[:, 0]
-ac_model = ACQVModel('ac_model')
-ac_model.add_data('train', data_arrays, preproc_param)
+ac_model = ACQVModel('ac_model', input_dim=2, output_dim=1)
+ac_model.add_data('train', [voltage, capas], preproc_param)
 ac_model.build_nets([10, 10, 10], batch_size = 1275)
 ac_model.train_with_eval(num_epoch = 10000, report_interval = 0)
 ac_model.draw_nets() 

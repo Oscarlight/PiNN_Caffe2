@@ -91,10 +91,12 @@ def get_restore_q_func(
                 return ori_gradient
         return restore_integral_func, restore_gradient_func
     
-def compute_ac_meta(vg, vd, gradient, checkaccuracy = False):
+def compute_ac_meta(vg, vd, gradient):
     vg_shift = np.median(vg)-0.0
     vg_scale = max(abs(np.max(vg)-vg_shift)/1.0, abs(np.min(vg)-vg_shift)/1.0)
     vd_scale = max(abs(np.max(vd))/1.0, abs(np.min(vd))/1.0)
+    print(gradient[0])
+    print(np.max(gradient))
     q_scale = max(abs(np.max(gradient))/0.75, abs(np.min(gradient))/0.75)   
     scale = {'vg':vg_scale, 'vd':vd_scale, 'q':q_scale}
     return scale, vg_shift
