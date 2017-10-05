@@ -1,6 +1,9 @@
 # PiNN2: device compact modeling using neural neworks
 ## Why PiNN2
-PiNN2 is the *ONLY* platform can model both ON region and subthreshold region of a transistor very accurately and efficiently. An example HEMT model is shown below. The dash line is the model and the solid line is the experimental data. The training time is only several seconds in a Macbook Pro (with NNPACK).
+PiNN2 is the **ONLY** platform can model both ON region and subthreshold region of a transistor very accurately and efficiently. It is written in Python and provides easy-to-use APIs.
+
+An example HEMT model is shown below. The dash line is the model and the solid line is the experimental data. The training time is only several minutes using a Macbook Pro Laptop (with NNPACK).
+
 ![alt text](https://github.com/Oscarlight/PiNN_Caffe2/tree/master/exmaple_pics/vd_major_linear.png)
 ![alt text](https://github.com/Oscarlight/PiNN_Caffe2/tree/master/exmaple_pics/vd_major_log.png)
 ![alt text](https://github.com/Oscarlight/PiNN_Caffe2/tree/master/exmaple_pics/vg_major_linear.png)
