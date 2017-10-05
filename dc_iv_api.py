@@ -32,8 +32,9 @@ class DCModel:
 		self.reports = {
 			'epoch':[],
 			'train_loss':[], 'eval_loss':[],
-			'train_l2_metric':[], 'eval_l2_metric':[],}
-
+			'train_l1_metric':[], 'eval_l1_metric':[],
+			'train_scaled_l1_metric':[], 'eval_scaled_l1_metric':[]
+		}
 
 	def add_data(
 		self,
@@ -211,18 +212,29 @@ class DCModel:
 				self.reports['epoch'].append((i + 1) * report_interval)
 				train_loss = np.asscalar(schema.FetchRecord(self.loss).get())
 				self.reports['train_loss'].append(train_loss)
-				train_l2_metric = np.asscalar(schema.FetchRecord(
-					self.model.metrics_schema.l2_metric).get())
-				self.reports['train_l2_metric'].append(train_l2_metric)
+				# Add metrics
+				train_l1_metric = np.asscalar(schema.FetchRecord(
+					self.model.metrics_schema.l1_metric).get())
+				self.reports['train_l1_metric'].append(train_l1_metric)
+				train_scaled_l1_metric = np.asscalar(schema.FetchRecord(
+					self.model.metrics_schema.scaled_l1_metric).get())
+				self.reports['train_scaled_l1_metric'].append(
+					train_scaled_l1_metric)
+
 				if eval_during_training and 'eval_net' in self.net_store:
 					workspace.RunNet(
 						eval_net.Proto().name,
 						num_iter=num_unit_iter)
 					eval_loss = np.asscalar(schema.FetchRecord(self.loss).get())
+					# Add metrics
 					self.reports['eval_loss'].append(eval_loss)
-					eval_l2_metric = np.asscalar(schema.FetchRecord(
-						self.model.metrics_schema.l2_metric).get())
-					self.reports['eval_l2_metric'].append(eval_l2_metric)
+					eval_l1_metric = np.asscalar(schema.FetchRecord(
+						self.model.metrics_schema.l1_metric).get())
+					self.reports['eval_l1_metric'].append(eval_l1_metric)
+					eval_scaled_l1_metric = np.asscalar(schema.FetchRecord(
+						self.model.metrics_schema.scaled_l1_metric).get())
+					self.reports['eval_scaled_l1_metric'].append(
+						eval_scaled_l1_metric)
 		else:
 			print('>>> Training without Reports (Fastest mode)')
 			workspace.RunNet(
@@ -315,8 +327,13 @@ class DCModel:
 		)
 		plt.plot(
 			self.reports['epoch'], 
-			self.reports['train_l2_metric'], 'b', 
-			label='train l2 metric'
+			self.reports['train_scaled_l1_metric'], 'b', 
+			label='train_scaled_l1_metric'
+		)
+		plt.plot(
+			self.reports['epoch'], 
+			self.reports['train_l1_metric'], 'g', 
+			label='train_l1_metric'
 		)
 		if len(self.reports['eval_loss']) > 0:
 			plt.plot(
@@ -326,8 +343,13 @@ class DCModel:
 			)
 			plt.plot(
 				self.reports['epoch'], 
-				self.reports['eval_l2_metric'], 'b--',
-				label='eval l2 metric'
+				self.reports['eval_scaled_l1_metric'], 'b--',
+				label='eval_scaled_l1_metric'
+			)
+			plt.plot(
+				self.reports['epoch'], 
+				self.reports['eval_l1_metric'], 'g--', 
+				label='eval_l1_metric'
 			)
 		plt.legend()
 		plt.show()

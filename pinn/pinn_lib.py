@@ -82,21 +82,19 @@ def build_pinn(
 
 	pred = model.Mul([sig_h, tanh_h], model.trainer_extra_schema.prediction)
 	# Add loss
-	loss = model.BatchDirectWeightedL1Loss(
+	assert max_loss_scale > 1, 'max loss scale must > 1'
+	loss_and_metrics = model.BatchDirectWeightedL1Loss(
 		model.trainer_extra_schema,
 		max_scale=max_loss_scale,
 	)
-	l2_metric = model.BatchDirectMSELoss(
-		model.trainer_extra_schema,
-	)
-	# loss = model.Add([loss, l2_metric], 'total_loss')
-	model.add_loss(loss)
+	model.add_loss(loss_and_metrics.loss)
 	# Set output
 	model.output_schema.pred.set_value(pred.get(), unsafe=True)
-	model.output_schema.loss.set_value(loss.get(), unsafe=True)
+	model.output_schema.loss.set_value(loss_and_metrics.loss.get(), unsafe=True)
 	# Add metric
-	model.add_metric_field('l2_metric', l2_metric)
-	return pred, loss
+	model.add_metric_field('l1_metric', loss_and_metrics.l1_metric)
+	model.add_metric_field('scaled_l1_metric', loss_and_metrics.scaled_l1_metric)
+	return pred, loss_and_metrics.loss
 
 def init_model_with_schemas(
 	model_name, 
