@@ -73,15 +73,18 @@ class ACQVModel:
 			self.preproc_param['scale'], 
 			self.preproc_param['vg_shift']
 		)
-		#self.preproc_data_arrays=preproc_data_arrays
+		self.preproc_data_arrays=preproc_data_arrays
 		# Only expand the dim if the number of dimension is 1
 		preproc_data_arrays = [np.expand_dims(
 			x, axis=1) if x.ndim == 1 else x for x in preproc_data_arrays]
 		preproc_data_arrays[0] = preproc_data_arrays[0].astype(np.float32)
 		preproc_data_arrays[1] = preproc_data_arrays[1].astype(np.float32)
 		preproc_data_arrays[2] = preproc_data_arrays[2].astype(np.float32)
+		print(preproc_data_arrays[0].shape)
+		print(preproc_data_arrays[1].shape)
+		print(preproc_data_arrays[2].shape)
 		# Write to database
-		data_reader.write_db('minidb', db_name, preproc_data_arrays)
+		data_reader.write_db('minidb', db_name, data_arrays)
 		self.input_data_store[data_tag] = [db_name, num_example]
 
 	def build_nets(
@@ -125,7 +128,7 @@ class ACQVModel:
 		self.origin_pred, self.adjoint_pred, self.loss = build_adjoint_mlp(
 			self.model,
 			input_dim = self.input_dim,
-			hidden_dims = self.hidden_dims,
+			hidden_dims = hidden_dims,
 			output_dim = self.output_dim,
 			optim = optimizer.AdagradOptimizer(alpha=0.01, epsilon = 1e-4)
 		)
@@ -153,7 +156,7 @@ class ACQVModel:
 
 
 	def train_with_eval(
-		self,
+		self, 
 		num_epoch=1,
 		report_interval=0,
 		eval_during_training=False,
@@ -272,9 +275,11 @@ class ACQVModel:
 			self.preproc_param['scale'], 
 			self.preproc_param['vg_shift']
 		)
+		plt.plot(vg, _qs, 'r')
+		plt.plot(vg, preproc_data_arrays[2], 'b')
 		qs = restore_integral_func(_qs)
 		gradients = restore_gradient_func(preproc_data_arrays[2])
-		return qs, gradients
+		return _qs, qs
 
 	def plot_loss_trend(self):
 		plt.plot(self.reports['epoch'], self.reports['train_loss'])

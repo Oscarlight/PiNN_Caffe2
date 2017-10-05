@@ -59,10 +59,10 @@ def compute_dc_meta(vg, vd, ids):
 def truncate(data_arrays, truncate_range, axis):
 	# The data within the truncate_range will be removed, the rest will be returned.
 
-	assert (truncate_range[0] <= np.max(data_arrays[axis]) and truncate_range[1] > np.min(data_arrays[axis])),\
+    assert (truncate_range[0] <= np.max(data_arrays[axis]) and truncate_range[1] > np.min(data_arrays[axis])),\
 		'Truncate range is out of data range, abort!'
 
-	index = np.logical_not(
+    index = np.logical_not(
 		np.logical_and(
 			data_arrays[axis] > truncate_range[0],
 			data_arrays[axis] <= truncate_range[1]
@@ -75,7 +75,9 @@ def truncate(data_arrays, truncate_range, axis):
 def ac_qv_preproc(vg, vd, gradient, scale, shift):
     preproc_vg = (vg-shift) / scale['vg']
     preproc_vd = vd / scale['vd']
-    preproc_gradient = gradient/scale['q']
+    gradient_scale =  1/scale['q']
+    preproc_gradient = gradient_scale*gradient
+    #plotgradient(preproc_vg, preproc_vd, preproc_gradient)
     return preproc_vg, preproc_vd, preproc_gradient
 
 def get_restore_q_func(
@@ -99,7 +101,7 @@ def compute_ac_meta(vg, vd, gradient, checkaccuracy = False):
 
 
 def plotgradient(vg, vd, gradient):
-    gradient = np.asarray(gradient)
+    #gradient = np.asarray(gradient)
     dqdvg = gradient[:, 0]
     dqdvd = gradient[:, 1]
     plt.plot(vg, dqdvg, 'r')
