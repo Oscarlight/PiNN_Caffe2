@@ -27,7 +27,8 @@ preproc_param = {
 	'scale': scale,
 	'vg_shift': vg_shift,
 }
-data_arrays[2] = np.asarray(data_arrays[2])[:, 0]
+data_arrays[2] = np.asarray(data_arrays[2])
+#data_arrays[2] = np.asarray(data_arrays[2])[:, 0]
 ac_model = ACQVModel('ac_model')
 ac_model.add_data('train', data_arrays, preproc_param)
 ac_model.build_nets([10, 10, 10], batch_size = 1275)
