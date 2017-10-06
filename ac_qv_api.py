@@ -41,13 +41,16 @@ class ACQVModel:
 		override=True,
 	):
 		'''
-		data_arrays are in the order of origin_input, adjoint_input, adjoint_label
+		data_arrays are in the order of origin_input, adjoint_label
+		origin_input and adjoint_label must be numpy arrays
 		'''
-		assert len(data_arrays) == 3, 'Incorrect number of input data'
-		# number of examples and same length assertion
-		num_example = len(data_arrays[0])
-		for data in data_arrays[1:]:
-			assert len(data) == num_example, 'Mismatch dimensions'
+		#check length and dimensions of origin input and adjoint label 
+		assert len(data_arrays) == 2, 'Incorrect number of input data'
+		origin_input = data_arrays[0]
+		adjoint_label = data_arrays[1]
+		assert origin_input.shape == adjoint_label.shape, 'Mismatch dimensions'
+		
+		#Set preprocess parameters and database name
 		self.preproc_param = preproc_param
 		self.pickle_file_name = self.model_name + '_preproc_param' + '.p'
 		db_name = self.model_name + '_' + data_tag + '.minidb'
@@ -68,24 +71,34 @@ class ACQVModel:
 			self.preproc_param, 
 			open(self.pickle_file_name, 'wb')
 		)
-		preproc_data_arrays = preproc.ac_qv_preproc(
-			data_arrays[0], data_arrays[2],
+
+		#Preprocess the data
+		origin_input, adjoint_label = preproc.ac_qv_preproc(
+			origin_input, adjoint_label,
 			self.preproc_param['scale'], 
 			self.preproc_param['vg_shift']
 		)
-		self.preproc_data_arrays=preproc_data_arrays
+		
 		# Only expand the dim if the number of dimension is 1
-		preproc_data_arrays = [np.expand_dims(
-			x, axis=1) if x.ndim == 1 else x for x in preproc_data_arrays]
-		preproc_data_arrays[0] = preproc_data_arrays[0].astype(np.float32)
-		preproc_data_arrays[1] = preproc_data_arrays[1].astype(np.float32)
-		data_arrays[1]=data_arrays[1].astype(np.float32)
+		origin_input = np.expand_dims(
+			origin_input, axis=1) if  origin_input.ndim == 1 else origin_input
+		adjoint_label = np.expand_dims(
+			adjoint_label, axis=1) if adjoint_label.ndim == 1 else adjoint_label		
+
+		# Create adjoint_input data
+		adjoint_input = np.ones((origin_input.shape[0], 1))
+
+		# Set the data type to np float for origin input, adjoint input, adjoint label
+		origin_input = origin_input.astype(np.float32)
+		adjoint_input = adjoint_input.astype(np.float32)
+		adjoint_label = adjoint_label.astype(np.float32)
+		
 		# Write to database
 		data_reader.write_db(
 			'minidb', db_name, 
-			[preproc_data_arrays[0], data_arrays[1], preproc_data_arrays[1]]
+			[origin_input, adjoint_input, adjoint_label]
 		)
-		self.input_data_store[data_tag] = [db_name, num_example]
+		self.input_data_store[data_tag] = [db_name, origin_input.shape[0]]
 
 	def build_nets(
 		self,
@@ -250,36 +263,42 @@ class ACQVModel:
 				
 
 	def predict_qs(self, voltages):
-		# preproc the input
-		vg = vg.astype(np.float32)
-		vd = vd.astype(np.float32)
+		# requires voltage to be vg, vd
+		# both vg and vd must be numpy arrays
+
+		# preprocess the origin input and create adjoint input
 		if len(self.preproc_param) == 0:
 			self.preproc_param = pickle.load(
 				open(self.pickle_file_name, "rb" )
 			)
-		dummy_qs = np.zeros(len(vg))
-		preproc_data_arrays = preproc.ac_qv_preproc(
-			vg, vd, dummy_qs, 
+		dummy_qs = np.zeros(voltages[0].shape[0])
+		voltages, dummy_qs = preproc.ac_qv_preproc(
+			voltages, dummy_qs, 
 			self.preproc_param['scale'], 
 			self.preproc_param['vg_shift']
 		)
-		_preproc_data_arrays = [np.expand_dims(
-			x, axis=1) for x in preproc_data_arrays]
-		workspace.FeedBlob('DBInput_train/origin_input', _preproc_data_arrays[0])
-		workspace.FeedBlob('DBInput_train/adjoint_input', _preproc_data_arrays[1])
+		adjoint_input = np.ones((voltages[0].shape[0], 1))
+
+		# Expand dimensions of input and set data type of inputs
+		voltages = np.expand_dims(
+			voltages, axis=1)
+		voltages = voltages.astype(np.float32)
+		adjoint_input = adjoint_input.astype(np.float32)
+
+		workspace.FeedBlob('DBInput_train/origin_input', voltages)
+		workspace.FeedBlob('DBInput_train/adjoint_input', adjoint_input)
 		pred_net = self.net_store['pred_net']
 		workspace.RunNet(pred_net)
 
-		_qs = np.squeeze(schema.FetchRecord(self.origin_pred).get())
+		qs = np.squeeze(schema.FetchRecord(self.origin_pred).get())
+		gradients = np.squeeze(schema.FetchRecord(self.adjoint_pred).get())
 		restore_integral_func, restore_gradient_func = preproc.get_restore_q_func( 
 			self.preproc_param['scale'], 
 			self.preproc_param['vg_shift']
 		)
-		plt.plot(vg, _qs, 'r')
-		plt.plot(vg, preproc_data_arrays[2], 'b')
-		qs = restore_integral_func(_qs)
-		gradients = restore_gradient_func(preproc_data_arrays[2])
-		return _qs, qs
+		original_qs = restore_integral_func(qs)
+		original_gradients = restore_gradient_func(gradients)
+		return qs, original_qs, gradients, original_gradients
 
 	def plot_loss_trend(self):
 		plt.plot(self.reports['epoch'], self.reports['train_loss'])
@@ -295,43 +314,45 @@ class ACQVModel:
 # ----------------   Global functions  -------------------
 # --------------------------------------------------------
 
-
-def predict_ids(model_name, vg, vd):
+def predict_qs(model_name, voltages):
 	workspace.ResetWorkspace()
 
-	# preproc the input
-	vg = vg.astype(np.float32)
-	vd = vd.astype(np.float32)
-	#if len(self.preproc_param) == 0:
+	# requires voltage to be vg, vd
+	# both vg and vd must be numpy arrays
+
+	# preprocess the origin input and create adjoint input
 	preproc_param = pickle.load(
 			open(model_name+'_preproc_param.p', "rb" )
 		)
-	dummy_ids = np.zeros(len(vg))
-	preproc_data_arrays = preproc.dc_iv_preproc(
-		vg, vd, dummy_ids, 
+	dummy_qs = np.zeros(voltages[0].shape[0])
+	voltages, dummy_qs = preproc.ac_qv_preproc(
+		voltages, dummy_qs, 
 		preproc_param['scale'], 
-		preproc_param['vg_shift'], 
-		slope=preproc_param['preproc_slope'],
-		threshold=preproc_param['preproc_threshold']
+		preproc_param['vg_shift']
 	)
-	_preproc_data_arrays = [np.expand_dims(
-		x, axis=1) for x in preproc_data_arrays]
-	workspace.FeedBlob('DBInput_train/sig_input', _preproc_data_arrays[0])
-	workspace.FeedBlob('DBInput_train/tanh_input', _preproc_data_arrays[1])
-	pred_net = exporter.load_net(model_name+'_init', model_name+'_predict')
-	#print(type(pred_net.name))
+	adjoint_input = np.ones((voltages[0].shape[0], 1))
 
+	# Expand dimensions of input and set data type of inputs
+	voltages = np.expand_dims(
+		voltages, axis=1)
+	voltages = voltages.astype(np.float32)
+	adjoint_input = adjoint_input.astype(np.float32)
+
+	workspace.FeedBlob('DBInput_train/origin_input', voltages)
+	workspace.FeedBlob('DBInput_train/adjoint_input', adjoint_input)
+	pred_net = exporter.load_net(model_name+'_init', model_name+'_predict')
 	workspace.RunNet(pred_net)
 
-	_ids = np.squeeze(workspace.FetchBlob('prediction'))
-	restore_id_func = preproc.get_restore_id_func( 
+	qs = np.squeeze(schema.FetchBlob('prediction'))
+	gradients = np.squeeze(schema.FetchBlob('adjoint_prediction'))
+	restore_integral_func, restore_gradient_func = preproc.get_restore_q_func( 
 		preproc_param['scale'], 
-		preproc_param['vg_shift'], 
-		slope=preproc_param['preproc_slope'],
-		threshold=preproc_param['preproc_threshold']
+		preproc_param['vg_shift']
 	)
-	ids = restore_id_func(_ids, preproc_data_arrays[0])
-	return _ids, ids
+	original_qs = restore_integral_func(qs)
+	original_gradients = restore_gradient_func(gradients)
+	return qs, original_qs, gradients, original_gradients
+
 
 def plot_iv( 
 	vg, vd, ids, 
