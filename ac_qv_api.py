@@ -19,7 +19,7 @@ class ACQVModel:
 	def __init__(
 		self, 
 		model_name,
-		input_dim = 1,
+		input_dim=1,
 		output_dim=1,
 	):	
 		self.model_name = model_name
@@ -41,7 +41,7 @@ class ACQVModel:
 		override=True,
 	):
 		'''
-		data_arrays are in the order of sig_input, tanh_input, and label
+		data_arrays are in the order of origin_input, adjoint_input, adjoint_label
 		'''
 		assert len(data_arrays) == 3, 'Incorrect number of input data'
 		# number of examples and same length assertion
@@ -69,7 +69,7 @@ class ACQVModel:
 			open(self.pickle_file_name, 'wb')
 		)
 		preproc_data_arrays = preproc.ac_qv_preproc(
-			data_arrays[0], data_arrays[1], data_arrays[2], 
+			data_arrays[0], data_arrays[2],
 			self.preproc_param['scale'], 
 			self.preproc_param['vg_shift']
 		)
@@ -79,12 +79,12 @@ class ACQVModel:
 			x, axis=1) if x.ndim == 1 else x for x in preproc_data_arrays]
 		preproc_data_arrays[0] = preproc_data_arrays[0].astype(np.float32)
 		preproc_data_arrays[1] = preproc_data_arrays[1].astype(np.float32)
-		preproc_data_arrays[2] = preproc_data_arrays[2].astype(np.float32)
-		print(preproc_data_arrays[0].shape)
-		print(preproc_data_arrays[1].shape)
-		print(preproc_data_arrays[2].shape)
+		data_arrays[1]=data_arrays[1].astype(np.float32)
 		# Write to database
-		data_reader.write_db('minidb', db_name, data_arrays)
+		data_reader.write_db(
+			'minidb', db_name, 
+			[preproc_data_arrays[0], data_arrays[1], preproc_data_arrays[1]]
+		)
 		self.input_data_store[data_tag] = [db_name, num_example]
 
 	def build_nets(
@@ -249,7 +249,7 @@ class ACQVModel:
 				f.write(graph.create_png())
 				
 
-	def predict_qs(self, vg, vd):
+	def predict_qs(self, voltages):
 		# preproc the input
 		vg = vg.astype(np.float32)
 		vd = vd.astype(np.float32)
