@@ -263,7 +263,8 @@ class ACQVModel:
 				
 
 	def predict_qs(self, voltages):
-		# requires voltage to be vg, vd
+		# requires voltages is an numpy array of size 
+		# (batch size, input_dimension) to be vg, vd
 		# both vg and vd must be numpy arrays
 
 		# preprocess the origin input and create adjoint input
@@ -317,7 +318,8 @@ class ACQVModel:
 def predict_qs(model_name, voltages):
 	workspace.ResetWorkspace()
 
-	# requires voltage to be vg, vd
+	# requires voltages to be a numpy array of size
+	# (batch size, input_dimension) to be vg, vd
 	# both vg and vd must be numpy arrays
 
 	# preprocess the origin input and create adjoint input
