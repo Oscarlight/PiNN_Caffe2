@@ -104,6 +104,8 @@ class ACQVModel:
 		self,
 		hidden_dims, 
 		batch_size=1,
+		optim_method = 'AdaGrad',
+		optim_param = {'alpha':0.01, 'epsilon':1e-4},
 	):
 		assert len(self.input_data_store) > 0, 'Input data store is empty.'
 		assert 'train' in self.input_data_store, 'Missing training data.'
@@ -143,7 +145,8 @@ class ACQVModel:
 			input_dim = self.input_dim,
 			hidden_dims = hidden_dims,
 			output_dim = self.output_dim,
-			optim = optimizer.AdagradOptimizer(alpha=0.01, epsilon = 1e-4)
+			optim=_build_optimizer(
+				optim_method, optim_param),
 		)
 
 		train_init_net, train_net = instantiator.generate_training_nets(self.model)
@@ -230,28 +233,6 @@ class ACQVModel:
 			self.model, 
 			self.model_name+'_init', self.model_name+'_predict'
 		)
-
-
-	def avg_loss_full_epoch(self, net_name):
-		num_batch_per_epoch = int(
-			self.input_data_store['train'][1] / 
-			self.batch_size
-		)
-		if not self.input_data_store['train'][1] % self.batch_size == 0:
-			num_batch_per_epoch += 1
-			print('[Warning]: batch_size cannot be divided. ' + 
-				'Run on {} example instead of {}'.format(
-						num_batch_per_epoch * self.batch_size,
-						self.input_data_store['train'][1]
-					)
-				)
-		# Get the average loss of all data
-		loss = 0.
-		for j in range(num_batch_per_epoch):
-			workspace.RunNet(self.net_store[net_name])
-			loss += np.asscalar(schema.FetchRecord(self.loss).get())
-		loss /= num_batch_per_epoch
-		return loss
 
 
 	def draw_nets(self):
