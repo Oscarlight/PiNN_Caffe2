@@ -264,8 +264,8 @@ class ACQVModel:
 
 	def predict_qs(self, voltages):
 		# requires voltages is an numpy array of size 
-		# (batch size, input_dimension) to be vg, vd
-		# both vg and vd must be numpy arrays
+		# (batch size, input_dimension)
+		# the first dimension is Vg and the second dimenstion is Vd
 
 		# preprocess the origin input and create adjoint input
 		if len(self.preproc_param) == 0:
@@ -318,9 +318,9 @@ class ACQVModel:
 def predict_qs(model_name, voltages):
 	workspace.ResetWorkspace()
 
-	# requires voltages to be a numpy array of size
-	# (batch size, input_dimension) to be vg, vd
-	# both vg and vd must be numpy arrays
+	# requires voltages is an numpy array of size 
+	# (batch size, input_dimension)
+	# the first dimension is Vg and the second dimenstion is Vd
 
 	# preprocess the origin input and create adjoint input
 	preproc_param = pickle.load(
