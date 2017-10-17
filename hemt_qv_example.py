@@ -37,9 +37,11 @@ preproc_param = {
 	'vg_shift': vg_shift,
 }
 
+voltage_input = np.copy(voltage)
+capas_input = np.copy(capas)
 
 ac_model = ACQVModel('ac_model', input_dim=2, output_dim=1)
-ac_model.add_data('train', [voltage, capas], preproc_param)
+ac_model.add_data('train', [voltage_input, capas_input], preproc_param)
 ac_model.build_nets(
 	[16, 16], 
 	batch_size = 1275,
@@ -53,8 +55,10 @@ ac_model.train_with_eval(
 ac_model.draw_nets() 
 # ac_model.plot_loss_trend()
 
+voltage_pred_input = np.copy(voltage)
+
 pred_qs, ori_qs, pred_grad, ori_grad = ac_model.predict_qs(
-	voltage)
+	voltage_pred_input)
 
 # Plot predicted q
 plot_iv(

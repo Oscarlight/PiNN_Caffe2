@@ -260,14 +260,14 @@ class ACQVModel:
 			self.preproc_param['vg_shift']
 		)
 		adjoint_input = np.ones((voltages[0].shape[0], 1))
-
+		
 		# Expand dimensions of input and set data type of inputs
-		voltages = np.expand_dims(
+		origin_input = np.expand_dims(
 			voltages, axis=1)
-		voltages = voltages.astype(np.float32)
+		origin_input = origin_input.astype(np.float32)
 		adjoint_input = adjoint_input.astype(np.float32)
 
-		workspace.FeedBlob('DBInput_train/origin_input', voltages)
+		workspace.FeedBlob('DBInput_train/origin_input', origin_input)
 		workspace.FeedBlob('DBInput_train/adjoint_input', adjoint_input)
 		pred_net = self.net_store['pred_net']
 		workspace.RunNet(pred_net)
@@ -314,7 +314,7 @@ def predict_qs(model_name, voltages):
 		preproc_param['vg_shift']
 	)
 	adjoint_input = np.ones((voltages[0].shape[0], 1))
-
+	
 	# Expand dimensions of input and set data type of inputs
 	voltages = np.expand_dims(
 		voltages, axis=1)
@@ -334,6 +334,11 @@ def predict_qs(model_name, voltages):
 	)
 	original_qs = restore_integral_func(qs)
 	original_gradients = restore_gradient_func(gradients)
+	voltages = restore_voltages(
+		self.preproc_param['scale'],
+		self.preproc_param['shift'],
+		input_voltages
+	)
 	return qs, original_qs, gradients, original_gradients
 
 
