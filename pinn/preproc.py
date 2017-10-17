@@ -72,12 +72,16 @@ def truncate(data_arrays, truncate_range, axis):
     return [e[index] for e in data_arrays]
 
 #AC QV preproc
-def ac_qv_preproc(voltages, gradient, scale, shift):
-    preproc_voltages=voltages
+def ac_qv_preproc(preproc_voltages, gradient, scale, shift):
     preproc_voltages[:,0] = (preproc_voltages[:,0]-shift) / scale['vg']
     preproc_voltages[:,1] /= scale['vd']
     preproc_gradient = gradient/scale['q']
     return preproc_voltages, preproc_gradient
+
+def restore_voltages(scale, shift, voltages):
+	voltages[:, 0] = (voltages[:,0]*scale['vg']) + shift
+	voltages[:, 1] *= scale['vd']
+	return voltages
 
 def get_restore_q_func(
         scale, shift

@@ -37,7 +37,6 @@ preproc_param = {
 	'vg_shift': vg_shift,
 }
 
-
 ac_model = ACQVModel('ac_model', input_dim=2, output_dim=1)
 ac_model.add_data('train', [voltage, capas], preproc_param)
 ac_model.build_nets(
