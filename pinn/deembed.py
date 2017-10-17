@@ -1,9 +1,11 @@
 import numpy as np
 import scipy.linalg as linalg
 
-def deembed(read_data_fun,file_name,lg,ld,rg,rd):
-    s11arr,s12arr,s21arr,s22arr,freq,vg,vd,id = read_data_fun(file_name)
-    yfinal = []
+def deembed(
+    read_data_fun,file_name,
+    lg=1e-12,ld=1e-12,rg=1,rd=1):
+    s11arr,s12arr,s21arr,s22arr,freq,vg,vd,ids = read_data_fun(file_name)
+
     y11re = []
     y12re = []
     y21re = []
@@ -26,7 +28,6 @@ def deembed(read_data_fun,file_name,lg,ld,rg,rd):
             [z[0,0]-1j*omega*lg-rg, z[0,1]],
             [z[1,0],z[1,1]-1j*omega*ld-rd]])
 
-        yfinal.append(linalg.inv(znew))
         y = linalg.inv(znew)
 
         y11re.append(y[0][0].real)
@@ -41,18 +42,17 @@ def deembed(read_data_fun,file_name,lg,ld,rg,rd):
 
     idcinput = listcombine(y11re,y12re)
     iacinput = listcombine(y21re,y22re)
-    qdinput = listcombine(y21im,y22im) # [dQ/dVg, dQ/dVd]
-    qginput = listcombine(y11im,y12im)
+    qdinput = listcombine(y21im,y22im) # [dQd/dVg, dQd/dVd]
+    qginput = listcombine(y11im,y12im) # [dQg/dVg, dQg/dVd]
 
-    return vg,vd,id,idcinput,iacinput,qdinput,qginput
+    return vg,vd,ids,idcinput,iacinput,qdinput,qginput
 
 def listcombine(list1,list2):
-    result = []
-    x = list1
-    y = list2
-    for i in range(0, np.size(x)):
-        result.append([x[i],y[i]])
-    return result
+    return np.concatenate(
+        (np.expand_dims(list1, axis=1),
+         np.expand_dims(list2, axis=1)),
+         axis=1
+        )
 
 
 if __name__ == '__main__':
