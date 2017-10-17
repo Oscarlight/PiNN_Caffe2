@@ -78,6 +78,11 @@ def ac_qv_preproc(preproc_voltages, gradient, scale, shift):
     preproc_gradient = gradient/scale['q']
     return preproc_voltages, preproc_gradient
 
+def restore_voltages(scale, shift, voltages):
+	voltages[:, 0] = (voltages[:,0]*scale['vg']) + shift
+	voltages[:, 1] *= scale['vd']
+	return voltages
+
 def get_restore_q_func(
         scale, shift
 ):

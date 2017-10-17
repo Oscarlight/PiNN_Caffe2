@@ -46,9 +46,9 @@ class ACQVModel:
 		'''
 		#check length and dimensions of origin input and adjoint label 
 		assert len(data_arrays) == 2, 'Incorrect number of input data'
-		origin_input = data_arrays[0]
-		adjoint_label = data_arrays[1]
-		assert origin_input.shape == adjoint_label.shape, 'Mismatch dimensions'
+		voltages = data_arrays[0]
+		capas = data_arrays[1]
+		assert voltages.shape == capas.shape, 'Mismatch dimensions'
 		
 		#Set preprocess parameters and database name
 		self.preproc_param = preproc_param
@@ -73,17 +73,17 @@ class ACQVModel:
 		)
 
 		#Preprocess the data
-		origin_input, adjoint_label = preproc.ac_qv_preproc(
-			origin_input, adjoint_label,
+		voltages, capas = preproc.ac_qv_preproc(
+			voltages, capas,
 			self.preproc_param['scale'], 
 			self.preproc_param['vg_shift']
 		)
 		
 		# Only expand the dim if the number of dimension is 1
 		origin_input = np.expand_dims(
-			origin_input, axis=1) if  origin_input.ndim == 1 else origin_input
+			voltages, axis=1) if  voltages.ndim == 1 else voltages
 		adjoint_label = np.expand_dims(
-			adjoint_label, axis=1) if adjoint_label.ndim == 1 else adjoint_label		
+			capas, axis=1) if capas.ndim == 1 else capas		
 
 		# Create adjoint_input data
 		adjoint_input = np.ones((origin_input.shape[0], 1))
@@ -99,6 +99,12 @@ class ACQVModel:
 			[origin_input, adjoint_input, adjoint_label]
 		)
 		self.input_data_store[data_tag] = [db_name, origin_input.shape[0]]
+		preproc.restore_voltages(
+			self.preproc_param['scale'],
+			self.preproc_param['vg_shift'],
+			voltages
+		)
+
 
 	def build_nets(
 		self,
@@ -249,6 +255,7 @@ class ACQVModel:
 		# the first dimension is Vg and the second dimenstion is Vd
 
 		# preprocess the origin input and create adjoint input
+		# voltages array is unchanged 		
 		if len(self.preproc_param) == 0:
 			self.preproc_param = pickle.load(
 				open(self.pickle_file_name, "rb" )
@@ -280,6 +287,11 @@ class ACQVModel:
 		)
 		original_qs = restore_integral_func(qs)
 		original_gradients = restore_gradient_func(gradients)
+		preproc.restore_voltages(
+			self.preproc_param['scale'],
+			self.preproc_param['vg_shift'],
+			voltages
+		)
 		return qs, original_qs, gradients, original_gradients
 
 	def plot_loss_trend(self):
@@ -316,9 +328,9 @@ def predict_qs(model_name, voltages):
 	adjoint_input = np.ones((voltages[0].shape[0], 1))
 	
 	# Expand dimensions of input and set data type of inputs
-	voltages = np.expand_dims(
+	origin_input = np.expand_dims(
 		voltages, axis=1)
-	voltages = voltages.astype(np.float32)
+	origin_input = origin_input.astype(np.float32)
 	adjoint_input = adjoint_input.astype(np.float32)
 
 	workspace.FeedBlob('DBInput_train/origin_input', voltages)
@@ -334,10 +346,10 @@ def predict_qs(model_name, voltages):
 	)
 	original_qs = restore_integral_func(qs)
 	original_gradients = restore_gradient_func(gradients)
-	voltages = restore_voltages(
+	preproc.restore_voltages(
 		self.preproc_param['scale'],
-		self.preproc_param['shift'],
-		input_voltages
+		self.preproc_param['vg_shift'],
+		voltages
 	)
 	return qs, original_qs, gradients, original_gradients
 
