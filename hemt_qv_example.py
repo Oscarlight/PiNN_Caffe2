@@ -10,8 +10,7 @@ from matplotlib import cm
 
 data_arrays = deembed.deembed(
 	parser.read_s_par_mdm, 
-	'./HEMT_bo/s_at_f_vs_VgVd.mdm', 
-	lg=1e-12, ld=1e-12, rg=1, rd=2
+	'./HEMT_bo/s_at_f_vs_VgVd.mdm',
 )
 
 #voltage is vg, vd
@@ -22,13 +21,6 @@ voltage = np.concatenate(
 )
 
 capas = data_arrays[6]
-
-# !!! The deembed may be buggy !!!
-plot_iv(
-	voltage[:, 0], voltage[:, 1], capas[:, 0],
-	styles = ['vg_major_linear', 'vd_major_linear']
-)
-# quit()
 
 scale, vg_shift = preproc.compute_ac_meta(voltage, capas)
 
