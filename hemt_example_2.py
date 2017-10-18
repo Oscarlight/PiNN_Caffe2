@@ -39,12 +39,17 @@ dc_model.build_nets(
 	weight_optim_param = {'alpha':0.1, 'epsilon':1e-4},
 	bias_optim_method = 'AdaGrad',
 	bias_optim_param = {'alpha':0.1, 'epsilon':1e-4},
-	max_loss_scale = 5e5, # to improve subthreshold modeling accuracy	
+	loss_function = 'scaled_l1', # or 'scaled_l2'
+	max_loss_scale = 5e5, 
+	# to improve subthreshold modeling accuracy
+	# for 'scaled_l1': max_loss_scale: ~5e5	
+	# for 'scaled_l2' : max_loss_scale: > 5e9
+	# Note 'scaled_l1' performed better than 'scaled_l2' 
 )
 
 dc_model.train_with_eval(
 	num_epoch=int(1e5),
-	report_interval=10000,
+	report_interval=0,
 	eval_during_training=False
 )
 

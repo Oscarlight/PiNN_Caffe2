@@ -1,5 +1,4 @@
 import numpy as np
-from scipy.integrate import simps 
 import matplotlib.pyplot as plt
 
  

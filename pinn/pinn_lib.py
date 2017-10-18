@@ -54,6 +54,7 @@ def build_pinn(
 	sig_net_dim=[1], tanh_net_dim=[1],
 	weight_optim=None,
 	bias_optim=None,
+	loss_function='scaled_l1',
 	max_loss_scale=1.0,
 ):
 	'''
@@ -83,17 +84,27 @@ def build_pinn(
 	pred = model.Mul([sig_h, tanh_h], model.trainer_extra_schema.prediction)
 	# Add loss
 	assert max_loss_scale > 1, 'max loss scale must > 1'
+
 	loss_and_metrics = model.BatchDirectWeightedL1Loss(
 		model.trainer_extra_schema,
 		max_scale=max_loss_scale,
 	)
+	# Add metric
+	model.add_metric_field('l1_metric', loss_and_metrics.l1_metric)
+	model.add_metric_field('scaled_l1_metric', loss_and_metrics.scaled_l1_metric)
+
+	if loss_function == 'scaled_l2':
+		print('[Pi-NN Build Net]: Use scaled_l2 loss, but l1 metrics.')
+		loss_and_metrics = model.BatchDirectWeightedL2Loss(
+			model.trainer_extra_schema,
+			max_scale=max_loss_scale,
+		)
+
 	model.add_loss(loss_and_metrics.loss)
 	# Set output
 	model.output_schema.pred.set_value(pred.get(), unsafe=True)
 	model.output_schema.loss.set_value(loss_and_metrics.loss.get(), unsafe=True)
-	# Add metric
-	model.add_metric_field('l1_metric', loss_and_metrics.l1_metric)
-	model.add_metric_field('scaled_l1_metric', loss_and_metrics.scaled_l1_metric)
+
 	return pred, loss_and_metrics.loss
 
 def init_model_with_schemas(

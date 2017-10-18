@@ -99,10 +99,11 @@ class DCModel:
 		hidden_tanh_dims,
 		train_batch_size=1,
 		eval_batch_size=1,
-		weight_optim_method = 'AdaGrad',
-		weight_optim_param = {'alpha':0.01, 'epsilon':1e-4},
-		bias_optim_method = 'AdaGrad',
-		bias_optim_param = {'alpha':0.01, 'epsilon':1e-4},
+		weight_optim_method='AdaGrad',
+		weight_optim_param={'alpha':0.01, 'epsilon':1e-4},
+		bias_optim_method='AdaGrad',
+		bias_optim_param={'alpha':0.01, 'epsilon':1e-4},
+		loss_function='scaled_l1', 
 		max_loss_scale = 1e6,
 	):
 		assert len(self.input_data_store) > 0, 'Input data store is empty.'
@@ -146,6 +147,7 @@ class DCModel:
 				weight_optim_method, weight_optim_param),
 			bias_optim=_build_optimizer(
 				bias_optim_method, bias_optim_param),
+			loss_function=loss_function,
 			max_loss_scale=max_loss_scale
 		)
 
@@ -176,7 +178,6 @@ class DCModel:
 		num_epoch=1,
 		report_interval=0,
 		eval_during_training=False,
-
 	):
 		''' Fastest mode: report_interval = 0
 			Medium mode: report_interval > 0, eval_during_training=False
