@@ -248,7 +248,7 @@ class DCModel:
 		exporter.save_net(
 			self.net_store['pred_net'], 
 			self.model, 
-			self.model_name+'_init', self.model_name+'_predict'
+			self.model_name+'_init',self.model_name+'_predict'
 		)
 
 
@@ -353,12 +353,38 @@ class DCModel:
 				label='eval_l1_metric'
 			)
 		plt.legend()
-		plt.show()
+		#plt.show()
 
-	def save_loss_trend(self, save_name):
-		# Jashan: please implement this function, save self.report 
-		# to a csv file with headers.
-		pass
+	def save_loss_trend(self,save_name):
+		if len(self.reports['eval_loss'])>0:
+			f = open(save_name, "w")
+			f.write("{},{},{},{},{},{},{}\n".format("epoch", "train_loss","eval_loss","train_l1_metric","eval_l1_metric",
+									 "train_scaled_l1_metric","eval_scaled_l1_metric" ))
+			for x in zip(self.reports['epoch'],self.reports['train_loss'],self.reports['eval_loss'],self.reports['train_l1_metric'],
+						 self.reports['eval_l1_metric'],self.reports['train_scaled_l1_metric'],self.reports['eval_scaled_l1_metric'] ):
+				f.write("{},{},{},{},{},{},{}\n".format(x[0], x[1], x[2], x[3], x[4], x[5], x[6]))
+			f.close()
+		else:
+			f = open(save_name, "w")
+			f.write("{},{},{},{}\n".format("epoch", "train_loss","train_l1_metric",
+									 "train_scaled_l1_metric" ))
+			for x in zip(self.reports['epoch'],self.reports['train_loss'],self.reports['train_l1_metric'],
+						 self.reports['train_scaled_l1_metric'] ):
+				f.write("{},{},{},{}\n".format(x[0], x[1], x[2], x[3]))
+			f.close()
+
+	def save_loss(self):
+		epoch = self.reports['epoch'][len(self.reports['epoch'])-1]
+		train_loss = self.reports['train_loss'][len(self.reports['epoch'])-1]
+		eval_loss = self.reports['eval_loss'][len(self.reports['epoch'])-1]
+		train_l1_metric = self.reports['train_l1_metric'][len(self.reports['epoch'])-1]
+		eval_l1_metric = self.reports['eval_l1_metric'][len(self.reports['epoch'])-1]
+		train_scaled_l1_metric = self.reports['train_scaled_l1_metric'][len(self.reports['epoch'])-1]
+		eval_scaled_l1_metric = self.reports['eval_scaled_l1_metric'][len(self.reports['epoch'])-1]
+		return epoch,train_loss,eval_loss,train_l1_metric,eval_l1_metric,train_scaled_l1_metric,eval_scaled_l1_metric
+
+		
+		
 
 	
 # --------------------------------------------------------

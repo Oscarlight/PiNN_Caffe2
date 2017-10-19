@@ -142,28 +142,28 @@ def read_s_par_mdm(file_name):
     header, data = parse_mdm_to_nparray(file_name)
 
     if ('freq' in data.keys()):
-    	freq = np.array(data['freq'])
+    	freq = np.array(data['freq'],dtype = np.float32)
     elif('#freq' in data.keys()):
-    	freq = np.array(data['#freq'])
+    	freq = np.array(data['#freq'],dtype = np.float32)
     else:
     	raise Exception('This is not ac measurement, abort!')
 
     if ('Vg' in data.keys()):
-    	vg = np.array(data['Vg'])
+    	vg = np.array(data['Vg'],dtype = np.float32)
     elif('#Vg' in data.keys()):
-    	vg = np.array(data['#Vg'])
+    	vg = np.array(data['#Vg'],dtype = np.float32)
     else:
     	raise Exception('Vg not found')
 
     if ('Vd' in data.keys()):
-    	vd = np.array(data['Vd'])
+    	vd = np.array(data['Vd'],dtype = np.float32)
     elif('#Vd' in data.keys()):
-    	vd = np.array(data['#Vd'])
+    	vd = np.array(data['#Vd'],dtype = np.float32)
     else:
     	raise Exception('Vd not found')
 
     if ('Id' in data.keys()):
-    	id = np.array(data['Id'])
+    	id = np.array(data['Id'],dtype = np.float32)
     else:
     	id = "not there"
 
