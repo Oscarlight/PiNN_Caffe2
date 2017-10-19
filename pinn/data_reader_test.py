@@ -1,3 +1,5 @@
+import sys
+sys.path.append('../')
 import caffe2_paths
 import numpy as np
 import os
@@ -16,7 +18,7 @@ class TestDataReader(unittest.TestCase):
 		if os.path.isfile('test.db'):
 			os.remove("test.db")
 		data_reader.write_db('minidb', 'test.db', 
-			features_expected, features_expected, labels_expected)
+			[features_expected, features_expected, labels_expected])
 		init_net = core.Net("example_reader_init")
 		net_proto = core.Net("example_reader")
 		dbreader = init_net.CreateDB(

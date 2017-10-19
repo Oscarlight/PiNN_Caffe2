@@ -48,9 +48,9 @@ dc_model.build_nets(
 )
 
 dc_model.train_with_eval(
-	num_epoch=int(1e5),
-	report_interval=0,
-	eval_during_training=False
+	num_epoch=int(1e6),
+	report_interval=1e3,
+	eval_during_training=True
 )
 
 # # ----------------- Inspection ---------------------
