@@ -9,6 +9,10 @@ from caffe2.python.modeling.parameter_sharing import (
 )
 import numpy as np
 
+class TrainTarget(object):
+	ORIGIN = 'origin'
+	ADJOINT = 'adjoint'
+
 def build_origin_block(
 	model,
 	sig_input, tanh_input,
@@ -118,6 +122,10 @@ def build_adjoint_pinn(
 	sig_net_dim=[1], tanh_net_dim=[1],
 	weight_optim=None,
 	bias_optim=None,
+	adjoint_tag=Tags.EXCLUDE_FROM_PREDICTION,
+	train_target=TrainTarget.ADJOINT,
+	loss_function='scaled_l1',
+	max_loss_scale=1.0,
 ):
 	'''
 		sig_net_dim and tanh_net_dim are the lists of dimensions for each hidden
@@ -153,7 +161,8 @@ def build_adjoint_pinn(
 				'origin_pred'
 			)
 		with scope.NameScope('adjoint'):
-			with Tags(Tags.EXCLUDE_FROM_PREDICTION):
+			# adjoint_tag decides how we are going to use the adjoint net.
+			with Tags(adjoint_tag):
 				ad_input = model.input_feature_schema.adjoint_input
 				sig_h = sig_h_lst[block_index-1]
 				tanh_h = tanh_h_lst[block_index-1]
@@ -216,67 +225,131 @@ def build_adjoint_pinn(
 				)
 
 		# Add loss
-		model.trainer_extra_schema.sig_loss_record.prediction.set_value(
-			sig_adjoint_pred.get(), unsafe=True)
-		model.trainer_extra_schema.tanh_loss_record.prediction.set_value(
-			tanh_adjoint_pred.get(), unsafe=True)		
-		# CAUTIONS: BatchDirectMSELoss calls SquaredL2Distance op, which assume 
-		# the input are 1D vector
-		sig_loss = model.BatchDirectMSELoss(
-			model.trainer_extra_schema.sig_loss_record)
-		tanh_loss = model.BatchDirectMSELoss(
-			model.trainer_extra_schema.tanh_loss_record)
-		total_loss = model.Add([sig_loss, tanh_loss], 'total_loss')
-		# model.add_loss(total_loss)
-		model.add_loss(sig_loss)
-		model.add_loss(tanh_loss)
-		# Set output
+		if train_target == TrainTarget.ADJOINT:
+			model.trainer_extra_schema.sig_loss_record.prediction.set_value(
+				sig_adjoint_pred.get(), unsafe=True)
+			model.trainer_extra_schema.tanh_loss_record.prediction.set_value(
+				tanh_adjoint_pred.get(), unsafe=True)		
+			# CAUTIONS: BatchDirectMSELoss calls SquaredL2Distance op, which assume 
+			# the input are 1D vector
+			sig_loss = model.BatchDirectMSELoss(
+				model.trainer_extra_schema.sig_loss_record)
+			tanh_loss = model.BatchDirectMSELoss(
+				model.trainer_extra_schema.tanh_loss_record)
+			adjoint_loss = model.Add([sig_loss, tanh_loss], 'adjoint_loss')
+			model.add_loss(sig_loss)
+			model.add_loss(tanh_loss)
+			# Set output
+			model.output_schema.sig_adjoint_pred.set_value(
+				sig_adjoint_pred.get(), unsafe=True)
+			model.output_schema.tanh_adjoint_pred.set_value(
+				tanh_adjoint_pred.get(), unsafe=True)
+			loss = adjoint_loss
+		if train_target == TrainTarget.ORIGIN:
+			model.trainer_extra_schema.origin_loss_record.prediction.set_value(
+				origin_pred.get(), unsafe=True)
+			# Add L1 Loss
+			assert max_loss_scale > 1, 'max loss scale must > 1'
+			loss_and_metrics = model.BatchDirectWeightedL1Loss(
+				model.trainer_extra_schema.origin_loss_record,
+				max_scale=max_loss_scale,
+			)
+			# Add metric
+			model.add_metric_field('l1_metric', 
+				loss_and_metrics.l1_metric)
+			model.add_metric_field('scaled_l1_metric', 
+				loss_and_metrics.scaled_l1_metric)
+			if loss_function == 'scaled_l2':
+				print('[Pi-NN Build Net]: Use scaled_l2 loss, but l1 metrics.')
+				loss_and_metrics = model.BatchDirectWeightedL2Loss(
+					model.trainer_extra_schema,
+					max_scale=max_loss_scale,
+				)
+			model.add_loss(loss_and_metrics.loss)
+			loss = loss_and_metrics.loss
+		else:
+			raise Exception('train target: ' + train_target + ' not implemented')
+
 		model.output_schema.origin_pred.set_value(
 			origin_pred.get(), unsafe=True)
-		model.output_schema.sig_adjoint_pred.set_value(
-			sig_adjoint_pred.get(), unsafe=True)
-		model.output_schema.tanh_adjoint_pred.set_value(
-			tanh_adjoint_pred.get(), unsafe=True)
 		model.output_schema.loss.set_value(
-			total_loss.get(), unsafe=True)
+			loss.get(), unsafe=True)
 
-	return origin_pred, sig_adjoint_pred, tanh_adjoint_pred, total_loss
+		return origin_pred, sig_adjoint_pred, tanh_adjoint_pred, loss
 
 
 def init_model_with_schemas(
 	model_name, 
 	sig_input_dim, tanh_input_dim,
-	pred_dim
+	pred_dim,
+	train_target=TrainTarget.ADJOINT
 ):
+	'''
+	 output_records have to filled with existing blobs.
+	'''
 	workspace.ResetWorkspace()
-	input_record_schema = schema.Struct(
-		('sig_input', schema.Scalar((np.float32, (sig_input_dim, )))), # sig
-		('tanh_input', schema.Scalar((np.float32, (tanh_input_dim, )))),  # tanh
-		('adjoint_input', schema.Scalar((np.float32, (pred_dim, ))))
-	)
-	output_record_schema = schema.Struct(
-		('loss', schema.Scalar((np.float32, (1, )))),
-		('origin_pred', schema.Scalar((np.float32, (pred_dim, )))),
-		('sig_adjoint_pred', schema.Scalar((np.float32, (sig_input_dim, )))),
-		('tanh_adjoint_pred', schema.Scalar((np.float32, (tanh_input_dim, )))),
-	)
-	# use trainer_extra_schema as the loss input record
-	trainer_extra_schema = schema.Struct(
-		('sig_loss_record', schema.Struct(
-			('label', schema.Scalar((np.float32, 
-				(sig_input_dim, )))),
-			('prediction', schema.Scalar((np.float32, 
-				(sig_input_dim, ))))
-			)
-		),
-		('tanh_loss_record', schema.Struct(
-			('label', schema.Scalar((np.float32, 
-				(tanh_input_dim, )))),
-			('prediction', schema.Scalar((np.float32, 
-				(tanh_input_dim, ))))
-			)
+	print('>>> Training Target: ' + train_target)
+	if train_target == TrainTarget.ADJOINT:
+		# When training the adjoint network, we also need to forward pass
+		# through the origin network
+		input_record_schema = schema.Struct(
+			('sig_input', schema.Scalar((np.float32, (sig_input_dim, )))), # sig
+			('tanh_input', schema.Scalar((np.float32, (tanh_input_dim, )))),  # tanh
+			('adjoint_input', schema.Scalar((np.float32, (pred_dim, ))))
+		)
+		output_record_schema = schema.Struct(
+			('loss', schema.Scalar((np.float32, (1, )))),
+			('origin_pred', schema.Scalar((np.float32, (pred_dim, )))),
+			('sig_adjoint_pred', schema.Scalar((np.float32, (sig_input_dim, )))),
+			('tanh_adjoint_pred', schema.Scalar((np.float32, (tanh_input_dim, )))),
+		)
+		# use trainer_extra_schema as the loss input record
+		trainer_extra_schema = schema.Struct(
+			('sig_loss_record', schema.Struct(
+				('label', schema.Scalar((np.float32, 
+					(sig_input_dim, )))),
+				('prediction', schema.Scalar((np.float32, 
+					(sig_input_dim, ))))
+				)
+			),
+			('tanh_loss_record', schema.Struct(
+				('label', schema.Scalar((np.float32, 
+					(tanh_input_dim, )))),
+				('prediction', schema.Scalar((np.float32, 
+					(tanh_input_dim, ))))
+				)
+			),
+			('origin_loss_record', schema.Struct(
+				('label', schema.Scalar((np.float32, 
+					(pred_dim, )))),
+				('prediction', schema.Scalar((np.float32, 
+					(pred_dim, ))))
+				)
+			),
+		)
+	if train_target == TrainTarget.ORIGIN:
+		# When training the origin network, no need of the adjoint network
+		input_record_schema = schema.Struct(
+			('sig_input', schema.Scalar((np.float32, (sig_input_dim, )))), # sig
+			('tanh_input', schema.Scalar((np.float32, (tanh_input_dim, )))),  # tanh
+			('adjoint_input', schema.Scalar((np.float32, (pred_dim, ))))
+		)
+		output_record_schema = schema.Struct(
+			('loss', schema.Scalar((np.float32, (1, )))),
+			('origin_pred', schema.Scalar((np.float32, (pred_dim, )))),
+		)
+		# use trainer_extra_schema as the loss input record
+		trainer_extra_schema = schema.Struct(
+			('origin_loss_record', schema.Struct(
+				('label', schema.Scalar((np.float32, 
+					(pred_dim, )))),
+				('prediction', schema.Scalar((np.float32, 
+					(pred_dim, ))))
+				)
+			),
 		)		
-	)
+
+		
 	model = layer_model_helper.LayerModelHelper(
 		model_name,
 		input_record_schema,

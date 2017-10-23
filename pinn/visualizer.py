@@ -4,7 +4,7 @@ import matplotlib.colors as colors
 from pylab import rcParams
 from matplotlib.ticker import AutoMinorLocator
 
-FIGURE_SIZE = (7, 8)
+FIGURE_SIZE = (8, 8)
 FONT_SIZE = 16
 LINE_WIDTH = 2
 MAJOR_LABEL_SIZE = 14
@@ -94,14 +94,14 @@ def plot_linear_Id_vs_Vd_at_Vg(vg, vd, ids, vg_comp = None, vd_comp = None, ids_
 
     if (vg_comp is None or vd_comp is None or ids_comp is None):
         plot_linear_fig(fig, ax,'V$_d$', yLabel, save_name)
-        plt.show()
+        # plt.show()
 
     else:
         sort_vg_comp, sort_vd_comp, sort_ids_comp = sort_vg_func (vg_comp, vd_comp, ids_comp)
         vg_count_comp, vd_count_comp = VgVd_counter(vg_comp, vd_comp)
         plot_data(sort_vg_comp, sort_vd_comp, sort_ids_comp, vg_count_comp, vd_count_comp, '--', 'linear')
         plot_linear_fig(fig, ax,'V$_d$', yLabel, save_name)
-        plt.show()
+        # plt.show()
 
 def plot_linear_Id_vs_Vg_at_Vd(vg, vd, ids, vg_comp = None, vd_comp = None, ids_comp = None, save_name = None, yLabel = 'I$_d$' ):
 
@@ -114,14 +114,14 @@ def plot_linear_Id_vs_Vg_at_Vd(vg, vd, ids, vg_comp = None, vd_comp = None, ids_
 
     if (vg_comp is None or vd_comp is None or ids_comp is None):
         plot_linear_fig(fig, ax, 'V$_g$', yLabel, save_name)
-        plt.show()
+        # plt.show()
 
     else:
         sort_vg_comp, sort_vd_comp, sort_ids_comp = sort_vd_func (vg_comp, vd_comp, ids_comp)
         vg_count_comp, vd_count_comp = VgVd_counter(vg_comp, vd_comp)
         plot_data (sort_vd_comp, sort_vg_comp, sort_ids_comp, vd_count_comp, vg_count_comp, '--', 'linear')
         plot_linear_fig(fig, ax, 'V$_g$', yLabel, save_name)
-        plt.show()
+        # plt.show()
 
 def plot_log_Id_vs_Vd_at_Vg(vg, vd, ids, vg_comp = None, vd_comp = None, ids_comp = None, save_name = None, yLabel = 'I$_d$'):
     vg_count, vd_count = VgVd_counter(vg, vd)
@@ -133,14 +133,14 @@ def plot_log_Id_vs_Vd_at_Vg(vg, vd, ids, vg_comp = None, vd_comp = None, ids_com
 
     if (vg_comp is None or vd_comp is None or ids_comp is None):
         plot_log_fig(fig, ax, 'V$_d$', yLabel, save_name)
-        plt.show()
+        # plt.show()
 
     else:
         sort_vg_comp, sort_vd_comp, sort_ids_comp = sort_vg_func(vg_comp, vd_comp, ids_comp)
         vg_count_comp, vd_count_comp = VgVd_counter(vg_comp, vd_comp)
         plot_data(sort_vg_comp, sort_vd_comp, sort_ids_comp, vg_count_comp, vd_count_comp, '--', 'log')
         plot_log_fig(fig, ax, 'V$_d$', yLabel, save_name)
-        plt.show()
+        # plt.show()
 
 def plot_log_Id_vs_Vg_at_Vd(vg, vd, ids, vg_comp = None, vd_comp = None, ids_comp = None, save_name = None, yLabel = 'I$_d$'):
     vg_count, vd_count = VgVd_counter(vg, vd)
@@ -152,11 +152,11 @@ def plot_log_Id_vs_Vg_at_Vd(vg, vd, ids, vg_comp = None, vd_comp = None, ids_com
 
     if (vg_comp is None or vd_comp is None or ids_comp is None):
         plot_log_fig(fig, ax, 'V$_g$', yLabel, save_name)
-        plt.show()
+        # plt.show()
 
     else:
         sort_vg_comp, sort_vd_comp, sort_ids_comp = sort_vd_func(vg_comp, vd_comp, ids_comp)
         vg_count_comp, vd_count_comp = VgVd_counter(vg_comp, vd_comp)
         plot_data(sort_vd_comp, sort_vg_comp, sort_ids_comp, vd_count_comp, vg_count_comp, '--', 'log')
         plot_log_fig(fig, ax, 'V$_g$', yLabel, save_name)
-        plt.show()
+        # plt.show()

@@ -5,8 +5,10 @@ from caffe2.python import (
 	workspace, layer_model_helper, schema, optimizer, net_drawer
 )
 import caffe2.python.layer_model_instantiator as instantiator
+from caffe2.python.layers.tags import Tags
 import numpy as np
-from pinn.pinn_lib import build_pinn, init_model_with_schemas
+from pinn.adjoint_pinn_lib import (
+	build_adjoint_pinn, init_model_with_schemas, TrainTarget)
 import pinn.data_reader as data_reader
 import pinn.preproc as preproc
 import pinn.parser as parser
@@ -15,17 +17,22 @@ import pinn.exporter as exporter
 # import logging
 import matplotlib.pyplot as plt
 
-class DCModel:
+class DeviceModel(object):
 	def __init__(
 		self, 
 		model_name,
 		sig_input_dim=1,
 		tanh_input_dim=1,
 		output_dim=1,
+		train_target=TrainTarget.ORIGIN
 	):	
 		self.model_name = model_name
+		self.sig_input_dim = sig_input_dim
+		self.tanh_input_dim = tanh_input_dim
 		self.model = init_model_with_schemas(
-			model_name, sig_input_dim, tanh_input_dim, output_dim)
+			model_name, sig_input_dim, tanh_input_dim, output_dim, 
+			train_target=train_target
+		)
 		self.input_data_store = {}
 		self.preproc_param = {}
 		self.net_store = {}
@@ -35,6 +42,11 @@ class DCModel:
 			'train_l1_metric':[], 'eval_l1_metric':[],
 			'train_scaled_l1_metric':[], 'eval_scaled_l1_metric':[]
 		}
+		self.train_target = train_target
+		if train_target == TrainTarget.ORIGIN:
+			self.adjoint_tag = Tags.PREDICTION_ONLY
+		if train_target == TrainTarget.ADJOINT:
+			self.adjoint_tag = Tags.EXCLUDE_FROM_PREDICTION
 
 	def add_data(
 		self,
@@ -44,19 +56,20 @@ class DCModel:
 		override=True,
 	):
 		'''
-		data_arrays are in the order of sig_input, tanh_input, and label
+		data_arrays are in the order of 
+			1) for train origin: sig_input, tanh_input, and label
+			2) for train adjoint: sig_input, tanh_input, sig_adjoint_label and 
+			   tanh_adjoint_label
 		'''
-		assert len(data_arrays) == 3, 'Incorrect number of input data'
+		assert (
+			(len(data_arrays) == 3 and self.train_target == TrainTarget.ORIGIN) or
+			(len(data_arrays) == 4 and self.train_target == TrainTarget.ADJOINT)
+			), 'Incorrect number of input data'
+
 		# number of examples and same length assertion
 		num_example = len(data_arrays[0])
 		for data in data_arrays[1:]:
 			assert len(data) == num_example, 'Mismatch dimensions'
-
-		# set default values in preproc_param if not set
-		preproc_param.setdefault('preproc_slope_vg', -1.0)
-		preproc_param.setdefault('preproc_threshold_vg', 0.0)
-		preproc_param.setdefault('preproc_slope_vd', -1.0)
-		preproc_param.setdefault('preproc_threshold_vd', 0.0)
 	
 		self.preproc_param = preproc_param
 
@@ -76,21 +89,28 @@ class DCModel:
 			self.preproc_param, 
 			open(self.pickle_file_name, 'wb')
 		)
-		preproc_data_arrays = preproc.dc_iv_preproc(
-			data_arrays[0], data_arrays[1], data_arrays[2], 
-			self.preproc_param['scale'], 
-			self.preproc_param['vg_shift'], 
-			slope_vg=self.preproc_param['preproc_slope_vg'],
-			thre_vg=self.preproc_param['preproc_threshold_vg'],
-			slope_vd=self.preproc_param['preproc_slope_vd'],
-			thre_vd=self.preproc_param['preproc_threshold_vd'],
-		)
+
+		if self.train_target == TrainTarget.ORIGIN:
+			preproc_data_arrays = preproc.dc_iv_preproc(
+				data_arrays[0], data_arrays[1], data_arrays[2], 
+				self.preproc_param['scale'], 
+				self.preproc_param['vg_shift']
+			)
+		if self.train_target == TrainTarget.ADJOINT:
+			adjoint_input = np.ones((origin_input.shape[0], 1))
+			raise Exception('Not Implemented')
+
 		self.preproc_data_arrays=preproc_data_arrays
 		# Only expand the dim if the number of dimension is 1
 		preproc_data_arrays = [np.expand_dims(
 			x, axis=1) if x.ndim == 1 else x for x in preproc_data_arrays]
+		
 		# Write to database
-		data_reader.write_db('minidb', db_name, preproc_data_arrays)
+		data_reader.write_db(
+			'minidb', 
+			db_name, 
+			preproc_data_arrays,
+		)
 		self.input_data_store[data_tag] = [db_name, num_example]
 
 	def build_nets(
@@ -104,31 +124,38 @@ class DCModel:
 		bias_optim_method='AdaGrad',
 		bias_optim_param={'alpha':0.01, 'epsilon':1e-4},
 		loss_function='scaled_l1', 
-		max_loss_scale = 1e6,
+		max_loss_scale=1.,
 	):
 		assert len(self.input_data_store) > 0, 'Input data store is empty.'
 		assert 'train' in self.input_data_store, 'Missing training data.'
 		self.batch_size = train_batch_size
 		# Build the date reader net for train net
-		input_data_train = data_reader.build_input_reader(
-			self.model, 
-			self.input_data_store['train'][0], 
-			'minidb', 
-			['sig_input', 'tanh_input', 'label'], 
-			batch_size=train_batch_size,
-			data_type='train',
-		)
-
-		if 'eval' in self.input_data_store:
-			# Build the data reader net for eval net
-			input_data_eval = data_reader.build_input_reader(
+		if self.train_target == TrainTarget.ORIGIN:
+			input_data_train = data_reader.build_input_reader(
 				self.model, 
-				self.input_data_store['eval'][0], 
+				self.input_data_store['train'][0], 
 				'minidb', 
-				['eval_sig_input', 'eval_tanh_input', 'eval_label'], 
-				batch_size=eval_batch_size,
-				data_type='eval',
+				['sig_input', 'tanh_input', 'label'], 
+				batch_size=train_batch_size,
+				data_type='train',
 			)
+			if 'eval' in self.input_data_store:
+				# Build the data reader net for eval net
+				input_data_eval = data_reader.build_input_reader(
+					self.model, 
+					self.input_data_store['eval'][0], 
+					'minidb', 
+					['eval_sig_input', 'eval_tanh_input', 'eval_label'], 
+					batch_size=eval_batch_size,
+					data_type='eval',
+				)
+			# for training origin, use origin_loss_record
+			self.model.trainer_extra_schema.origin_loss_record.label.set_value(
+				input_data_train[2].get(), unsafe=True)
+
+		if self.train_target == TrainTarget.ADJOINT:
+			raise Exception('Not Implemented')
+
 
 		# Build the computational nets
 		# Create train net
@@ -136,19 +163,20 @@ class DCModel:
 			input_data_train[0].get(), unsafe=True)
 		self.model.input_feature_schema.tanh_input.set_value(
 			input_data_train[1].get(), unsafe=True)
-		self.model.trainer_extra_schema.label.set_value(
-			input_data_train[2].get(), unsafe=True)
 
-		self.pred, self.loss = build_pinn(
+		(self.pred, self.sig_adjoint_pred, 
+			self.tanh_adjoint_pred, self.loss) = build_adjoint_pinn(
 			self.model,
+			sig_input_dim=self.sig_input_dim,
+			tanh_input_dim=self.tanh_input_dim,
 			sig_net_dim=hidden_sig_dims,
 			tanh_net_dim=hidden_tanh_dims,
-			weight_optim=_build_optimizer(
-				weight_optim_method, weight_optim_param),
-			bias_optim=_build_optimizer(
-				bias_optim_method, bias_optim_param),
+			weight_optim=_build_optimizer(weight_optim_method, weight_optim_param),
+			bias_optim=_build_optimizer(bias_optim_method, bias_optim_param),
+			adjoint_tag=self.adjoint_tag,
+			train_target=self.train_target,
 			loss_function=loss_function,
-			max_loss_scale=max_loss_scale
+			max_loss_scale=max_loss_scale,
 		)
 
 		train_init_net, train_net = instantiator.generate_training_nets(self.model)
@@ -166,8 +194,14 @@ class DCModel:
 				input_data_eval[0].get(), unsafe=True)
 			self.model.input_feature_schema.tanh_input.set_value(
 				input_data_eval[1].get(), unsafe=True)
-			self.model.trainer_extra_schema.label.set_value(
-				input_data_eval[2].get(), unsafe=True)
+
+			if self.train_target == TrainTarget.ORIGIN: 
+				self.model.trainer_extra_schema.origin_loss_record.label.set_value(
+					input_data_eval[2].get(), unsafe=True)
+
+			if self.train_target == TrainTarget.ADJOINT:
+				raise Exception('Not Implemented')
+
 			eval_net = instantiator.generate_eval_net(self.model)
 			workspace.CreateNet(eval_net)
 			self.net_store['eval_net'] = eval_net
@@ -245,42 +279,27 @@ class DCModel:
 			
 		print('>>> Saving test model')
 
+		# Save Net
 		exporter.save_net(
 			self.net_store['pred_net'], 
 			self.model, 
 			self.model_name+'_init', self.model_name+'_predict'
 		)
 
+		# Save Loss Trend
+		if report_interval > 0:
+			self.save_loss_trend(self.model_name)
 
-	# Depreciate
-	def avg_loss_full_epoch(self, net_name):
-		num_batch_per_epoch = int(
-			self.input_data_store['train'][1] / 
-			self.batch_size
-		)
-		if not self.input_data_store['train'][1] % self.batch_size == 0:
-			num_batch_per_epoch += 1
-			print('[Warning]: batch_size cannot be divided. ' + 
-				'Run on {} example instead of {}'.format(
-						num_batch_per_epoch * self.batch_size,
-						self.input_data_store['train'][1]
-					)
-				)
-		# Get the average loss of all data
-		loss = 0.
-		for j in range(num_batch_per_epoch):
-			workspace.RunNet(self.net_store[net_name])
-			loss += np.asscalar(schema.FetchRecord(self.loss).get())
-		loss /= num_batch_per_epoch
-		return loss
 
 
 	def draw_nets(self):
 		for net_name in self.net_store:
 			net = self.net_store[net_name]
 			graph = net_drawer.GetPydotGraph(net.Proto().op, rankdir='TB')
-			with open(net.Name() + ".png",'wb') as f:
+			with open(self.model_name + '_' + net.Name() + ".png",'wb') as f:
 				f.write(graph.create_png())
+			with open(self.model_name + '_' + net.Name() + "_proto.txt",'wb') as f:
+				f.write(str(net.Proto()))
 				
 
 	def predict_ids(self, vg, vd):
@@ -296,10 +315,6 @@ class DCModel:
 			vg, vd, dummy_ids, 
 			self.preproc_param['scale'], 
 			self.preproc_param['vg_shift'], 
-			slope_vg=self.preproc_param['preproc_slope_vg'],
-			thre_vg=self.preproc_param['preproc_threshold_vg'],
-			slope_vd=self.preproc_param['preproc_slope_vd'],
-			thre_vd=self.preproc_param['preproc_threshold_vd'],
 		)
 		_preproc_data_arrays = [np.expand_dims(
 			x, axis=1) for x in preproc_data_arrays]
@@ -309,15 +324,11 @@ class DCModel:
 		workspace.RunNet(pred_net)
 
 		_ids = np.squeeze(schema.FetchRecord(self.pred).get())
-		restore_id_func = preproc.get_restore_id_func( 
+		restore_id_func, _ = preproc.get_restore_id_func( 
 			self.preproc_param['scale'], 
 			self.preproc_param['vg_shift'], 
-			slope_vg=self.preproc_param['preproc_slope_vg'],
-			thre_vg=self.preproc_param['preproc_threshold_vg'],
-			slope_vd=self.preproc_param['preproc_slope_vd'],
-			thre_vd=self.preproc_param['preproc_threshold_vd'],
 		)
-		ids = restore_id_func(_ids, preproc_data_arrays[0], preproc_data_arrays[1])
+		ids = restore_id_func(_ids)
 		return _ids, ids
 
 	def plot_loss_trend(self):
@@ -357,7 +368,7 @@ class DCModel:
 
 	def save_loss_trend(self,save_name):
 		if len(self.reports['eval_loss'])>0:
-			f = open(save_name, "w")
+			f = open(save_name+'_loss_trend.csv', "w")
 			f.write(
 				"{},{},{},{},{},{},{}\n".format(
 					"epoch", "train_loss","eval_loss","train_l1_metric",
@@ -372,7 +383,7 @@ class DCModel:
 					x[0], x[1], x[2], x[3], x[4], x[5], x[6]))
 			f.close()
 		else:
-			f = open(save_name, "w")
+			f = open(save_name+'_loss_trend.csv', "w")
 			f.write("{},{},{},{}\n".format("epoch", "train_loss","train_l1_metric",
 									 "train_scaled_l1_metric" ))
 			for x in zip(
@@ -388,7 +399,7 @@ class DCModel:
 # --------------------------------------------------------
 
 
-def predict_ids(model_name, vg, vd):
+def predict_ids_grads(model_name, vg, vd):
 	workspace.ResetWorkspace()
 
 	# preproc the input
@@ -403,61 +414,63 @@ def predict_ids(model_name, vg, vd):
 		vg, vd, dummy_ids, 
 		preproc_param['scale'], 
 		preproc_param['vg_shift'], 
-		slope_vg=preproc_param['preproc_slope_vg'],
-		thre_vg=preproc_param['preproc_threshold_vg'],
-		slope_vd=preproc_param['preproc_slope_vd'],
-		thre_vd=preproc_param['preproc_threshold_vd'],
 	)
 	_preproc_data_arrays = [np.expand_dims(
 		x, axis=1) for x in preproc_data_arrays]
+
 	workspace.FeedBlob('DBInput_train/sig_input', _preproc_data_arrays[0])
 	workspace.FeedBlob('DBInput_train/tanh_input', _preproc_data_arrays[1])
+	adjoint_input = np.ones((_preproc_data_arrays[0].shape[0], 1))
+	workspace.FeedBlob('adjoint_input', adjoint_input)
 	pred_net = exporter.load_net(model_name+'_init', model_name+'_predict')
-	#print(type(pred_net.name))
 
 	workspace.RunNet(pred_net)
 
-	_ids = np.squeeze(workspace.FetchBlob('prediction'))
-	restore_id_func = preproc.get_restore_id_func( 
-		preproc_param['scale'], 
-		preproc_param['vg_shift'], 
-		slope_vg=preproc_param['preproc_slope_vg'],
-		thre_vg=preproc_param['preproc_threshold_vg'],
-		slope_vd=preproc_param['preproc_slope_vd'],
-		thre_vd=preproc_param['preproc_threshold_vd'],
+	_ids = np.squeeze(workspace.FetchBlob('origin/Mul/origin_pred'))
+	_sig_grad = np.squeeze(workspace.FetchBlob('adjoint/sig_fc_layer_0/output'))
+	_tanh_grad = np.squeeze(workspace.FetchBlob('adjoint/tanh_fc_layer_0/output'))
+
+	restore_id_func, get_restore_id_grad_func = preproc.get_restore_id_func( 
+		preproc_param['scale']
 	)
-	ids = restore_id_func(_ids, preproc_data_arrays[0], preproc_data_arrays[1])
-	return _ids, ids
+	ids = restore_id_func(_ids)
+	sig_grad, tanh_grad = get_restore_id_grad_func(_sig_grad, _tanh_grad)
+	return ids, sig_grad, tanh_grad
 
 def plot_iv( 
 	vg, vd, ids, 
 	vg_comp = None, vd_comp = None, ids_comp = None,
 	save_name = '',
-	styles = ['vg_major_linear', 'vd_major_linear', 'vg_major_log', 'vd_major_log']
+	styles = ['vg_major_linear', 'vd_major_linear', 'vg_major_log', 'vd_major_log'],
+	yLabel='I$_d$'
 ):
 	if 'vg_major_linear' in styles:
 		visualizer.plot_linear_Id_vs_Vd_at_Vg(
 			vg, vd, ids, 
 			vg_comp = vg_comp, vd_comp = vd_comp, ids_comp = ids_comp,
-			save_name = save_name + 'vg_major_linear'
+			save_name = save_name + 'vg_major_linear',
+			yLabel=yLabel
 		)
 	if 'vd_major_linear' in styles:
 		visualizer.plot_linear_Id_vs_Vg_at_Vd(
 			vg, vd, ids, 
 			vg_comp = vg_comp, vd_comp = vd_comp, ids_comp = ids_comp,
-			save_name = save_name + 'vd_major_linear'
+			save_name = save_name + 'vd_major_linear',
+			yLabel=yLabel
 		)
 	if 'vg_major_log' in styles:
 		visualizer.plot_log_Id_vs_Vd_at_Vg(
 			vg, vd, ids, 
 			vg_comp = vg_comp, vd_comp = vd_comp, ids_comp = ids_comp,
-			save_name = save_name + 'vg_major_log'
+			save_name = save_name + 'vg_major_log',
+			yLabel=yLabel
 		)
 	if 'vd_major_log' in styles:
 		visualizer.plot_log_Id_vs_Vg_at_Vd(
 			vg, vd, ids, 
 			vg_comp = vg_comp, vd_comp = vd_comp, ids_comp = ids_comp,
-			save_name = save_name + 'vd_major_log'
+			save_name = save_name + 'vd_major_log',
+			yLabel=yLabel
 		)
 
 def _build_optimizer(optim_method, optim_param):

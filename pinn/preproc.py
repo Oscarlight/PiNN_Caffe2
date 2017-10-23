@@ -1,48 +1,31 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
- 
+# slope and thre are deprecated
 def dc_iv_preproc(
 	vg, vd, ids, 
 	scale, shift, 
-	slope_vg=0, thre_vg=0,
-	slope_vd=0, thre_vd=0,
+	**kwarg
 ):
-	'''
-	inputs:
-		1) two numpy array features and labels
-		2) arguments for pre-processing
-	outputs:
-		1) pre-process features and labels
-		2) a function for restoring to the original data
-	'''
+	if len(kwarg) > 0:
+		print('[WARNING]: slope and threshold preprocessing is deprecated!')
 	preproc_vg = (vg-shift) / scale['vg']
 	preproc_vd = vd / scale['vd']
-	preproc_id = ids / scale['id'] * (
-		np.power(10, -slope_vg*(preproc_vg + thre_vg)) + 1 
-	) if slope_vg > 0 else ids/scale['id']
-	preproc_id = preproc_id * (
-		(np.power(10, -slope_vd*(abs(preproc_vd) - thre_vd)) + 1
-	) / 2) if slope_vd > 0 else preproc_id
-
+	preproc_id = ids / scale['id']
 	return preproc_vg, preproc_vd, preproc_id
 
-def get_restore_id_func(	
-	scale, shift, 
-	slope_vg=0, thre_vg=0,
-	slope_vd=0, thre_vd=0,
-):
-	def restore_id_func(ids, vg, vd):
-		# ori_vg = vgs * scale['vg'] + shift
-		# ori_vd = vds * scale['vd']
-		ori_id = ids * scale['id'] / (
-			np.power(10, -slope_vg*(vg + thre_vg)) + 1
-		) if slope_vg > 0 or slope_vd > 0 else ids * scale['id']
-		ori_id = ori_id /((np.power(10, -slope_vd*(abs(vd) - thre_vd)) + 1)
-		) / 2 if slope_vd > 0 else ori_id
-		# return ori_vg, ori_vd, ori_id
-		return ori_id
-	return restore_id_func
+def get_restore_id_func(scale, *arg, **kwarg):
+	if (len(arg) > 0 or len(kwarg) > 0):
+		print('[WARNING]: slope and threshold preprocessing is deprecated!')
+	def restore_id_func(ids, *arg):
+		return ids * scale['id']
+	def get_restore_id_grad_func(sig_grad, tanh_grad):
+		return (sig_grad * scale['id'] / scale['vg'],
+			tanh_grad * scale['id'] / scale['vd'])
+
+	return restore_id_func, get_restore_id_grad_func
+
+
 
 def compute_dc_meta(vg, vd, ids):
 	vg_shift = np.median(vg)-0.0
@@ -85,13 +68,13 @@ def restore_voltages(scale, shift, voltages):
 def get_restore_q_func(
         scale, shift
 ):
-        def restore_integral_func(integrals):
-            ori_integral = integrals*scale['q']*scale['vd']*scale['vg']
-            return ori_integral
-        def restore_gradient_func(gradient):
-                ori_gradient =  gradient * scale['q']
-                return ori_gradient
-        return restore_integral_func, restore_gradient_func
+    def restore_integral_func(integrals):
+        ori_integral = integrals*scale['q']*scale['vd']*scale['vg']
+        return ori_integral
+    def restore_gradient_func(gradient):
+        ori_gradient =  gradient * scale['q']
+        return ori_gradient
+    return restore_integral_func, restore_gradient_func
     
 def compute_ac_meta(voltage, gradient):
     vg = voltage[:, 0]
