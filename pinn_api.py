@@ -398,7 +398,6 @@ class DeviceModel(object):
 # ----------------   Global functions  -------------------
 # --------------------------------------------------------
 
-
 def predict_ids_grads(model_name, vg, vd):
 	workspace.ResetWorkspace()
 

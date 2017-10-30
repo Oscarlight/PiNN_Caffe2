@@ -1,7 +1,7 @@
 import caffe2_paths
 
 from caffe2.python import (
-	core, schema, optimizer, net_drawer, workspace, layer_model_helper
+	core, schema, optimizer, workspace, layer_model_helper
 )
 import numpy as np
 

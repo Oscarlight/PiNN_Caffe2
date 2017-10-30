@@ -6,9 +6,11 @@ import numpy as np
 import sys
 import time
 
-if len(sys.argv) == 3:
-	MODEL_NAME = 'model_output/' + sys.argv[1]
+if len(sys.argv) == 4:
+	MODEL_NAME = sys.argv[1]
 	MAX_LOSS_SCALE = float(sys.argv[2])
+	BASE_LR = float(sys.argv[3])
+	NUM_EPOCH = 1e6
 else:
 	raise Exception('Model name or max loss scale is not set')
 
@@ -47,9 +49,9 @@ dc_model.build_nets(
 	train_batch_size=461,
 	eval_batch_size=100,
 	weight_optim_method='AdaGrad',
-	weight_optim_param={'alpha':0.1, 'epsilon':1e-4},
+	weight_optim_param={'alpha':BASE_LR, 'epsilon':1e-4},
 	bias_optim_method='AdaGrad',
-	bias_optim_param={'alpha':0.1, 'epsilon':1e-4},
+	bias_optim_param={'alpha':BASE_LR, 'epsilon':1e-4},
 	loss_function='scaled_l1', # or 'scaled_l2'
 	max_loss_scale=MAX_LOSS_SCALE, 
 	# to improve subthreshold modeling accuracy
@@ -60,7 +62,7 @@ dc_model.build_nets(
 
 start = time.time()
 dc_model.train_with_eval(
-	num_epoch=int(1e7),
+	num_epoch=int(NUM_EPOCH),
 	report_interval=1e3,
 	eval_during_training=True
 )

@@ -23,7 +23,7 @@ def deembed(
         omega = 2*3.14*freq[i]
         s = np.array([[s11,s12],[s21,s22]])
         imat = np.array([[1,0],[0,1]])
-        z = (imat+s).dot(linalg.inv(imat-s))
+        z = 50*(imat+s).dot(linalg.inv(imat-s))
         znew = np.array([
             [z[0,0]-1j*omega*lg-rg, z[0,1]],
             [z[1,0],z[1,1]-1j*omega*ld-rd]])

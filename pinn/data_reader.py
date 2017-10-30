@@ -8,6 +8,7 @@ from caffe2.python.layers.tags import Tags
 
 def write_db(db_type, db_name, data_lst):
 	''' The minidb datebase seems immutable.
+		Pre-condition: the first dimension is the num of example
 	'''
 	db = core.C.create_db(db_type, db_name, core.C.Mode.write)
 	transaction = db.new_transaction()
