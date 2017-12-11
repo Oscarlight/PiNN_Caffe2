@@ -447,28 +447,28 @@ def plot_iv(
 		visualizer.plot_linear_Id_vs_Vd_at_Vg(
 			vg, vd, ids, 
 			vg_comp = vg_comp, vd_comp = vd_comp, ids_comp = ids_comp,
-			save_name = save_name + 'vg_major_linear',
+			save_name = save_name + 'vg_major_linear.pdf',
 			yLabel=yLabel
 		)
 	if 'vd_major_linear' in styles:
 		visualizer.plot_linear_Id_vs_Vg_at_Vd(
 			vg, vd, ids, 
 			vg_comp = vg_comp, vd_comp = vd_comp, ids_comp = ids_comp,
-			save_name = save_name + 'vd_major_linear',
+			save_name = save_name + 'vd_major_linear.pdf',
 			yLabel=yLabel
 		)
 	if 'vg_major_log' in styles:
 		visualizer.plot_log_Id_vs_Vd_at_Vg(
 			vg, vd, ids, 
 			vg_comp = vg_comp, vd_comp = vd_comp, ids_comp = ids_comp,
-			save_name = save_name + 'vg_major_log',
+			save_name = save_name + 'vg_major_log.pdf',
 			yLabel=yLabel
 		)
 	if 'vd_major_log' in styles:
 		visualizer.plot_log_Id_vs_Vg_at_Vd(
 			vg, vd, ids, 
 			vg_comp = vg_comp, vd_comp = vd_comp, ids_comp = ids_comp,
-			save_name = save_name + 'vd_major_log',
+			save_name = save_name + 'vd_major_log.pdf',
 			yLabel=yLabel
 		)
 

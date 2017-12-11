@@ -11,7 +11,7 @@ from matplotlib import cm
 data_arrays = deembed.deembed(
 	parser.read_s_par_mdm, 
 	'./HEMT_bo/s_at_f_vs_VgVd.mdm',
-	lg=1,ld=1,rg=2,rd=2
+	# lg=1,ld=1,rg=2,rd=2
 )
 
 #voltage is vg, vd
@@ -21,7 +21,16 @@ voltage = np.concatenate(
 	axis=1
 )
 
-capas = data_arrays[6]
+capas = data_arrays[6] # (Cgg, Cgd)
+# capas = data_arrays[5] # (Cdg, Cdd)
+# print(capas.shape)
+# MIN = 0
+# MAX = 1200
+# plot_iv(
+# 	voltage[:,0][MIN:MAX], voltage[:,1][MIN:MAX], capas[:, 0][MIN:MAX],
+# 	styles = ['vg_major_linear', 'vd_major_linear']
+# )
+
 plot_iv(
 	voltage[:,0], voltage[:,1], capas[:, 0],
 	styles = ['vg_major_linear', 'vd_major_linear']
@@ -34,7 +43,8 @@ preproc_param = {
 	'scale': scale,
 	'vg_shift': vg_shift,
 }
-
+print(preproc_param)
+quit()
 ac_model = ACQVModel('ac_model', input_dim=2, output_dim=1)
 ac_model.add_data('train', [voltage, capas], preproc_param)
 ac_model.build_nets(

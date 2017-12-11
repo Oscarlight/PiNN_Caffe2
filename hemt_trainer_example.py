@@ -17,10 +17,8 @@ else:
 # ----------------- Preprocessing --------------------
 # data_arrays format: [vg, vd, ids]
 data_arrays = parser.read_dc_iv_mdm('./HEMT_bo/Id_vs_Vd_at_Vg.mdm')
-data_arrays_test = parser.read_dc_iv_mdm('./HEMT_bo/Id_vs_Vg_at_Vd.mdm')
 #data_arrays = preproc.truncate(data_arrays, (-2, -1.2), 0)
 vg, vd, ids = data_arrays[0], data_arrays[1], data_arrays[2]
-vgtest, vdtest, idstest = data_arrays_test[0], data_arrays_test[1], data_arrays_test[2]
 # plot_iv(vg, vd, ids)
 # quit()
 scale, vg_shift = preproc.compute_dc_meta(*data_arrays)
