@@ -113,6 +113,15 @@ class DeviceModel(object):
 		)
 		self.input_data_store[data_tag] = [db_name, num_example]
 
+	# overload add_data: add the database file directly
+	def add_data(
+		self,
+		data_tag,
+		db_name,
+		num_example
+		):
+		self.input_data_store[data_tag] = [db_name, num_example]
+
 	def build_nets(
 		self,
 		hidden_sig_dims, 
@@ -240,6 +249,7 @@ class DeviceModel(object):
 				print('>>> Training with Eval Reports (Slowest mode)')
 				eval_net = self.net_store['eval_net']
 			for i in range(num_eval):
+				print('>>> Done with Iter: ' + str(i*num_unit_iter))
 				workspace.RunNet(
 					train_net.Proto().name, 
 					num_iter=num_unit_iter
@@ -255,11 +265,9 @@ class DeviceModel(object):
 					self.model.metrics_schema.scaled_l1_metric).get())
 				self.reports['train_scaled_l1_metric'].append(
 					train_scaled_l1_metric)
-
-				if eval_during_training and 'eval_net' in self.net_store:
-					workspace.RunNet(
-						eval_net.Proto().name,
-						num_iter=num_unit_iter)
+				
+				if eval_during_training and 'eval_net' in self.net_store:		
+					workspace.RunNet(eval_net.Proto().name)
 					eval_loss = np.asscalar(schema.FetchRecord(self.loss).get())
 					# Add metrics
 					self.reports['eval_loss'].append(eval_loss)
