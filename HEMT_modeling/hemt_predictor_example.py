@@ -1,3 +1,5 @@
+import sys
+sys.path.append('../')
 from pinn_api import predict_ids_grads, plot_iv
 from pinn.exporter import load_init_net, read_param
 from pinn import parser
@@ -17,7 +19,7 @@ IVPLOT = True
 ## ------------ The train and eval data ------------
 if IVPLOT:
 	# data_arrays format: [vg, vd, ids]
-	data_arrays = parser.read_dc_iv_mdm('./HEMT_bo/Id_vs_Vd_at_Vg.mdm')
+	data_arrays = parser.read_dc_iv_mdm('../HEMT_bo/Id_vs_Vd_at_Vg.mdm')
 	vg, vd, ids = data_arrays[0], data_arrays[1], data_arrays[2]
 	np.random.seed = 42  # use same seed as during training
 	permu = np.random.permutation(len(data_arrays[0]))
@@ -36,7 +38,7 @@ if IVPLOT:
 
 	## ------------ Predication data ----------------
 	# Extension
-	USE_EXTENSION = True
+	USE_EXTENSION = False
 	if USE_EXTENSION:
 		vg_unique = np.unique(vg)
 		vd_unique = np.unique(vd)
@@ -67,9 +69,9 @@ if IVPLOT:
 		# Use the origin data
 		vg_pred = vg
 		vd_pred = vd
-	quit()
+	# quit()
 	ids_pred, _, _ = predict_ids_grads(
-		'model_output_1/HEMT_DC_5', vg_pred, vd_pred)
+		'../HEMT_Models/model_output_1/HEMT_DC_5', vg_pred, vd_pred)
 
 	# styles = ['vd_major_linear', 'vd_major_log']
 	# styles = ['vg_major_log', 'vg_major_linear']
@@ -99,10 +101,10 @@ if GRAD1:
 	vg_pred = np.array([e[0] for e in iter_lst])
 	vd_pred = np.array([e[1] for e in iter_lst])
 	ids_pred, sig_grad, _ = predict_ids_grads(
-		'model_output_1/HEMT_DC_5', vg_pred, vd_pred)
+		'../HEMT_Models/HEMT_DC_5', vg_pred, vd_pred)
 
 	# gm from Id-Vg 
-	data_arrays = parser.read_dc_iv_mdm('./HEMT_bo/Id_vs_Vg_at_Vd.mdm')
+	data_arrays = parser.read_dc_iv_mdm('../HEMT_bo/Id_vs_Vg_at_Vd.mdm')
 	vg, vd, ids = data_arrays[0], data_arrays[1], data_arrays[2]
 	# print(ids/CHANNEL_LENGTH)
 	plot_iv(
@@ -129,7 +131,7 @@ if GRAD1:
 	vg_pred = np.array([e[0] for e in iter_lst])
 	vd_pred = np.array([e[1] for e in iter_lst])
 	ids_pred, _, tanh_grad = predict_ids_grads(
-		'model_output_1/HEMT_DC_5', vg_pred, vd_pred)
+		'../HEMT_Models/model_output_1/HEMT_DC_5', vg_pred, vd_pred)
 
 	styles = ['vg_major_linear']
 	plot_iv(

@@ -48,8 +48,8 @@ def plot_data (tag, x, y, tag_count, x_count, line_style, y_scale):
 
         # plt.plot(x_tmp, y_tmp, ls=line_style, color=colors.cnames.keys()[i])
         if line_style == 'solid':
-            plt.plot(x_tmp, y_tmp, linewidth=1, ls='solid', color='#3498db')
-            # plt.plot(x_tmp, y_tmp, linewidth=1, ls='solid', color='#143c57')
+            # plt.plot(x_tmp, y_tmp, linewidth=1, ls='solid', color='#3498db')
+            plt.plot(x_tmp, y_tmp, linewidth=1, ls='solid', color='#143c57')
             # color gradient
             # cmap=plt.get_cmap('Blues')
             # plt.plot(x_tmp, y_tmp, linewidth=1, ls='solid', color=cmap(100 + 8*i) )
