@@ -28,7 +28,7 @@ parser.add_argument("-batchsize", type=int,
 args = parser.parse_args()
 
 # ----------------- Preprocessing --------------------
-id_file = glob.glob('../transiXOR_data/*_id_*')
+id_file = glob.glob('./transiXOR_data/*_id_*')
 id_data = np.load(id_file[0])
 # vds, vbg, vtg, id
 print(id_data.shape)
@@ -45,6 +45,7 @@ print(vg_train.shape)
 print(vds_train.shape)
 print(id_train.shape)
 data_arrays = [vg_train, vds_train, id_train]
+
 scale, vg_shift = preproc.compute_dc_meta(*data_arrays)
 preproc_param = {
 	'scale' : scale, 
