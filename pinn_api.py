@@ -422,8 +422,9 @@ def predict_ids_grads(model_name, vg, vd):
 		preproc_param['scale'], 
 		preproc_param['vg_shift'], 
 	)
+	# print(preproc_data_arrays[0].shape)
 	_preproc_data_arrays = [np.expand_dims(
-		x, axis=1) for x in preproc_data_arrays]
+		x, axis=1) if len(x.shape)<2 else x for x in preproc_data_arrays]
 
 	workspace.FeedBlob('DBInput_train/sig_input', _preproc_data_arrays[0])
 	workspace.FeedBlob('DBInput_train/tanh_input', _preproc_data_arrays[1])

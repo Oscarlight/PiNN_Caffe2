@@ -1,3 +1,5 @@
+import sys
+sys.path.append('../')
 from ac_qv_api import ACQVModel, plot_iv, predict_qs
 import pinn.parser as parser
 import pinn.preproc as preproc

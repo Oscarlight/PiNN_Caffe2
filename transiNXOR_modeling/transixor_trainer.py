@@ -1,3 +1,5 @@
+import sys
+sys.path.append('../')
 import numpy as np
 import glob
 from itertools import product
@@ -5,8 +7,6 @@ from pinn_api import DeviceModel, plot_iv
 import pinn.parser as parser
 import pinn.preproc as preproc
 import pinn.exporter as exporter
-import numpy as np
-import sys
 import time
 import argparse
 
@@ -28,7 +28,7 @@ parser.add_argument("-batchsize", type=int,
 args = parser.parse_args()
 
 # ----------------- Preprocessing --------------------
-id_file = glob.glob('transiXOR_data/*_id_*')
+id_file = glob.glob('../transiXOR_data/*_id_*')
 id_data = np.load(id_file[0])
 # vds, vbg, vtg, id
 print(id_data.shape)

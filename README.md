@@ -4,8 +4,7 @@ PiNN2 is the **ONLY** platform can model both ON region and subthreshold region 
 
 An example HEMT model is shown below. The dash line is the model and the solid line is the experimental data. The training time is only several minutes using a Macbook Pro Laptop (with NNPACK).
 
-![alt text](exmaple_pics/LossTrend.pdf)
-![alt text](exmaple_pics/IV_modeRes.pdf)
+**See the figures in example_pics**
 
 ## Install
 Install Caffe2 from https://github.com/Oscarlight/caffe2.git. The forked repo contains some new layers created for this project. The instruction about how to install caffe2 is in https://caffe2.ai.
