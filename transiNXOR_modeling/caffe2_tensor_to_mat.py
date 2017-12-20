@@ -10,5 +10,7 @@ print(type(init_net))
 saved_mat = {}
 for op in init_net.op:
 	tensor = workspace.FetchBlob(op.output[0])
-	saved_mat[op.output[0]] = tensor
+	tensor_name = op.output[0].replace('/', '_')
+	print(tensor_name)
+	saved_mat[tensor_name] = tensor
 savemat('params.mat', saved_mat)

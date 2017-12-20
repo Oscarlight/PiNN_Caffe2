@@ -20,7 +20,7 @@ vtg_pred = np.array([e[2] for e in iter_lst], dtype=np.float32)
 vg_pred = np.column_stack((vtg_pred, vbg_pred))
 
 ids_pred, _, _ = predict_ids_grads(
-	'./transiXOR_Models/model_output_0', vg_pred, vds_pred)
+	'./transiXOR_Models/model_output_3', vg_pred, vds_pred)
 
 plt.semilogy(ids_pred)
 plt.show()
