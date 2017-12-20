@@ -17,7 +17,7 @@ else:
 
 # ----------------- Preprocessing --------------------
 # data_arrays format: [vg, vd, ids]
-data_arrays = parser.read_dc_iv_mdm('../HEMT_bo/Id_vs_Vd_at_Vg.mdm')
+data_arrays = parser.read_dc_iv_mdm('./HEMT_bo/Id_vs_Vd_at_Vg.mdm')
 #data_arrays = preproc.truncate(data_arrays, (-2, -1.2), 0)
 vg, vd, ids = data_arrays[0], data_arrays[1], data_arrays[2]
 # plot_iv(vg, vd, ids)

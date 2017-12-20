@@ -19,7 +19,7 @@ IVPLOT = True
 ## ------------ The train and eval data ------------
 if IVPLOT:
 	# data_arrays format: [vg, vd, ids]
-	data_arrays = parser.read_dc_iv_mdm('../HEMT_bo/Id_vs_Vd_at_Vg.mdm')
+	data_arrays = parser.read_dc_iv_mdm('./HEMT_bo/Id_vs_Vd_at_Vg.mdm')
 	vg, vd, ids = data_arrays[0], data_arrays[1], data_arrays[2]
 	np.random.seed = 42  # use same seed as during training
 	permu = np.random.permutation(len(data_arrays[0]))
@@ -104,7 +104,7 @@ if GRAD1:
 		'./HEMT_Models/HEMT_DC_5', vg_pred, vd_pred)
 
 	# gm from Id-Vg 
-	data_arrays = parser.read_dc_iv_mdm('../HEMT_bo/Id_vs_Vg_at_Vd.mdm')
+	data_arrays = parser.read_dc_iv_mdm('./HEMT_bo/Id_vs_Vg_at_Vd.mdm')
 	vg, vd, ids = data_arrays[0], data_arrays[1], data_arrays[2]
 	# print(ids/CHANNEL_LENGTH)
 	plot_iv(

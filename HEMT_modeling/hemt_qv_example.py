@@ -12,7 +12,7 @@ from matplotlib import cm
 
 data_arrays = deembed.deembed(
 	parser.read_s_par_mdm, 
-	'../HEMT_bo/s_at_f_vs_VgVd.mdm',
+	'./HEMT_bo/s_at_f_vs_VgVd.mdm',
 	# lg=1,ld=1,rg=2,rd=2
 )
 

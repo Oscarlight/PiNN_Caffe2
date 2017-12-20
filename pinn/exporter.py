@@ -10,7 +10,7 @@ def load_init_net(INIT_NET):
 	    init_def.ParseFromString(f.read())
 	    #init_def.device_option.CopyFrom(device_opts)
 	    workspace.RunNetOnce(init_def.SerializeToString())
-	    #print(init_def)
+	return init_def
 
 def read_param(param_name):
 	return np.squeeze(workspace.FetchBlob(param_name))
