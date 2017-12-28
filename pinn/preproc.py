@@ -8,7 +8,8 @@ def dc_iv_preproc(
 	**kwarg
 ):
 	if len(kwarg) > 0:
-		print('[WARNING]: slope and threshold preprocessing is deprecated!')
+		print('[WARNING]: slope and threshold preprocessing is no longer supported!')
+	# print(scale['vg'])
 	preproc_vg = (vg-shift) / scale['vg']
 	preproc_vd = vd / scale['vd']
 	preproc_id = ids / scale['id']
@@ -16,7 +17,7 @@ def dc_iv_preproc(
 
 def get_restore_id_func(scale, *arg, **kwarg):
 	if (len(arg) > 0 or len(kwarg) > 0):
-		print('[WARNING]: slope and threshold preprocessing is deprecated!')
+		print('[WARNING]: slope and threshold preprocessing is no longer supported!')
 	def restore_id_func(ids, *arg):
 		return ids * scale['id']
 	def get_restore_id_grad_func(sig_grad, tanh_grad):
@@ -28,11 +29,24 @@ def get_restore_id_func(scale, *arg, **kwarg):
 
 
 def compute_dc_meta(vg, vd, ids):
-	vg_shift = np.median(vg)-0.0
-	vg_scale = max(abs(np.max(vg)-vg_shift)/1.0, abs(np.min(vg)-vg_shift)/1.0)
-	vd_scale = max(abs(np.max(vd))/1.0, abs(np.min(vd))/1.0)
-	id_scale = max(abs(np.max(ids))/0.75, abs(np.min(ids))/0.75)
+	vg_shift = np.median(vg,axis=0)
 
+	vg_scale = np.maximum(
+		abs(np.max(vg,axis=0)-vg_shift), 
+		abs(np.min(vg,axis=0)-vg_shift)
+	)
+	vd_scale = np.maximum(
+		abs(np.max(vd,axis=0)), 
+		abs(np.min(vd,axis=0))
+	)
+	id_scale = np.maximum(
+		abs(np.max(ids,axis=0))/0.75, 
+		abs(np.min(ids,axis=0))/0.75
+	)
+	## replace 0 to 1
+	vg_scale[vg_scale == 0.0] = 1.0
+	vd_scale[vd_scale == 0.0] = 1.0
+	id_scale[id_scale == 0.0] = 1.0
 	scale = {'vg':vg_scale, 'vd':vd_scale, 'id':id_scale}
 
 	return scale, vg_shift

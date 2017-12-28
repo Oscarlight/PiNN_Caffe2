@@ -8,7 +8,9 @@ import caffe2.python.layer_model_instantiator as instantiator
 from caffe2.python.layers.tags import Tags
 import numpy as np
 from pinn.adjoint_pinn_lib import (
-	build_adjoint_pinn, init_model_with_schemas, TrainTarget)
+	build_adjoint_pinn, init_adjoint_model_with_schemas, TrainTarget)
+from pinn.pinn_lib import (
+	build_pinn, init_model_with_schemas)
 import pinn.data_reader as data_reader
 import pinn.preproc as preproc
 import pinn.parser as parser
@@ -24,15 +26,21 @@ class DeviceModel(object):
 		sig_input_dim=1,
 		tanh_input_dim=1,
 		output_dim=1,
-		train_target=TrainTarget.ORIGIN
+		train_target=TrainTarget.ORIGIN,
+		net_builder=TrainTarget.ORIGIN,
 	):	
 		self.model_name = model_name
 		self.sig_input_dim = sig_input_dim
 		self.tanh_input_dim = tanh_input_dim
-		self.model = init_model_with_schemas(
-			model_name, sig_input_dim, tanh_input_dim, output_dim, 
-			train_target=train_target
-		)
+		if net_builder==TrainTarget.ADJOINT or train_target==TrainTarget.ADJOINT:
+			self.model = init_adjoint_model_with_schemas(
+				model_name, sig_input_dim, tanh_input_dim, output_dim, 
+				train_target=train_target
+			)
+		elif net_builder==TrainTarget.ORIGIN and train_target==TrainTarget.ORIGIN:
+			self.model = init_model_with_schemas(
+				model_name, sig_input_dim, tanh_input_dim, output_dim
+			)
 		self.input_data_store = {}
 		self.preproc_param = {}
 		self.net_store = {}
@@ -43,6 +51,7 @@ class DeviceModel(object):
 			'train_scaled_l1_metric':[], 'eval_scaled_l1_metric':[]
 		}
 		self.train_target = train_target
+		self.net_builder = net_builder
 		if train_target == TrainTarget.ORIGIN:
 			self.adjoint_tag = Tags.PREDICTION_ONLY
 		if train_target == TrainTarget.ADJOINT:
@@ -113,8 +122,8 @@ class DeviceModel(object):
 		)
 		self.input_data_store[data_tag] = [db_name, num_example]
 
-	# overload add_data: add the database file directly
-	def add_data(
+	# add_data_base: add the database file directly
+	def add_database(
 		self,
 		data_tag,
 		db_name,
@@ -173,20 +182,30 @@ class DeviceModel(object):
 		self.model.input_feature_schema.tanh_input.set_value(
 			input_data_train[1].get(), unsafe=True)
 
-		(self.pred, self.sig_adjoint_pred, 
-			self.tanh_adjoint_pred, self.loss) = build_adjoint_pinn(
-			self.model,
-			sig_input_dim=self.sig_input_dim,
-			tanh_input_dim=self.tanh_input_dim,
-			sig_net_dim=hidden_sig_dims,
-			tanh_net_dim=hidden_tanh_dims,
-			weight_optim=_build_optimizer(weight_optim_method, weight_optim_param),
-			bias_optim=_build_optimizer(bias_optim_method, bias_optim_param),
-			adjoint_tag=self.adjoint_tag,
-			train_target=self.train_target,
-			loss_function=loss_function,
-			max_loss_scale=max_loss_scale,
-		)
+		if self.net_builder==TrainTarget.ADJOINT or self.train_target==TrainTarget.ADJOINT:
+			(self.pred, self.sig_adjoint_pred, 
+				self.tanh_adjoint_pred, self.loss) = build_adjoint_pinn(
+				self.model,
+				sig_input_dim=self.sig_input_dim,
+				tanh_input_dim=self.tanh_input_dim,
+				sig_net_dim=hidden_sig_dims,
+				tanh_net_dim=hidden_tanh_dims,
+				weight_optim=_build_optimizer(weight_optim_method, weight_optim_param),
+				bias_optim=_build_optimizer(bias_optim_method, bias_optim_param),
+				adjoint_tag=self.adjoint_tag,
+				train_target=self.train_target,
+				loss_function=loss_function,
+				max_loss_scale=max_loss_scale,
+			)
+		elif self.net_builder==TrainTarget.ORIGIN and self.train_target == TrainTarget.ORIGIN:
+			self.pred, self.loss = build_pinn(
+				sig_net_dim=hidden_sig_dims, 
+				tanh_net_dim=hidden_tanh_dims,
+				weight_optim=_build_optimizer(weight_optim_method, weight_optim_param),
+				bias_optim=_build_optimizer(bias_optim_method, bias_optim_param),
+				loss_function=loss_function,
+				max_loss_scale=max_loss_scale,
+			)
 
 		train_init_net, train_net = instantiator.generate_training_nets(self.model)
 		workspace.RunNetOnce(train_init_net)
@@ -278,6 +297,12 @@ class DeviceModel(object):
 						self.model.metrics_schema.scaled_l1_metric).get())
 					self.reports['eval_scaled_l1_metric'].append(
 						eval_scaled_l1_metric)
+					# Save Net
+					exporter.save_net(
+						self.net_store['pred_net'], 
+						self.model, 
+						self.model_name+'_init', self.model_name+'_predict'
+					)
 		else:
 			print('>>> Training without Reports (Fastest mode)')
 			workspace.RunNet(

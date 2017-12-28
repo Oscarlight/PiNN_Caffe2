@@ -262,7 +262,7 @@ def build_adjoint_pinn(
 			if loss_function == 'scaled_l2':
 				print('[Pi-NN Build Net]: Use scaled_l2 loss, but l1 metrics.')
 				loss_and_metrics = model.BatchDirectWeightedL2Loss(
-					model.trainer_extra_schema,
+					model.trainer_extra_schema.origin_loss_record,
 					max_scale=max_loss_scale,
 				)
 			model.add_loss(loss_and_metrics.loss)
@@ -278,7 +278,7 @@ def build_adjoint_pinn(
 		return origin_pred, sig_adjoint_pred, tanh_adjoint_pred, loss
 
 
-def init_model_with_schemas(
+def init_adjoint_model_with_schemas(
 	model_name, 
 	sig_input_dim, tanh_input_dim,
 	pred_dim,

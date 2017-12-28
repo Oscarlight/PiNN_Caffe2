@@ -26,7 +26,7 @@ parser.add_argument("-hidden", type=int, default=32,
                     help="hidden dimension")
 parser.add_argument("-batchsize", type=int, default=1024,
                     help="batch size")
-parser.add_argument("-vds_reweight", type=int,
+parser.add_argument("-vds_reweight", type=int, default=1,
                     help="Vds Reweight")
 args = parser.parse_args()
 
@@ -56,9 +56,9 @@ print(vg_train.shape)
 print(vds_train.shape)
 print(id_train.shape)
 ## Vds reweighting
-if args.vds_reweight > 0:
-	print('[Warning]:Applying Vds Reweighting')
-	id_train = id_train * vds_train * args.vds_reweight
+# if args.vds_reweight > 0:
+#	print('[Warning]:Applying Vds Reweighting')
+#	id_train = id_train * vds_train * args.vds_reweight
 data_arrays = [vg_train, vds_train, id_train]
 scale, vg_shift = preproc.compute_dc_meta(*data_arrays)
 preproc_param = {
@@ -92,15 +92,16 @@ dc_model = DeviceModel(
 	sig_input_dim=2,
 	tanh_input_dim=1,
 	output_dim=1,
-	train_target='origin'
+	train_target='origin',
+	net_builder='adjoint'
 )
 dc_model.add_data('train', data_arrays_train, preproc_param)
 dc_model.add_data('eval',data_arrays_eval, preproc_param)
 # plot_iv(*dc_model.preproc_data_arrays)
 
 dc_model.build_nets(
-	hidden_sig_dims=[args.hidden, 1],
-	hidden_tanh_dims=[args.hidden, 1],
+	hidden_sig_dims=[args.hidden, args.hidden, 1],
+	hidden_tanh_dims=[args.hidden, args.hidden, 1],
 	train_batch_size=args.batchsize,
 	eval_batch_size=args.batchsize,
 	weight_optim_method='AdaGrad',
