@@ -32,12 +32,12 @@ class DeviceModel(object):
 		self.model_name = model_name
 		self.sig_input_dim = sig_input_dim
 		self.tanh_input_dim = tanh_input_dim
-		if net_builder==TrainTarget.ADJOINT or train_target==TrainTarget.ADJOINT:
+		if net_builder==TrainTarget.ADJOINT:
 			self.model = init_adjoint_model_with_schemas(
 				model_name, sig_input_dim, tanh_input_dim, output_dim, 
 				train_target=train_target
 			)
-		elif net_builder==TrainTarget.ORIGIN and train_target==TrainTarget.ORIGIN:
+		elif net_builder==TrainTarget.ORIGIN:
 			self.model = init_model_with_schemas(
 				model_name, sig_input_dim, tanh_input_dim, output_dim
 			)
@@ -56,6 +56,7 @@ class DeviceModel(object):
 			self.adjoint_tag = Tags.PREDICTION_ONLY
 		if train_target == TrainTarget.ADJOINT:
 			self.adjoint_tag = Tags.EXCLUDE_FROM_PREDICTION
+			assert net_builder == TrainTarget.ADJOINT, "Wrong Net Builder"
 
 	def add_data(
 		self,
@@ -147,6 +148,7 @@ class DeviceModel(object):
 		assert len(self.input_data_store) > 0, 'Input data store is empty.'
 		assert 'train' in self.input_data_store, 'Missing training data.'
 		self.batch_size = train_batch_size
+
 		# Build the date reader net for train net
 		if self.train_target == TrainTarget.ORIGIN:
 			input_data_train = data_reader.build_input_reader(
@@ -167,9 +169,14 @@ class DeviceModel(object):
 					batch_size=eval_batch_size,
 					data_type='eval',
 				)
-			# for training origin, use origin_loss_record
-			self.model.trainer_extra_schema.origin_loss_record.label.set_value(
-				input_data_train[2].get(), unsafe=True)
+
+			if self.net_builder == TrainTarget.ADJOINT: # Use Adjoint net so output adjoint net
+				# for training origin, use origin_loss_record
+				self.model.trainer_extra_schema.origin_loss_record.label.set_value(
+					input_data_train[2].get(), unsafe=True)
+			elif self.net_builder == TrainTarget.ORIGIN:
+				self.model.trainer_extra_schema.label.set_value(
+					input_data_train[2].get(), unsafe=True)
 
 		if self.train_target == TrainTarget.ADJOINT:
 			raise Exception('Not Implemented')
@@ -182,7 +189,7 @@ class DeviceModel(object):
 		self.model.input_feature_schema.tanh_input.set_value(
 			input_data_train[1].get(), unsafe=True)
 
-		if self.net_builder==TrainTarget.ADJOINT or self.train_target==TrainTarget.ADJOINT:
+		if self.net_builder == TrainTarget.ADJOINT:
 			(self.pred, self.sig_adjoint_pred, 
 				self.tanh_adjoint_pred, self.loss) = build_adjoint_pinn(
 				self.model,
@@ -197,7 +204,7 @@ class DeviceModel(object):
 				loss_function=loss_function,
 				max_loss_scale=max_loss_scale,
 			)
-		elif self.net_builder==TrainTarget.ORIGIN and self.train_target == TrainTarget.ORIGIN:
+		elif self.net_builder == TrainTarget.ORIGIN:
 			self.pred, self.loss = build_pinn(
 				sig_net_dim=hidden_sig_dims, 
 				tanh_net_dim=hidden_tanh_dims,
@@ -223,9 +230,14 @@ class DeviceModel(object):
 			self.model.input_feature_schema.tanh_input.set_value(
 				input_data_eval[1].get(), unsafe=True)
 
-			if self.train_target == TrainTarget.ORIGIN: 
-				self.model.trainer_extra_schema.origin_loss_record.label.set_value(
-					input_data_eval[2].get(), unsafe=True)
+			if self.train_target == TrainTarget.ORIGIN:
+				if self.net_builder == TrainTarget.ADJOINT:
+					self.model.trainer_extra_schema.origin_loss_record.label.set_value(
+						input_data_eval[2].get(), unsafe=True)
+				elif self.net_builder == TrainTarget.ORIGIN:
+					self.model.trainer_extra_schema.label.set_value(
+						input_data_eval[2].get(), unsafe=True)
+
 
 			if self.train_target == TrainTarget.ADJOINT:
 				raise Exception('Not Implemented')
