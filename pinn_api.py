@@ -16,6 +16,7 @@ import pinn.preproc as preproc
 import pinn.parser as parser
 import pinn.visualizer as visualizer
 import pinn.exporter as exporter
+from shutil import copyfile
 # import logging
 import matplotlib.pyplot as plt
 
@@ -134,7 +135,9 @@ class DeviceModel(object):
 		preproc_param_pickle_name,
 		):
 		self.input_data_store[data_tag] = [db_name, num_example]
-		self.pickle_file_name = preproc_param_pickle_name
+		# Save the preproc_param with the model
+		self.pickle_file_name = self.model_name + '_' + preproc_param_pickle_name
+		copyfile(preproc_param_pickle_name, self.pickle_file_name)
 
 	def build_nets(
 		self,
