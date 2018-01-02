@@ -58,6 +58,8 @@ class DeviceModel(object):
 			self.adjoint_tag = Tags.EXCLUDE_FROM_PREDICTION
 			assert net_builder == TrainTarget.ADJOINT, "Wrong Net Builder"
 
+	# If reuse the same database many time, recommend to create the database
+	# and the preproc_param only once (using add_database)
 	def add_data(
 		self,
 		data_tag,
@@ -128,9 +130,11 @@ class DeviceModel(object):
 		self,
 		data_tag,
 		db_name,
-		num_example
+		num_example,
+		preproc_param_pickle_name,
 		):
 		self.input_data_store[data_tag] = [db_name, num_example]
+		self.pickle_file_name = preproc_param_pickle_name
 
 	def build_nets(
 		self,
