@@ -6,7 +6,9 @@ from pinn import exporter
 from scipy.io import savemat
 import pickle
 
-init_net = exporter.load_init_net('./transiXOR_Models/model_output_0_init')
+model_name = 'model_output_4'
+
+init_net = exporter.load_init_net('./transiXOR_Models/'+model_name+'_init')
 print(type(init_net))
 saved_mat = {}
 for op in init_net.op:
@@ -18,7 +20,7 @@ savemat('params.mat', saved_mat)
 
 ## Preprocess param
 saved_preproc = {}
-with open("./transiXOR_Models/model_output_0_preproc_param.p", "rb") as f:
+with open("./transiXOR_Models/"+model_name+"_preproc_param.p", "rb") as f:
 	preproc_dict = pickle.load(f)
 saved_preproc = preproc_dict['scale']
 saved_preproc['vg_shift'] = preproc_dict['vg_shift']

@@ -55,10 +55,7 @@ vg_train = np.column_stack((vtg_train, vbg_train))
 print(vg_train.shape)
 print(vds_train.shape)
 print(id_train.shape)
-## Vds reweighting
-# if args.vds_reweight > 0:
-#	print('[Warning]:Applying Vds Reweighting')
-#	id_train = id_train * vds_train * args.vds_reweight
+
 data_arrays = [vg_train, vds_train, id_train]
 scale, vg_shift = preproc.compute_dc_meta(*data_arrays)
 preproc_param = {
@@ -115,8 +112,8 @@ dc_model.build_nets(
 start = time.time()
 dc_model.train_with_eval(
 	num_epoch=int(args.epoch),
-	# report_interval=int(args.report),
-	# eval_during_training=True
+	report_interval=int(args.report),
+	eval_during_training=True
 )
 end = time.time()
 print('Elapsed time: ' + str(end - start))
