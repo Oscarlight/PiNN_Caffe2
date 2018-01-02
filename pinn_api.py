@@ -29,6 +29,7 @@ class DeviceModel(object):
 		train_target=TrainTarget.ORIGIN,
 		net_builder=TrainTarget.ORIGIN,
 	):	
+		print('>>> Creating model: ' + model_name)
 		self.model_name = model_name
 		self.sig_input_dim = sig_input_dim
 		self.tanh_input_dim = tanh_input_dim
