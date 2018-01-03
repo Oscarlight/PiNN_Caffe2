@@ -79,6 +79,12 @@ preproc_data_arrays_train = [np.expand_dims(
 preproc_data_arrays_eval = [np.expand_dims(
 	x, axis=1) if x.ndim == 1 else x for x in preproc_data_arrays_eval]
 # Write to database
+if os.path.isfile('train.minidb'):
+	print("XXX Delete the old train database...")
+	os.remove('train.minidb')
+if os.path.isfile('eval.minidb'):
+	print("XXX Delete the old eval database...")
+	os.remove('eval.minidb')
 data_reader.write_db('minidb', 'train.minidb', preproc_data_arrays_train)
 data_reader.write_db('minidb', 'eval.minidb', preproc_data_arrays_eval)
 pickle.dump(preproc_param, open('preproc_param.p', 'wb'))
