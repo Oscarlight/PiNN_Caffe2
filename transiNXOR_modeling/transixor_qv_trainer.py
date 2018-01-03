@@ -3,7 +3,7 @@ sys.path.append('../')
 import numpy as np
 import glob
 from itertools import product
-from pinn_api import DeviceModel, plot_iv
+from ac_qv_api import ACQVModel
 import pinn.parser as parser
 import pinn.preproc as preproc
 import pinn.exporter as exporter
