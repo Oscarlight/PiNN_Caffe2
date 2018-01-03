@@ -39,7 +39,7 @@ dc_model.add_database(
 	56313, args.terminal + '_preproc_param.p')
 dc_model.add_database(
 	'eval', args.terminal + '_eval.minidb',
-	56313, args.terminal + '_preproc_param.p')
+	56314, args.terminal + '_preproc_param.p')
 
 dc_model.build_nets(
 	hidden_dims=[args.hidden, args.hidden],

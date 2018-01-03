@@ -26,7 +26,7 @@ for term in terminal_list:
 	cv_files = glob.glob('./transiXOR_data/*_C'+term+'?_*')
 	capa_data = [np.expand_dims(
 		np.load(f).flatten(), axis=1).astype(np.float32) for f in cv_files]
-	c_train = np.column_stack(capa_data)
+	c_train = np.column_stack(capa_data) # capacitances
 	scale, vg_shift = preproc.compute_ac_meta(v_train, c_train)
 	# print(c_train.shape)
 	# print(scale, vg_shift)
