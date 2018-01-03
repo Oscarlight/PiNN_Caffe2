@@ -99,12 +99,19 @@ class ACQVModel:
 			[origin_input, adjoint_input, adjoint_label]
 		)
 		self.input_data_store[data_tag] = [db_name, origin_input.shape[0]]
-		preproc.restore_voltages(
-			self.preproc_param['scale'],
-			self.preproc_param['vg_shift'],
-			voltages
-		)
 
+	# add_data_base: add the database file directly
+	def add_database(
+		self,
+		data_tag,
+		db_name,
+		num_example,
+		preproc_param_pickle_name,
+		):
+		self.input_data_store[data_tag] = [db_name, num_example]
+		# Save the preproc_param with the model
+		self.pickle_file_name = self.model_name + '_' + preproc_param_pickle_name
+		copyfile(preproc_param_pickle_name, self.pickle_file_name)
 
 	def build_nets(
 		self,

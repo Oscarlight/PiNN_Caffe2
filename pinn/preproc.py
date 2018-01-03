@@ -55,59 +55,65 @@ def compute_dc_meta(vg, vd, ids):
 def truncate(data_arrays, truncate_range, axis):
 	# The data within the truncate_range will be removed, the rest will be returned.
 
-    assert (truncate_range[0] <= np.max(data_arrays[axis]) and truncate_range[1] > np.min(data_arrays[axis])),\
+	assert (truncate_range[0] <= np.max(data_arrays[axis]) and truncate_range[1] > np.min(data_arrays[axis])),\
 		'Truncate range is out of data range, abort!'
 
-    index = np.logical_not(
+	index = np.logical_not(
 		np.logical_and(
 			data_arrays[axis] > truncate_range[0],
 			data_arrays[axis] <= truncate_range[1]
 		)
 	)
 
-    return [e[index] for e in data_arrays]
+	return [e[index] for e in data_arrays]
 
 #AC QV preproc
-def ac_qv_preproc(preproc_voltages, gradient, scale, shift):
-    preproc_voltages[:,0] = (preproc_voltages[:,0]-shift) / scale['vg']
-    preproc_voltages[:,1] /= scale['vd']
-    preproc_gradient = gradient/scale['q']
-    return preproc_voltages, preproc_gradient
-
-def restore_voltages(scale, shift, voltages):
-	voltages[:, 0] = (voltages[:,0]*scale['vg']) + shift
-	voltages[:, 1] *= scale['vd']
-	return voltages
+def ac_qv_preproc(voltages, grads, scale, shift):
+	print('[WARNING:ac_qv_preproc]Precondition: the first column of voltage is Vd, and last column of voltages is Vs')
+	voltages[:,1:-1] = (voltages[:,1:-1]-shift) / scale['vg']
+	voltages[:,0:1] /= scale['vd']
+	preproc_grads = grads/scale['grads']
+	return voltages, preproc_grads
 
 def get_restore_q_func(
-        scale, shift
+		scale, shift
 ):
-    def restore_integral_func(integrals):
-        ori_integral = integrals*scale['q']*scale['vd']*scale['vg']
-        return ori_integral
-    def restore_gradient_func(gradient):
-        ori_gradient =  gradient * scale['q']
-        return ori_gradient
-    return restore_integral_func, restore_gradient_func
-    
-def compute_ac_meta(voltage, gradient):
-    vg = voltage[:, 0]
-    vd = voltage[:, 1]
-    vg_shift = np.median(vg)-0.0
-    vg_scale = max(abs(np.max(vg)-vg_shift)/1.0, abs(np.min(vg)-vg_shift)/1.0)
-    vd_scale = max(abs(np.max(vd))/1.0, abs(np.min(vd))/1.0)
-    q_scale = max(abs(np.max(gradient))/0.75, abs(np.min(gradient))/0.75)   
-    scale = {'vg':vg_scale, 'vd':vd_scale, 'q':q_scale}
-    return scale, vg_shift
+	def restore_integral_func(integrals):
+		ori_integral = integrals*scale['q']*scale['vd']*scale['vg']
+		return ori_integral
+	def restore_gradient_func(gradient):
+		ori_gradient =  gradient * scale['q']
+		return ori_gradient
+	return restore_integral_func, restore_gradient_func
+	
+def compute_ac_meta(voltages, grads):
+	print('[WARNING:compute_ac_meta]Precondition: the first column of voltage is Vd, and last column of voltages is Vs')
+	vd = voltages[:, 0:1]
+	vg = voltages[:, 1:-1]
+	
+	vg_shift = np.median(vg,axis=0)
+	vg_scale = np.maximum(
+		abs(np.max(vg,axis=0)-vg_shift), 
+		abs(np.min(vg,axis=0)-vg_shift)
+	)
+	vd_scale = np.maximum(
+		abs(np.max(vd,axis=0)), 
+		abs(np.min(vd,axis=0))
+	)
+	# print(vd_scale)
+	grads_scale = np.maximum(
+		abs(np.max(grads,axis=0))/0.85, 
+		abs(np.min(grads,axis=0))/0.85
+	)
+	## replace 0 to 1
+	vg_scale[vg_scale == 0.0] = 1.0
+	vd_scale[vd_scale == 0.0] = 1.0
+	grads_scale[grads_scale == 0.0] = 1.0
+ 
+	scale = {'vg':vg_scale, 'vd':vd_scale, 'grads':grads_scale}
+	return scale, vg_shift
 
 
-def plotgradient(vg, vd, gradient):
-    #gradient = np.asarray(gradient)
-    dqdvg = gradient[:, 0]
-    dqdvd = gradient[:, 1]
-    plt.plot(vg, dqdvg, 'r')
-    plt.plot(vd, dqdvd, 'b')
-    plt.show()
 
   
 
