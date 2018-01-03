@@ -12,6 +12,7 @@ import pinn.preproc as preproc
 import pinn.parser as parser
 import pinn.visualizer as visualizer
 import pinn.exporter as exporter
+from shutil import copyfile
 # import logging
 import matplotlib.pyplot as plt
 
