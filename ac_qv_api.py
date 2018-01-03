@@ -140,7 +140,7 @@ class ACQVModel:
 				self.model, 
 				self.input_data_store['eval'][0], 
 				'minidb', 
-				['origin_input', 'adjoint_input'], 
+				['origin_input', 'adjoint_input', 'label'], 
 				batch_size=batch_size,
 				data_type='eval',
 			)
