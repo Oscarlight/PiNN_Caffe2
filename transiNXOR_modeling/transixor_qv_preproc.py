@@ -8,6 +8,7 @@ import pinn.preproc as preproc
 import pinn.data_reader as data_reader
 import matplotlib.pyplot as plt
 import pickle
+import os
 
 vds = np.linspace(0.0, 0.4, 41)
 vbg = np.linspace(0.0, 0.4, 41)
@@ -34,14 +35,20 @@ for term in terminal_list:
 	# print(v_train.shape)
 	# print(c_train.shape)
 	s_train = np.ones((v_train.shape[0], 1)).astype(np.float32) # selector aka adjoint input
-	v_train = v_train.astype(np.float32)
-	c_train = c_train.astype(np.float32)
-	s_train = s_train.astype(np.float32)
+	# v_train = v_train.astype(np.float32)
+	# c_train = c_train.astype(np.float32)
+	# s_train = s_train.astype(np.float32)
 	## get eval and train
 	v_eval = v_train[::2]; v_train = v_train[1::2]
 	c_eval = c_train[::2]; c_train = c_train[1::2]
 	s_eval = s_train[::2]; s_train = s_train[1::2]
 	## Saving 
+	if os.path.isfile(term+'_train.minidb'):
+		print("XXX Delete the old train database...")
+		os.remove(term+'_train.minidb')
+	if os.path.isfile(term+'_eval.minidb'):
+		print("XXX Delete the old eval database...")
+		os.remove(term+'_eval.minidb')
 	data_reader.write_db(
 		'minidb', term+'_train.minidb', 
 		[v_train, s_train, c_train]

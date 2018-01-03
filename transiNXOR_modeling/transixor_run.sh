@@ -1,6 +1,5 @@
-# python transixor_trainer.py transiXOR_Models/model_output_0 -mls 1e2 -epoch 1e5 -hidden 8
-# python transixor_trainer.py transiXOR_Models/model_output_1 -mls 1e2 -epoch 1e5 -hidden 16
-# python transixor_trainer.py transiXOR_Models/model_output_2 -mls 1e2 -epoch 1e5 -hidden 32
-# python transixor_trainer.py transiXOR_Models/model_output_3 -mls 1e1 -epoch 1e6 -hidden 16
-# python transixor_trainer.py transiXOR_Models/model_output_4 -mls 1e2 -epoch 1e6 -hidden 16
-# python transixor_trainer.py transiXOR_Models/model_output_5 -mls 1e3 -epoch 1e6 -hidden 16
+python transixor_qv_trainer.py transiXOR_QV_Models/model_d_0 -epoch 1e5 -report 1e3 -hidden 8 -terminal d
+python transixor_qv_trainer.py transiXOR_QV_Models/model_b_0 -epoch 1e5 -report 1e3 -hidden 8 -terminal b
+python transixor_qv_trainer.py transiXOR_QV_Models/model_g_0 -epoch 1e5 -report 1e3 -hidden 8 -terminal g
+python transixor_qv_trainer.py transiXOR_QV_Models/model_s_0 -epoch 1e5 -report 1e3 -hidden 8 -terminal s
+
