@@ -33,7 +33,7 @@ for term in terminal_list:
 	v_train, c_train = preproc.ac_qv_preproc(v_train, c_train, scale, vg_shift)
 	# print(v_train.shape)
 	# print(c_train.shape)
-	s_train = np.ones((v_train.shape[0], 1)) # selector aka adjoint input
+	s_train = np.ones((v_train.shape[0], 1)).astype(np.float32) # selector aka adjoint input
 	## get eval and train
 	v_eval = v_train[::2]; v_train = v_train[1::2]
 	c_eval = c_train[::2]; c_train = c_train[1::2]
