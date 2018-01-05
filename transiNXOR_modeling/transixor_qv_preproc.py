@@ -25,9 +25,14 @@ print(v_train.shape)
 terminal_list = ['b', 'd', 'g', 's']
 for term in terminal_list:
 	cv_files = glob.glob('./transiXOR_data/*_C'+term+'?_*')
+	# capacitances: [caution] must in the same order as the inputs!
+	# inputs are vd, vbg, vtg, vs
+	# grads should be C?d, C?b, C?g, C?s (where ? is the terminal)
+	temp = cv_files[1]; cv_files[1] = cv_files[0]; cv_files[0] = temp;
+	# print(cv_files)
 	capa_data = [np.expand_dims(
-		np.load(f).flatten(), axis=1).astype(np.float32) for f in cv_files]
-	c_train = np.column_stack(capa_data) # capacitances
+		np.load(f).flatten(), axis=1).astype(np.float32) for f in cv_files]	
+	c_train = np.column_stack(capa_data) 
 	scale, vg_shift = preproc.compute_ac_meta(v_train, c_train)
 	# print(c_train.shape)
 	# print(scale, vg_shift)
