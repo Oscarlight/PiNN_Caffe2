@@ -19,7 +19,7 @@ vss_pred = np.zeros_like(vtg_pred)
 v_pred = np.column_stack((vds_pred, vbg_pred, vtg_pred, vss_pred))
 
 # terminal_list = ['b', 'd', 'g', 's']
-terminal_list = ['b']
+terminal_list = ['d']
 for term in terminal_list:
 	## ------------  True data  ---------------
 	# cv_files = glob.glob('./transiXOR_data/*_C'+term+'?_*')
@@ -29,5 +29,5 @@ for term in terminal_list:
 
 	## ------------  Prediction ---------------
 	q_pred, grads_pred = predict_qs(
-		'./transiXOR_QV_Models/model_'+term+'_0', v_pred)
+		'./transiXOR_QV_Models/model_'+term+'_2', term, v_pred)
 	print(q_pred.shape, grads_pred.shape)

@@ -255,52 +255,6 @@ class ACQVModel:
 			graph = net_drawer.GetPydotGraph(net.Proto().op, rankdir='TB')
 			with open(net.Name() + ".png",'wb') as f:
 				f.write(graph.create_png())
-				
-
-	def predict_qs(self, voltages):
-		# requires voltages is an numpy array of size 
-		# (batch size, input_dimension)
-		# the first dimension is Vg and the second dimenstion is Vd
-
-		# preprocess the origin input and create adjoint input
-		# voltages array is unchanged 		
-		if len(self.preproc_param) == 0:
-			self.preproc_param = pickle.load(
-				open(self.pickle_file_name, "rb" )
-			)
-		dummy_qs = np.zeros(voltages[0].shape[0])
-		voltages, dummy_qs = preproc.ac_qv_preproc(
-			voltages, dummy_qs, 
-			self.preproc_param['scale'], 
-			self.preproc_param['vg_shift']
-		)
-		adjoint_input = np.ones((voltages[0].shape[0], 1))
-		
-		# Expand dimensions of input and set data type of inputs
-		origin_input = np.expand_dims(
-			voltages, axis=1)
-		origin_input = origin_input.astype(np.float32)
-		adjoint_input = adjoint_input.astype(np.float32)
-
-		workspace.FeedBlob('DBInput_train/origin_input', origin_input)
-		workspace.FeedBlob('DBInput_train/adjoint_input', adjoint_input)
-		pred_net = self.net_store['pred_net']
-		workspace.RunNet(pred_net)
-
-		qs = np.squeeze(schema.FetchRecord(self.origin_pred).get())
-		gradients = np.squeeze(schema.FetchRecord(self.adjoint_pred).get())
-		restore_integral_func, restore_gradient_func = preproc.get_restore_q_func( 
-			self.preproc_param['scale'], 
-			self.preproc_param['vg_shift']
-		)
-		original_qs = restore_integral_func(qs)
-		original_gradients = restore_gradient_func(gradients)
-		preproc.restore_voltages(
-			self.preproc_param['scale'],
-			self.preproc_param['vg_shift'],
-			voltages
-		)
-		return qs, original_qs, gradients, original_gradients
 
 	def plot_loss_trend(self):
 		plt.plot(self.reports['epoch'], self.reports['train_loss'])
@@ -308,6 +262,27 @@ class ACQVModel:
 			plt.plot(self.reports['epoch'], self.reports['eval_loss'], 'r--')
 		plt.show()
 
+	def save_loss_trend(self,save_name):
+		if len(self.reports['eval_loss'])>0:
+			f = open(save_name+'_loss_trend.csv', "w")
+			f.write(
+				"{},{},{}\n".format(
+					"epoch", "train_loss","eval_loss"))
+			for x in zip(
+				self.reports['epoch'],
+				self.reports['train_loss'],
+				self.reports['eval_loss']):
+				f.write("{},{},{}\n".format(
+					x[0], x[1], x[2]))
+			f.close()
+		else:
+			f = open(save_name+'_loss_trend.csv', "w")
+			f.write("{},{}\n".format("epoch", "train_loss"))
+			for x in zip(
+				self.reports['epoch'],
+				self.reports['train_loss']):
+				f.write("{},{}\n".format(x[0], x[1]))
+			f.close()
 	
 
 
@@ -316,7 +291,7 @@ class ACQVModel:
 # ----------------   Global functions  -------------------
 # --------------------------------------------------------
 
-def predict_qs(model_name, voltages):
+def predict_qs(model_name, terminal, voltages):
 	workspace.ResetWorkspace()
 
 	# requires voltages is an numpy array of size 
@@ -325,7 +300,7 @@ def predict_qs(model_name, voltages):
 
 	# preprocess the origin input and create adjoint input
 	preproc_param = pickle.load(
-			open(model_name+'_preproc_param.p', "rb" )
+			open(model_name+'_' + terminal + '_preproc_param.p', "rb" )
 		)
 	dummy_qs = np.zeros(voltages[0].shape[0])
 	voltages, dummy_qs = preproc.ac_qv_preproc(
@@ -333,8 +308,7 @@ def predict_qs(model_name, voltages):
 		preproc_param['scale'], 
 		preproc_param['vg_shift']
 	)
-	adjoint_input = np.ones((voltages[0].shape[0], 1))
-	
+	adjoint_input = np.ones((voltages.shape[0], 1))
 	# Expand dimensions of input and set data type of inputs
 	origin_input = np.expand_dims(
 		voltages, axis=1)
@@ -346,8 +320,8 @@ def predict_qs(model_name, voltages):
 	pred_net = exporter.load_net(model_name+'_init', model_name+'_predict')
 	workspace.RunNet(pred_net)
 
-	qs = np.squeeze(schema.FetchBlob('prediction'))
-	gradients = np.squeeze(schema.FetchBlob('adjoint_prediction'))
+	qs = np.squeeze(workspace.FetchBlob('origin/NanCheck/origin_pred'))
+	gradients = np.squeeze(workspace.FetchBlob('adjoint/fc0/output'))
 	restore_integral_func, restore_gradient_func = preproc.get_restore_q_func( 
 		preproc_param['scale'], 
 		preproc_param['vg_shift']

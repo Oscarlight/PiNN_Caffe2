@@ -48,42 +48,43 @@ def build_adjoint_mlp(
 				weight_optim=optim, 
 				name='fc{}'.format(idx)
 			)
+			origin_pred = model.NanCheck(origin_pred, 'origin_pred')
 
 		with scope.NameScope('adjoint'):
-			with Tags(Tags.EXCLUDE_FROM_PREDICTION):
-				alpha = model.input_feature_schema.adjoint_input
-				for hidden_dim in reversed(hidden_dims):
-					gamma_ad = model.FCTransposeW(
-						alpha, 
-						hidden_dim,
-						weight_optim=optim,
-						name='fc{}'.format(idx)
-					)
-					z = z_lst[idx-1]
-					# Note: passing gradient is helpful
-					# z = model.StopGradient(z, z)
-					# TODO: use add_global_constant
-					one_vector = model.ConstantFill(
-						[z],
-						'ones{}'.format(idx),
-						value=1.0, 
-						dtype=core.DataType.FLOAT
-					)
-					multiplier = model.Mul(
-						[z, model.Sub([one_vector, z], 'sub{}'.format(idx))],
-						'multiplier{}'.format(idx),
-					)
-					alpha = model.Mul(
-						[gamma_ad, multiplier], 
-						'adjoint_layer{}'.format(idx)
-					)
-					idx -= 1
-				adjoint_pred = model.FCTransposeW(
+			# with Tags(Tags.EXCLUDE_FROM_PREDICTION):
+			alpha = model.input_feature_schema.adjoint_input
+			for hidden_dim in reversed(hidden_dims):
+				gamma_ad = model.FCTransposeW(
 					alpha, 
-					input_dim,
+					hidden_dim,
 					weight_optim=optim,
 					name='fc{}'.format(idx)
 				)
+				z = z_lst[idx-1]
+				# Note: passing gradient is helpful
+				# z = model.StopGradient(z, z)
+				# TODO: use add_global_constant
+				one_vector = model.ConstantFill(
+					[z],
+					'ones{}'.format(idx),
+					value=1.0, 
+					dtype=core.DataType.FLOAT
+				)
+				multiplier = model.Mul(
+					[z, model.Sub([one_vector, z], 'sub{}'.format(idx))],
+					'multiplier{}'.format(idx),
+				)
+				alpha = model.Mul(
+					[gamma_ad, multiplier], 
+					'adjoint_layer{}'.format(idx)
+				)
+				idx -= 1
+			adjoint_pred = model.FCTransposeW(
+				alpha, 
+				input_dim,
+				weight_optim=optim,
+				name='fc{}'.format(idx)
+			)
 	# Add loss
 	model.trainer_extra_schema.prediction.set_value(adjoint_pred.get(), unsafe=True)
 	loss = model.BatchDirectMSELoss(model.trainer_extra_schema)

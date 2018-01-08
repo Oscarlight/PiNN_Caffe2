@@ -49,6 +49,7 @@ dc_model.build_nets(
 	optim_method='AdaGrad',
 	optim_param={'alpha':args.lr, 'epsilon':1e-4},
 )
+dc_model.draw_nets()
 
 start = time.time()
 dc_model.train_with_eval(
@@ -57,4 +58,5 @@ dc_model.train_with_eval(
 	eval_during_training=True
 )
 end = time.time()
+dc_model.save_loss_trend(args.model_name)
 print('Elapsed time: ' + str(end - start))

@@ -79,10 +79,10 @@ def get_restore_q_func(
 		scale, shift
 ):
 	def restore_integral_func(integrals):
-		ori_integral = integrals*scale['q']*scale['vd']*scale['vg']
+		ori_integral = integrals*scale['grads']*scale['vd']*scale['vg']
 		return ori_integral
 	def restore_gradient_func(gradient):
-		ori_gradient =  gradient * scale['q']
+		ori_gradient =  gradient * scale['grads']
 		return ori_gradient
 	return restore_integral_func, restore_gradient_func
 	

@@ -21,9 +21,7 @@ def load_net(INIT_NET, PREDICT_NET):
 	with open(PREDICT_NET+'.model', 'r') as f:
 	    net_def.ParseFromString(f.read())
 	    workspace.CreateNet(net_def.SerializeToString(), overwrite=True)
-	    #print(net_def)
-
-	# return net_def.SerializeToString()
+	    # print(net_def)
 	return net_def.name
 
 
