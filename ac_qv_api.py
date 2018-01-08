@@ -328,11 +328,6 @@ def predict_qs(model_name, terminal, voltages):
 	)
 	original_qs = restore_integral_func(qs)
 	original_gradients = restore_gradient_func(gradients)
-	preproc.restore_voltages(
-		self.preproc_param['scale'],
-		self.preproc_param['vg_shift'],
-		voltages
-	)
 	return original_qs, original_gradients
 
 

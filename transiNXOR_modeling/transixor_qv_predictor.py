@@ -31,3 +31,4 @@ for term in terminal_list:
 	q_pred, grads_pred = predict_qs(
 		'./transiXOR_QV_Models/model_'+term+'_2', term, v_pred)
 	print(q_pred.shape, grads_pred.shape)
+	
