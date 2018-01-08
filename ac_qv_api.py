@@ -359,7 +359,7 @@ def predict_qs(model_name, voltages):
 		self.preproc_param['vg_shift'],
 		voltages
 	)
-	return qs, original_qs, gradients, original_gradients
+	return original_qs, original_gradients
 
 
 def plot_iv( 
