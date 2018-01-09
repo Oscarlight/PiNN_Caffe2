@@ -22,13 +22,18 @@ v_pred = np.column_stack((vds_pred, vbg_pred, vtg_pred, vss_pred))
 terminal_list = ['d']
 for term in terminal_list:
 	## ------------  True data  ---------------
-	# cv_files = glob.glob('./transiXOR_data/*_C'+term+'?_*')
-	# capa_data = [np.expand_dims(
-	# 	np.load(f).flatten(), axis=1).astype(np.float32) for f in cv_files]
+	cv_files = glob.glob('./transiXOR_data/*_C'+term+'?_*')
 	# vds, vbg, vtg, C
+	capa_data = [np.load(f).astype(np.float32) for f in cv_files]
 
 	## ------------  Prediction ---------------
 	q_pred, grads_pred = predict_qs(
 		'./transiXOR_QV_Models/model_'+term+'_2', term, v_pred)
 	print(q_pred.shape, grads_pred.shape)
+	# plt.plot(vtg, grads_pred, 'r')
+	# for i in range(4):
+	# 	plt.plot(vtg, capa_data[i][40, 0, :], 'b')
+	# plt.show()
+	plt.plot(vtg, q_pred, 'r')
+	plt.show()
 	
