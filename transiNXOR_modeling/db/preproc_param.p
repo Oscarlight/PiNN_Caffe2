@@ -53,7 +53,7 @@ Rp22
 tp23
 g14
 I00
-S'\x90\x9aVB'
+S'\x1c\xb5MB'
 p24
 tp25
 bsS'vg'
@@ -66,11 +66,11 @@ g7
 tp28
 Rp29
 (I1
-(I2
+(I1
 tp30
 g14
 I00
-S'\xcd\xcc\xcc=\xcd\xcc\xcc='
+S'\xcd\xccL>'
 p31
 tp32
 bssS'vg_shift'
@@ -83,11 +83,11 @@ g7
 tp35
 Rp36
 (I1
-(I2
+(I1
 tp37
 g14
 I00
-S'\xcd\xcc\xcc=\xcd\xcc\xcc='
+S'\xcd\xccL>'
 p38
 tp39
 bs.
