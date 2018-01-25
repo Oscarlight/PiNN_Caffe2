@@ -20,6 +20,8 @@ from shutil import copyfile
 # import logging
 import matplotlib.pyplot as plt
 
+DEBUG = False
+
 class DeviceModel(object):
     def __init__(
         self, 
@@ -264,7 +266,50 @@ class DeviceModel(object):
         ''' Fastest mode: report_interval = 0
             Medium mode: report_interval > 0, eval_during_training=False
             Slowest mode: report_interval > 0, eval_during_training=True
+            Debug mode: DEBUG flag set to true
         '''
+        if DEBUG:
+            train_net = self.net_store['train_net']
+            workspace.RunNet(train_net, num_iter=5000)
+            if self.net_builder == TrainTarget.ORIGIN:
+                print(workspace.FetchBlob('DBInput_train/tanh_input'))
+                print(workspace.FetchBlob('DBInput_train/sig_input'))
+                print(workspace.FetchBlob('DBInput_train/label'))
+                print(workspace.FetchBlob('prediction'))
+                # print(workspace.FetchBlob('Sigmoid_auto_1/sig_tranfer_layer_2'))
+                # print(workspace.FetchBlob('Tanh_auto_1/tanh_tranfer_layer_2'))
+                # print(workspace.FetchBlob('Sigmoid/sig_tranfer_layer_0'))
+                # print(workspace.FetchBlob('sig_fc_layer_0/w'))
+                # print(workspace.FetchBlob('sig_fc_layer_0/b'))
+            if self.net_builder == TrainTarget.ADJOINT:
+                print(workspace.FetchBlob('DBInput_train/tanh_input'))
+                print(workspace.FetchBlob('DBInput_train/sig_input'))
+                print(workspace.FetchBlob('DBInput_train/label'))
+                print(workspace.FetchBlob('origin/'+'Mul/origin_pred'))
+                print(workspace.FetchBlob('adjoint/'+'Sigmoid_auto_1/sig_tranfer_layer_2'))
+                print(workspace.FetchBlob('origin/'+'Tanh_auto_1/tanh_tranfer_layer_2'))
+                print(workspace.FetchBlob('origin/'+'Sigmoid/sig_tranfer_layer_0'))
+                print(workspace.FetchBlob('adjoint/'+'sig_fc_layer_0/w'))
+                print(workspace.FetchBlob('adjoint/'+'sig_fc_layer_0/b'))
+            print('-'*50)
+            eval_net = self.net_store['eval_net']
+            workspace.RunNet(eval_net.Proto().name)
+            if self.net_builder == TrainTarget.ORIGIN:
+                print(workspace.FetchBlob('DBInput_eval/eval_sig_input'))
+                print(workspace.FetchBlob('DBInput_eval/eval_sig_input'))
+                eval_label_debug = workspace.FetchBlob('DBInput_eval/eval_label')
+                eval_pred_debug = workspace.FetchBlob('prediction')
+                print(workspace.FetchBlob('batch_direct_weighted_l1_loss/l1_metric'))
+                print(np.average(np.abs(eval_label_debug - eval_pred_debug)))
+                print("-"*10 + "Debug BatchDirectWeightedL1Loss" + "-"*10)
+                print(eval_pred_debug)
+                print(workspace.FetchBlob('batch_direct_weighted_l1_loss/scaler'))
+                print(workspace.FetchBlob('batch_direct_weighted_l1_loss/scaler_no_clip'))
+                print(workspace.FetchBlob('batch_direct_weighted_l1_loss/scaled_loss'))
+                print(workspace.FetchBlob('batch_direct_weighted_l1_loss/scaled_loss_no_clip'))
+                print(workspace.FetchBlob('batch_direct_weighted_l1_loss/loss'))
+            quit()
+
         num_batch_per_epoch = int(
             self.input_data_store['train'][1] / 
             self.batch_size
@@ -295,17 +340,6 @@ class DeviceModel(object):
                 )
                 self.reports['epoch'].append((i + 1) * report_interval)
                 train_loss = np.asscalar(schema.FetchRecord(self.loss).get())
-
-                # print(workspace.FetchBlob('DBInput_train/tanh_input'))
-                # print(workspace.FetchBlob('DBInput_train/sig_input'))
-                # print(workspace.FetchBlob('DBInput_train/label'))
-                # print(workspace.FetchBlob('prediction'))
-                # print(workspace.FetchBlob('Sigmoid_auto_1/sig_tranfer_layer_2'))
-                # print(workspace.FetchBlob('Tanh_auto_1/tanh_tranfer_layer_2'))
-                # print(workspace.FetchBlob('Sigmoid/sig_tranfer_layer_0'))
-                # print(workspace.FetchBlob('sig_fc_layer_0/w'))
-                # print(workspace.FetchBlob('sig_fc_layer_0/b'))
-
                 self.reports['train_loss'].append(train_loss)
                 print('      train_loss = ' + str(train_loss))
                 # Add metrics
@@ -344,16 +378,6 @@ class DeviceModel(object):
                 train_net, 
                 num_iter=num_epoch * num_batch_per_epoch
             )
-            # label_prefix='adjoint/'
-            # print(workspace.FetchBlob('DBInput_train/tanh_input'))
-            # print(workspace.FetchBlob('DBInput_train/sig_input'))
-            # print(workspace.FetchBlob('DBInput_train/label'))
-            # print(workspace.FetchBlob('origin/'+'Mul/origin_pred'))
-            # print(workspace.FetchBlob(label_prefix+'Sigmoid_auto_1/sig_tranfer_layer_2'))
-            # print(workspace.FetchBlob('origin/'+'Tanh_auto_1/tanh_tranfer_layer_2'))
-            # print(workspace.FetchBlob('origin/'+'Sigmoid/sig_tranfer_layer_0'))
-            # print(workspace.FetchBlob(label_prefix+'sig_fc_layer_0/w'))
-            # print(workspace.FetchBlob(label_prefix+'sig_fc_layer_0/b'))
             
         print('>>> Saving test model')
 

@@ -14,16 +14,18 @@ import matplotlib.pyplot as plt
 parser = argparse.ArgumentParser(description='pinn')
 parser.add_argument("model_name", type=str, default='transiXOR_Mdoels/example',
                     help="model_name")
-parser.add_argument("-mls", type=float, default=1e3,
+parser.add_argument("-mls", type=float, default=1e2,
                     help="max loss scale")
 parser.add_argument("-lr", type=float, default=0.1,
                     help="base learning rate")
 parser.add_argument("-epoch", type=int, default=5e5,
                     help="num of epoch")
-parser.add_argument("-report", type=float, default=1e2,
+parser.add_argument("-report", type=float, default=1e3,
                     help="report_interval")
-parser.add_argument("-hidden", type=int, default=16,
+parser.add_argument("-hidden", type=int, default=8,
                     help="hidden dimension")
+parser.add_argument("-layer", type=int, default=2,
+                    help="number of hidden layers")
 parser.add_argument("-batchsize", type=int, default=1024,
                     help="batch size")
 args = parser.parse_args()
@@ -39,14 +41,14 @@ dc_model = DeviceModel(
 )
 
 ## manually input the number of train/eval examples
-train_example = 4630 # 56313 # 8335
-test_example  = 4631 # 56314 # 926
+train_example = 7938 # 56313 
+test_example  = 882 # 56314 
 dc_model.add_database('train', 'db/train.minidb', train_example, 'db/preproc_param.p')
 dc_model.add_database('eval', 'db/eval.minidb', test_example, 'db/preproc_param.p')
 
 dc_model.build_nets(
-	hidden_sig_dims=[args.hidden, args.hidden, 1],
-	hidden_tanh_dims=[args.hidden, args.hidden, 1],
+	hidden_sig_dims=[args.hidden] * args.layer + [1],
+	hidden_tanh_dims=[args.hidden] * args.layer + [1],
 	train_batch_size=args.batchsize,
 	eval_batch_size=args.batchsize,
 	weight_optim_method='AdaGrad',
@@ -57,7 +59,7 @@ dc_model.build_nets(
 	max_loss_scale=args.mls, 
 )
 
-dc_model.draw_nets()
+# dc_model.draw_nets()
 
 start = time.time()
 dc_model.train_with_eval(

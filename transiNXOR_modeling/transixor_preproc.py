@@ -11,16 +11,17 @@ import pickle
 import os
 
 # ----------------- Preprocessing --------------------
-vds = np.linspace(0.0, 0.2, 21)
+vds = np.linspace(0.01, 0.2, 20)
 vbg = np.linspace(0.0, 0.2, 21)
 vtg = np.linspace(0.0, 0.2, 21)
 id_file = glob.glob('./transiXOR_data/current.npy')
-# vds = np.linspace(0.0, 0.4, 41)
-# vbg = np.linspace(0.0, 0.4, 41)
-# vtg = np.linspace(0.0, 0.4, 67)
-# id_file = glob.glob('./transiXOR_data/*_id_*.npy')
+
 db_path = 'db/'
 id_data = np.load(id_file[0])
+# !!CAUTION!! If use batch direct weighted L1 loss,
+#             make sure no zero label in the training data
+#             Future version will address this issue internally.
+id_data = id_data[1:,:,:]
 # Optional
 id_data = np.abs(id_data)
 # vds, vbg, vtg, id
@@ -41,20 +42,20 @@ print(vds_train.shape)
 print(id_train.shape)
 
 ## random select train/eval
-# np.random.seed = 42
-# data_arrays = [vg_train, vds_train, id_train]
-# permu = np.random.permutation(len(data_arrays[0]))
-# num_eval = int(len(data_arrays[0])*0.1)
-# data_arrays = [e[permu] for e in data_arrays]
-# data_arrays_eval = [e[0:num_eval] for e in data_arrays]
-# data_arrays_train = [e[num_eval:] for e in data_arrays]
+np.random.seed = 42
+data_arrays = [vg_train, vds_train, id_train]
+permu = np.random.permutation(len(data_arrays[0]))
+num_eval = int(len(data_arrays[0])*0.1)
+data_arrays = [e[permu] for e in data_arrays]
+data_arrays_eval = [e[0:num_eval] for e in data_arrays]
+data_arrays_train = [e[num_eval:] for e in data_arrays]
 
 ## Odd for train, even for eval
-vg_eval = vg_train[::2]; vg_train = vg_train[1::2]
-vds_eval = vds_train[::2]; vds_train = vds_train[1::2]
-id_eval = id_train[::2]; id_train = id_train[1::2]
-data_arrays_train = [vg_train, vds_train, id_train]
-data_arrays_eval = [vg_eval, vds_eval, id_eval]
+# vg_eval = vg_train[::2]; vg_train = vg_train[1::2]
+# vds_eval = vds_train[::2]; vds_train = vds_train[1::2]
+# id_eval = id_train[::2]; id_train = id_train[1::2]
+# data_arrays_train = [vg_train, vds_train, id_train]
+# data_arrays_eval = [vg_eval, vds_eval, id_eval]
 
 ## Check shape of train and eval dataset
 print('--- Train/Eval shape: ')
