@@ -11,19 +11,26 @@ import pickle
 import os
 
 # ----------------- Preprocessing --------------------
-vds = np.linspace(0.01, 0.2, 20)
+vds = np.linspace(0.0, 0.2, 21)
 vbg = np.linspace(0.0, 0.2, 21)
 vtg = np.linspace(0.0, 0.2, 21)
 id_file = glob.glob('./transiXOR_data/current.npy')
 
 db_path = 'db/'
 id_data = np.load(id_file[0])
+
 # !!CAUTION!! If use batch direct weighted L1 loss,
 #             make sure no zero label in the training data
 #             Future version will address this issue internally.
-id_data = id_data[1:,:,:]
+selected_vds_idx = [1, 5, 9, 12, 15, 17, 18, 19, 20]
+# selected_vds_idx = [20]
+vds = vds[selected_vds_idx]
+id_data = id_data[selected_vds_idx,:,:]
+# id_data = id_data[1:,:,:]
+
 # Optional
 id_data = np.abs(id_data)
+
 # vds, vbg, vtg, id
 print('original data shape: ' 
 	+ str(id_data.shape) + '; ' 
@@ -43,7 +50,7 @@ print(id_train.shape)
 
 ## Using the fact that vtg and vbg are interchangeable
 ## CAUTION: This invariance may not be true for experimental data
-vg_train = np.sum(vg_train, axis=1, keepdims=True)
+# vg_train = np.sum(vg_train, axis=1, keepdims=True)
 
 ## random select train/eval
 np.random.seed = 42
