@@ -33,7 +33,7 @@ args = parser.parse_args()
 # ----------------- Train + Eval ---------------------
 dc_model = DeviceModel(
 	args.model_name,
-	sig_input_dim=2,
+	sig_input_dim=1,  # due to Vtg and Vbg are interchangeable
 	tanh_input_dim=1,
 	output_dim=1,
 	train_target='origin',
