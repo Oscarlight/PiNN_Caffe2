@@ -55,7 +55,7 @@ dc_model.build_nets(
 	weight_optim_param={'alpha':args.lr, 'epsilon':1e-4},
 	bias_optim_method='AdaGrad',
 	bias_optim_param={'alpha':args.lr, 'epsilon':1e-4},
-	loss_function='scaled_l1', # or 'scaled_l2'
+	loss_function='scaled_l2', # or 'scaled_l2'
 	max_loss_scale=args.mls, 
 )
 
