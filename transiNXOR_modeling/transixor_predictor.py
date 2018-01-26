@@ -30,7 +30,7 @@ vg_pred = np.column_stack((vtg_pred, vbg_pred))
 
 ## If trained with origin builder
 ids_pred = predict_ids(
-	'./transiXOR_Models/bise_h216_1', vg_pred, vds_pred)
+	'./transiXOR_Models/bise_h316_0', vg_pred, vds_pred)
 
 # plt.plot(ids_pred, 'r')
 # plt.plot(np.abs(ids_data[20, :, 10]))
