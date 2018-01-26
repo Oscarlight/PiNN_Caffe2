@@ -18,7 +18,7 @@ parser.add_argument("-mls", type=float, default=1e2,
                     help="max loss scale")
 parser.add_argument("-lr", type=float, default=0.1,
                     help="base learning rate")
-parser.add_argument("-epoch", type=int, default=5e5,
+parser.add_argument("-epoch", type=int, default=1e5,
                     help="num of epoch")
 parser.add_argument("-report", type=float, default=1e3,
                     help="report_interval")
@@ -33,7 +33,7 @@ args = parser.parse_args()
 # ----------------- Train + Eval ---------------------
 dc_model = DeviceModel(
 	args.model_name,
-	sig_input_dim=1,  # due to Vtg and Vbg are interchangeable
+	sig_input_dim=2,  # due to Vtg and Vbg are interchangeable
 	tanh_input_dim=1,
 	output_dim=1,
 	train_target='origin',
@@ -41,8 +41,8 @@ dc_model = DeviceModel(
 )
 
 ## manually input the number of train/eval examples
-train_example = 7938 # 56313 
-test_example  = 882 # 56314 
+train_example = 3573 # 7938 # 56313 
+test_example  = 396 # 882 # 56314 
 dc_model.add_database('train', 'db/train.minidb', train_example, 'db/preproc_param.p')
 dc_model.add_database('eval', 'db/eval.minidb', test_example, 'db/preproc_param.p')
 
