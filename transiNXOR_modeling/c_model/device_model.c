@@ -291,7 +291,7 @@ float device_model(
   sig_act(sig_fc_layer_0_b, 16);
   tanh_act(tanh_temp0, 16);
 	print_array(sig_fc_layer_0_b, 16);
-  print_array(tanh_temp0, 16)
+  print_array(tanh_temp0, 16);
 	// Layer 1
   fc(16, 1, 16, sig_fc_layer_1_w, sig_fc_layer_0_b, sig_fc_layer_1_b);
 	matmul(16, 1, 16, tanh_fc_layer_1_w, tanh_temp0, tanh_temp1);
