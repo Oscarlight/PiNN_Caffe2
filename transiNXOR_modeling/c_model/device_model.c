@@ -14,14 +14,14 @@
 /* -------------------- HELPER FUNCTIONS -------------------- */
 // Don't support batch mode
 void fc(const int m, const int n, const int k, 
-	float *W, float *I, float *B, float* O) {
+	const float *W, const float *I, const float *B, float* O) {
 	cblas_sgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
         m, n, k, 1.0, W, k, I, n, 0.0, O, n);
   cblas_saxpy(m, 1.0, B, 1, O, 1);
 }
 
 void matmul(const int m, const int n, const int k, 
-	float *W, float *I, float *O) {
+	const float *W, const float *I, const float *O) {
 	cblas_sgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
         m, n, k, 1.0, W, k, I, n, 0.0, O, n);
 }
