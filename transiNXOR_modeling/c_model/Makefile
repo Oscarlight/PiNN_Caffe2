@@ -6,6 +6,3 @@ main.o: main.c
 
 device_model.o: device_model.c
 	gcc -c device_model.c 
-
-clean:
-	rm *.o main
