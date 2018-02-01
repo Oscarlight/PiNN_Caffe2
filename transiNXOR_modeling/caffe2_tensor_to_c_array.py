@@ -34,6 +34,7 @@ with open("c_model/c_arrays.txt","w") as f:
 vg = np.array([0.2, 0.2]); vd = np.array([0.2])
 vg = (vg - 0.1)/0.1; vd /= 0.2
 tanh_temp0 = p['tanh_fc_layer_0_w']*vd
-print(tanh_temp0)
+sig_temp0 = p['sig_fc_layer_0_w'].dot(vg) + p['sig_fc_layer_0_b']
+print(sig_temp0)
 
 
