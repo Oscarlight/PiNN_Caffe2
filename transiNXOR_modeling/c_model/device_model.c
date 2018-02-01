@@ -286,12 +286,10 @@ float device_model(
   fc(16, 1, 2, sig_fc_layer_0_w, vg, sig_fc_layer_0_b);
 	matmul(16, 1, 1, tanh_fc_layer_0_w, vd, tanh_temp0);
 	fc(16, 1, 16, inter_embed_layer_0_w, tanh_temp0, inter_embed_layer_0_b);
-  print_array(inter_embed_layer_0_b, 16);
 	add(16, inter_embed_layer_0_b, sig_fc_layer_0_b);
   sig_act(sig_fc_layer_0_b, 16);
   tanh_act(tanh_temp0, 16);
-	print_array(sig_fc_layer_0_b, 16);
-  print_array(tanh_temp0, 16);
+
 	// Layer 1
   fc(16, 1, 16, sig_fc_layer_1_w, sig_fc_layer_0_b, sig_fc_layer_1_b);
 	matmul(16, 1, 16, tanh_fc_layer_1_w, tanh_temp0, tanh_temp1);
@@ -299,7 +297,8 @@ float device_model(
 	add(16, inter_embed_layer_1_b, sig_fc_layer_1_b);
   sig_act(sig_fc_layer_1_b, 16);
   tanh_act(tanh_temp1, 16);
-	
+	print_array(sig_fc_layer_1_b, 16);
+  print_array(tanh_temp1, 16);
 	// Layer 2
   fc(1, 1, 16, sig_fc_layer_2_w, sig_fc_layer_1_b, sig_fc_layer_2_b);
 	matmul(1, 1, 16, tanh_fc_layer_2_w, tanh_temp1, tanh_temp0);
