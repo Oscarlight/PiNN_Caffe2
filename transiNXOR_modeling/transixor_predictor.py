@@ -15,7 +15,7 @@ ids_data = np.load(ids_file[0])
 ## ------------  Prediction ---------------
 vds = np.linspace(0.2, 0.2, 1)
 vbg = np.linspace(0.0, 0.2, 21)
-vtg = np.linspace(0.1, 0.1, 1)
+vtg = np.linspace(0.2, 0.2, 1)
 iter_lst = list(product(vds, vbg, vtg))
 vds_pred = np.expand_dims(np.array([e[0] for e in iter_lst], dtype=np.float32), axis=1)
 vbg_pred = np.array([e[1] for e in iter_lst], dtype=np.float32)
@@ -34,6 +34,6 @@ ids_pred = predict_ids(
 
 # plt.plot(ids_pred, 'r')
 # plt.plot(np.abs(ids_data[20, :, 10]))
-plt.semilogy(np.abs(ids_pred), 'r')
-plt.semilogy(np.abs(ids_data[20, :, 10]))
+plt.semilogy(np.abs(ids_pred), 'r') 
+plt.semilogy(np.abs(ids_data[20, :, 20]))
 plt.show()

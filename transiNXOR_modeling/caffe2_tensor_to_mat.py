@@ -6,7 +6,7 @@ from pinn import exporter
 from scipy.io import savemat
 import pickle
 
-model_name = 'model_output_4'
+model_name = 'bise_h216_0'
 
 init_net = exporter.load_init_net('./transiXOR_Models/'+model_name+'_init')
 print(type(init_net))

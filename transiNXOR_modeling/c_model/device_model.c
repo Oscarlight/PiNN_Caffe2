@@ -9,6 +9,7 @@
 #include <stdio.h>
 #include <math.h>
 
+/* -------------------- PARAMETERS -------------------- */
 float tanh_fc_layer_0_w[] = { 0.60636699,-0.7843641 , 0.85639101, 0.62267089, 0.65765762,-0.85957742,
  -0.93166775,-0.60751784, 0.80550343, 0.7906968 , 0.84626752,-0.26057673,
   0.68305463, 0.68828636,-0.61112815,-0.62441045};
@@ -233,6 +234,7 @@ float sig_fc_layer_2_b[] = { 0.1601387};
 float inter_embed_layer_2_w[] = { 0.67124748};
 float inter_embed_layer_2_b[] = {-0.33187959};
 
+/* -------------------- HELPER FUNCTIONS -------------------- */
 void fc(const int m, const int n, const int k, 
 	float *W, float *I, float *B) {
 	cblas_sgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
@@ -269,6 +271,7 @@ void print_array(float *a, const int len) {
 	printf("\n");
 }
 
+/* -------------------- DEVICE MODEL -------------------- */
 float device_model( 
 	const float vtg, 
 	const float vbg, 
@@ -277,31 +280,31 @@ float device_model(
 ) {
 	float vg[2] = {(vtg-0.1)/0.1, (vbg-0.1)/0.1};
 	float vd[1] = {vds/0.2};
-	float tanh_output[16] = {0};
-	float tanh_input[16] = {0};
+	float tanh_temp0[16] = {0};
+	float tanh_temp1[16] = {0};
 	// Layer 0
-	matmul(16, 1, 1, tanh_fc_layer_0_w, vd, tanh_output);
-	tanh_act(tanh_output, 16);
-	fc(16, 1, 16, inter_embed_layer_0_w, tanh_output, inter_embed_layer_0_b);
+	matmul(16, 1, 1, tanh_fc_layer_0_w, vd, tanh_temp0);
+	fc(16, 1, 16, inter_embed_layer_0_w, tanh_temp0, inter_embed_layer_0_b);
 	fc(16, 1, 2, sig_fc_layer_0_w, vg, sig_fc_layer_0_b);
 	add(16, inter_embed_layer_0_b, sig_fc_layer_0_b);
+  tanh_act(tanh_temp0, 16);
 	sig_act(sig_fc_layer_0_b, 16);
 	// Layer 1
-	matmul(16, 1, 16, tanh_fc_layer_1_w, tanh_output, tanh_input);
-	tanh_act(tanh_input, 16);
-	fc(16, 1, 16, inter_embed_layer_1_w, tanh_output, inter_embed_layer_1_b);
+	matmul(16, 1, 16, tanh_fc_layer_1_w, tanh_temp0, tanh_temp1);
+	fc(16, 1, 16, inter_embed_layer_1_w, tanh_temp0, inter_embed_layer_1_b);
 	fc(16, 1, 16, sig_fc_layer_1_w, sig_fc_layer_0_b, sig_fc_layer_1_b);
 	add(16, inter_embed_layer_1_b, sig_fc_layer_1_b);
+  tanh_act(tanh_temp1, 16);
 	sig_act(sig_fc_layer_1_b, 16);
 	// Layer 2
-	matmul(1, 1, 16, tanh_fc_layer_2_w, tanh_input, tanh_output);
-	tanh_act(tanh_output, 1);
-	fc(1, 1, 1, inter_embed_layer_2_w, tanh_output, inter_embed_layer_2_b);
+	matmul(1, 1, 16, tanh_fc_layer_2_w, tanh_temp1, tanh_temp0);
+	fc(1, 1, 1, inter_embed_layer_2_w, tanh_temp0, inter_embed_layer_2_b);
 	fc(1, 1, 16, sig_fc_layer_2_w, sig_fc_layer_1_b, sig_fc_layer_2_b);
 	add(1, inter_embed_layer_2_b, sig_fc_layer_2_b);
+  tanh_act(tanh_temp0, 1);
 	sig_act(sig_fc_layer_2_b, 1);
 	// Output	
-	return sig_fc_layer_2_b[0] * tanh_output[0] * 53.65093994 * w;
+	return sig_fc_layer_2_b[0] * tanh_temp0[0] * 53.65093994 * w;
 }
 
 int main(int argc, char** argv) {
