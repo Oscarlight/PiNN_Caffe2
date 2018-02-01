@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
+#include "device_model.h"
 
 /* -------------------- PARAMETERS -------------------- */
 float tanh_fc_layer_0_w[] = { 0.60636699,-0.7843641 , 0.85639101, 0.62267089, 0.65765762,-0.85957742,
@@ -272,11 +273,9 @@ void print_array(float *a, const int len) {
 }
 
 /* -------------------- DEVICE MODEL -------------------- */
-float device_model( 
-	const float vtg, 
-	const float vbg, 
-	const float vds,
-	const float w
+float device_model(
+  const float vtg, const float vbg, 
+  const float vds, const float w
 ) {
 	float vg[2] = {(vtg-0.1)/0.1, (vbg-0.1)/0.1};
 	float vd[1] = {vds/0.2};
