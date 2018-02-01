@@ -308,16 +308,3 @@ float device_model(
 	// Output	
 	return sig_fc_layer_2_b[0] * tanh_temp0[0] * 53.65093994 * w;
 }
-
-int main(int argc, char** argv) {
-	float id = device_model(0.2, 0.2, 0.2, 1);
-	// float a[] = {1, 2, 3, 4};
-	// float b[] = {1, 2};
-	// float c[] = {1, 1};
-	// matmul(2, 1, 2, a, c, b);
-	// print_array(c, 2);
-	// print_array(b, 2);
-	// add(2, b, c);
-	// print_array(c, 2);
-	printf("%f\n", id);
-}

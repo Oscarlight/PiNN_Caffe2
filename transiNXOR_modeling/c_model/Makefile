@@ -1,2 +1,5 @@
+test: main.c device_model.o
+	gcc -o main.c
+
 device_model: device_model.c
-	gcc -o device_model device_model.c -lcblas -lm
+	gcc -c device_model.c -lcblas -lm

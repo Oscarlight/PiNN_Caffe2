@@ -31,34 +31,30 @@ with open("c_model/c_arrays.txt","w") as f:
 	print(preproc_dict)
 
 ## TESTING
-vg = np.array([[0.2], [0.2]]); vd = np.array([[0.2]])
-vg = (vg - 0.1)/0.1; vd /= 0.2
+def test(vtg, vbg, vds):
+	vg = np.array([[vtg], [vbg]]); vd = np.array([[vds]])
+	vg = (vg - 0.1)/0.1; vd /= 0.2
 
-tanh_temp0 = np.matmul(p['tanh_fc_layer_0_w'], vd)
-sig_temp0 = np.matmul(p['sig_fc_layer_0_w'], vg) + np.expand_dims(p['sig_fc_layer_0_b'], axis=1)
-inter0 = np.matmul(p['inter_embed_layer_0_w'], tanh_temp0) + np.expand_dims(p['inter_embed_layer_0_b'], axis=1)
-sig_temp0 = 1 / (1 + np.exp(-(inter0+sig_temp0)))
-tanh_temp0 = np.tanh(tanh_temp0)
+	tanh_temp0 = np.matmul(p['tanh_fc_layer_0_w'], vd)
+	sig_temp0 = np.matmul(p['sig_fc_layer_0_w'], vg) + np.expand_dims(p['sig_fc_layer_0_b'], axis=1)
+	inter0 = np.matmul(p['inter_embed_layer_0_w'], tanh_temp0) + np.expand_dims(p['inter_embed_layer_0_b'], axis=1)
+	sig_temp0 = 1 / (1 + np.exp(-(inter0+sig_temp0)))
+	tanh_temp0 = np.tanh(tanh_temp0)
 
-tanh_temp1 = np.matmul(p['tanh_fc_layer_1_w'], tanh_temp0)
-sig_temp1 = np.matmul(p['sig_fc_layer_1_w'], sig_temp0) + np.expand_dims(p['sig_fc_layer_1_b'], axis=1)
-inter1 = np.matmul(p['inter_embed_layer_1_w'], tanh_temp1) + np.expand_dims(p['inter_embed_layer_1_b'], axis=1)
-print(tanh_temp1)
-print(inter1)
-sig_temp1 = 1 / (1 + np.exp(-(inter1+sig_temp1)))
-tanh_temp1 = np.tanh(tanh_temp1)
-# print(tanh_temp1)
-tanh_temp2 = np.matmul(p['tanh_fc_layer_2_w'], tanh_temp1)
-sig_temp2 = np.matmul(p['sig_fc_layer_2_w'], sig_temp1) + np.expand_dims(p['sig_fc_layer_2_b'], axis=1)
-inter2 = np.matmul(p['inter_embed_layer_2_w'], tanh_temp2) + np.expand_dims(p['inter_embed_layer_2_b'], axis=1)
-sig_temp2 = 1 / (1 + np.exp(-(inter2+sig_temp2)))
-tanh_temp2 = np.tanh(tanh_temp2)
-ids = sig_temp2 * tanh_temp2 * 53.65093994
+	tanh_temp1 = np.matmul(p['tanh_fc_layer_1_w'], tanh_temp0)
+	sig_temp1 = np.matmul(p['sig_fc_layer_1_w'], sig_temp0) + np.expand_dims(p['sig_fc_layer_1_b'], axis=1)
+	inter1 = np.matmul(p['inter_embed_layer_1_w'], tanh_temp1) + np.expand_dims(p['inter_embed_layer_1_b'], axis=1)
 
-print(ids)
+	sig_temp1 = 1 / (1 + np.exp(-(inter1+sig_temp1)))
+	tanh_temp1 = np.tanh(tanh_temp1)
+	# print(tanh_temp1)
+	tanh_temp2 = np.matmul(p['tanh_fc_layer_2_w'], tanh_temp1)
+	sig_temp2 = np.matmul(p['sig_fc_layer_2_w'], sig_temp1) + np.expand_dims(p['sig_fc_layer_2_b'], axis=1)
+	inter2 = np.matmul(p['inter_embed_layer_2_w'], tanh_temp2) + np.expand_dims(p['inter_embed_layer_2_b'], axis=1)
+	sig_temp2 = 1 / (1 + np.exp(-(inter2+sig_temp2)))
+	tanh_temp2 = np.tanh(tanh_temp2)
+	ids = sig_temp2 * tanh_temp2 * 53.65093994
 
-a = np.array([[1, 2, 4, 5]])
-b = np.array([[1], [2], [4], [5]])
-print(np.matmul(a, b))
+	return ids
 
 
