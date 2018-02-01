@@ -1,8 +1,8 @@
 main: main.o device_model.o
-	gcc -o main.o device_model.o -lcblas -lm
+	gcc -o main main.o device_model.o -lcblas -lm
 
 main.o: main.c
 	gcc -c main.c
 
 device_model.o: device_model.c
-	gcc -c device_model.c
+	gcc -c device_model.c 
