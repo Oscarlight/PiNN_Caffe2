@@ -14,7 +14,7 @@ ids_data = np.load(ids_file[0])
 
 ## ------------  Prediction ---------------
 vds = np.linspace(0.2, 0.2, 1)
-vbg = np.linspace(0.0, 0.2, 21)
+vbg = np.linspace(0.2, 0.2, 1)
 vtg = np.linspace(0.2, 0.2, 1)
 iter_lst = list(product(vds, vbg, vtg))
 vds_pred = np.expand_dims(np.array([e[0] for e in iter_lst], dtype=np.float32), axis=1)
@@ -32,8 +32,9 @@ vg_pred = np.column_stack((vtg_pred, vbg_pred))
 ids_pred = predict_ids(
 	'./transiXOR_Models/bise_h216_0', vg_pred, vds_pred)
 
+print(ids_pred)
 # plt.plot(ids_pred, 'r')
 # plt.plot(np.abs(ids_data[20, :, 10]))
-plt.semilogy(np.abs(ids_pred), 'r') 
-plt.semilogy(np.abs(ids_data[20, :, 20]))
-plt.show()
+# plt.semilogy(np.abs(ids_pred), 'r') 
+# plt.semilogy(np.abs(ids_data[20, :, 20]))
+# plt.show()
