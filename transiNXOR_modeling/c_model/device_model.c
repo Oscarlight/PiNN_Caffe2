@@ -292,10 +292,10 @@ float device_model(
 
 	// Layer 1
   fc(16, 1, 16, sig_fc_layer_1_w, sig_fc_layer_0_b, sig_fc_layer_1_b);
-  print_array(sig_fc_layer_1_b, 16);
 	matmul(16, 1, 16, tanh_fc_layer_1_w, tanh_temp0, tanh_temp1);
 	fc(16, 1, 16, inter_embed_layer_1_w, tanh_temp0, inter_embed_layer_1_b);
 	add(16, inter_embed_layer_1_b, sig_fc_layer_1_b);
+  print_array(sig_fc_layer_1_b, 16);
   sig_act(sig_fc_layer_1_b, 16);
   tanh_act(tanh_temp1, 16);
 	
