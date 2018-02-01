@@ -21,7 +21,7 @@ void fc(const int m, const int n, const int k,
 }
 
 void matmul(const int m, const int n, const int k, 
-	const float *W, const float *I, const float *O) {
+	const float *W, const float *I, float *O) {
 	cblas_sgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
         m, n, k, 1.0, W, k, I, n, 0.0, O, n);
 }
