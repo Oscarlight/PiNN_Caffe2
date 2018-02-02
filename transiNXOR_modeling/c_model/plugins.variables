@@ -1,0 +1,37 @@
+# -*- mode: makefile -*-
+# -*- eval: font-lock-fontify-buffer -*-
+#
+# (C) 2008 Cadence Design Systems, Inc. All rights reserved worldwide.
+#
+# This work is protected by copyright laws and contains Cadence proprietary
+# and confidential information.  No part of this file may be reproduced,
+# modified, re-published, used, disclosed or distributed in any way, in any
+# medium, whether in whole or in part, without prior written permission from
+# Cadence Design Systems, Inc. (Cadence).  If you are a customer of Cadence,
+# such permission may be found in a previously executed license and
+# maintenance agreement between authorized representatives of you and Cadence.
+#
+# Notwithstanding any previous agreement, written or otherwise, this file is
+# provided to you AS IS with no warranties of any kind, and you agree to bear
+# the entire risk of any customizations you make using this file.
+
+ifndef MMSIM_ROOT
+  MMSIM_ROOT	:= /opt/cadence2/MMSIM151
+  export MMSIM_ROOT
+endif
+
+# What platform are we working on ?
+ifndef CDS_PLAT
+  CDS_PLAT	:= $(shell cds_plat)
+  export CDS_PLAT
+endif
+
+# Location of the configuration files for building.
+ifndef GNUMAKE_ROOT
+  GNUMAKE_ROOT	:= $(MMSIM_ROOT)/tools.$(CDS_PLAT)/mmsim/examples/GNUmake
+  export GNUMAKE_ROOT
+endif
+
+include $(GNUMAKE_ROOT)/std.variables
+include $(GNUMAKE_ROOT)/system.variables
+
