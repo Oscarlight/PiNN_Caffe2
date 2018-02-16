@@ -15,6 +15,7 @@
 # provided to you AS IS with no warranties of any kind, and you agree to bear
 # the entire risk of any customizations you make using this file.
 
+BIT := 64
 ROOT		:= .
 BLAS_DIR := ${BLAS_DIR}
 LINK_FLAGS=-L$(BLAS_DIR)/lib -Wl,-rpath,$(BLAS_DIR)/lib -lopenblas 
@@ -45,4 +46,5 @@ include $(GNUMAKE_ROOT)/library.rules
 include $(GNUMAKE_ROOT)/std.rules
 
 main: main.c device_model.c
-	$(CC) -o $@ $(CFLAGS) $(LINK_FLAGS) -lm -m32 $^
+#	$(CC) -o $@ $(CFLAGS) $(LINK_FLAGS) -lm -m32 $^
+	$(CC) -o $@ $(CFLAGS) $(LINK_FLAGS) -lm $^
