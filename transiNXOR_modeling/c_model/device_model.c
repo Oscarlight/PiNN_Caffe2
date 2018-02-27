@@ -2,8 +2,10 @@
 #  include <Accelerate/Accelerate.h>
 #elif defined(__ICC) || defined(__INTEL_COMPILER)
 #  include <mkl_cblas.h>
+#elif defined(MATLAB_MEX_FILE)
+#  include "cblas.h"
 #elif defined(__GNUC__) || defined(__GNUG__)
-#  include <cblas.h>
+#  include "cblas.h"
 #endif
 #include <stdlib.h>
 #include <stdio.h>

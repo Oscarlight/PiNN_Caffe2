@@ -27,7 +27,8 @@ include $(ROOT)/plugins.variables
 default : all 
 
 # Definition of the tfet library
-LIB_SRC		:= veriloga_bridge.c device_model.c
+#LIB_SRC		:= device_model.c 
+LIB_SRC		:= device_model.c limit_model.c
 LIB_NAME	:= tfet
 CFLAGS=-pthread -I$(BLAS_DIR)/include
 LIB_LDFLAGS=$(LINK_FLAGS) -pthread
@@ -44,6 +45,9 @@ include $(GNUMAKE_ROOT)/library.rules
 
 # Include some standard rules
 include $(GNUMAKE_ROOT)/std.rules
+
+mex: wrappedModel.c device_model.c
+	mex $^ -I$(BLAS_DIR)/include LDFLAGS='$(LINK_FLAGS)'
 
 main: main.c device_model.c
 #	$(CC) -o $@ $(CFLAGS) $(LINK_FLAGS) -lm -m32 $^
