@@ -36,7 +36,7 @@ I-1
 I0
 tp16
 bI00
-S'\xcd\xccL>'
+S'\x9a\x99\x99>'
 p17
 tp18
 bsS'id'
@@ -53,7 +53,7 @@ Rp22
 tp23
 g14
 I00
-S'\x90\x9aVB'
+S'Q\xd2\xe4C'
 p24
 tp25
 bsS'vg'
@@ -70,7 +70,7 @@ Rp29
 tp30
 g14
 I00
-S'\xcd\xcc\xcc=\xcd\xcc\xcc='
+S'\xce\xccL>\xce\xccL>'
 p31
 tp32
 bssS'vg_shift'

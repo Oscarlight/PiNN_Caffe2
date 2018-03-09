@@ -11,10 +11,13 @@ import pickle
 import os
 
 # ----------------- Preprocessing --------------------
-vds = np.linspace(0.0, 0.2, 21)
-vbg = np.linspace(0.0, 0.2, 21)
-vtg = np.linspace(0.0, 0.2, 21)
-id_file = glob.glob('./transiXOR_data/current.npy')
+vds = np.concatenate((np.linspace(-0.1, -0.01, 10),np.linspace(0.01, 0.3, 30)))
+# print(vds)
+vbg = np.linspace(-0.1, 0.3, 41)
+# print(vbg)
+vtg = np.linspace(-0.1, 0.3, 41)
+# print(vtg)
+id_file = glob.glob('./transiXOR_data/current_D9.npy')
 
 db_path = 'db/'
 id_data = np.load(id_file[0])
@@ -22,14 +25,13 @@ id_data = np.load(id_file[0])
 # !!CAUTION!! If use batch direct weighted L1 loss,
 #             make sure no zero label in the training data
 #             Future version will address this issue internally.
-selected_vds_idx = [1, 5, 9, 12, 15, 17, 18, 19, 20]
-# selected_vds_idx = [20]
-vds = vds[selected_vds_idx]
-id_data = id_data[selected_vds_idx,:,:]
-# id_data = id_data[1:,:,:]
+# selected_vds_idx = [1, 5, 9, 12, 15, 17, 18, 19, 20]
+# vds = vds[selected_vds_idx]
+# id_data = id_data[selected_vds_idx,:,:]
+id_data = np.concatenate((id_data[0:11,:,:],id_data[12:,:,:]))
 
-# Optional
-id_data = np.abs(id_data)
+## Check whether zero label exit
+assert np.min(np.abs(id_data).flatten()) < 1e-9, "Zero exist in labels"
 
 # vds, vbg, vtg, id
 print('original data shape: ' 
@@ -52,7 +54,7 @@ print(id_train.shape)
 ## CAUTION: This invariance may not be true for experimental data
 # vg_train = np.sum(vg_train, axis=1, keepdims=True)
 
-## random select train/eval
+## random select train/eval = 0.9/0.1
 np.random.seed = 42
 data_arrays = [vg_train, vds_train, id_train]
 permu = np.random.permutation(len(data_arrays[0]))

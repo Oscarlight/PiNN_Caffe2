@@ -41,8 +41,8 @@ dc_model = DeviceModel(
 )
 
 ## manually input the number of train/eval examples
-train_example = 3573 # 7938 # 56313 
-test_example  = 396 # 882 # 56314 
+train_example = 60516 
+test_example  = 6724 
 dc_model.add_database('train', 'db/train.minidb', train_example, 'db/preproc_param.p')
 dc_model.add_database('eval', 'db/eval.minidb', test_example, 'db/preproc_param.p')
 
