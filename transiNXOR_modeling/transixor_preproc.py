@@ -28,10 +28,10 @@ id_data = np.load(id_file[0])
 # selected_vds_idx = [1, 5, 9, 12, 15, 17, 18, 19, 20]
 # vds = vds[selected_vds_idx]
 # id_data = id_data[selected_vds_idx,:,:]
-id_data = np.concatenate((id_data[0:11,:,:],id_data[12:,:,:]))
+id_data = np.concatenate((id_data[0:10,:,:],id_data[11:,:,:]))
 
 ## Check whether zero label exit
-assert np.min(np.abs(id_data).flatten()) < 1e-9, "Zero exist in labels"
+assert np.min(np.abs(id_data).flatten()) > 1e-9, "Zero exist in labels"
 
 # vds, vbg, vtg, id
 print('original data shape: ' 
