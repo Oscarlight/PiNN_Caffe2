@@ -12,7 +12,7 @@ model_name = 'bise_h216_0'
 init_net = exporter.load_init_net('./transiXOR_Models/'+model_name+'_init')
 print(type(init_net))
 p = {}
-with open("c_model/c_arrays.txt","w") as f:
+with open("c_model/device_param","w") as f:
 	f.write('/* --------------- MODEL: '+ model_name +' -------------------- */\n')
 	for op in init_net.op:
 		tensor = workspace.FetchBlob(op.output[0])
