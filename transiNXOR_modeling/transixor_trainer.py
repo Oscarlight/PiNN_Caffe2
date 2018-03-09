@@ -28,6 +28,8 @@ parser.add_argument("-layer", type=int, default=2,
                     help="number of hidden layers")
 parser.add_argument("-batchsize", type=int, default=1024,
                     help="batch size")
+parser.add_argument("-lossfunct", type=str, default="scaled_l1",
+                    help="type of loss function")
 args = parser.parse_args()
 
 # ----------------- Train + Eval ---------------------
@@ -55,7 +57,7 @@ dc_model.build_nets(
 	weight_optim_param={'alpha':args.lr, 'epsilon':1e-4},
 	bias_optim_method='AdaGrad',
 	bias_optim_param={'alpha':args.lr, 'epsilon':1e-4},
-	loss_function='scaled_l2', # or 'scaled_l2'
+	loss_function=args.lossfunct,
 	max_loss_scale=args.mls, 
 )
 
