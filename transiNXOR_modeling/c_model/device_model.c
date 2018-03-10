@@ -16,7 +16,6 @@
 #define VD_SCALE 0.3
 #define ID_SCALE 457.86010742
 
-
 /* -------------------- HELPER FUNCTIONS -------------------- */
 // Don't support batch mode
 void fc(const int m_in, const int n_in, const int k_in, 
@@ -102,6 +101,7 @@ double device_model( const double vtg_d, const double vbg_d,
     add(1, inter_temp, sig_temp0);
     tanh_act(tanh_temp0, 1);
     sig_act(sig_temp0, 1);
+    
     // Output   
     double ids = (double) (sig_temp0[0] * tanh_temp0[0] * ID_SCALE * w);
     return ids;
