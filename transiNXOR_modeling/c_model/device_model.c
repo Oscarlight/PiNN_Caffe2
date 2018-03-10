@@ -69,7 +69,7 @@ double device_model( const double vtg_d, const double vbg_d,
     const float w = (float) w_d;
 
     // float vg[2] = {(vtg-VG_SHIFT)/VG_SCALE, (vbg-0.1)/VG_SCALE};
-    float vg[2] = {(vtg-VG_SHIFT)/VG_SCALE + (vbg-VG_SHIFT)/VG_SCALE};
+    float vg[1] = {(vtg-VG_SHIFT)/VG_SCALE + (vbg-VG_SHIFT)/VG_SCALE};
     float vd[1] = {vds/VD_SCALE};
     float sig_temp0[H_DIM]  = {0};
     float tanh_temp0[H_DIM] = {0};
