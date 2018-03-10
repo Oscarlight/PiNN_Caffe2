@@ -1,6 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
-// #include "device_model.h"
+#include "device_model.h"
 
 int main(int argc, char** argv) {
     double vtg = 0.2;
