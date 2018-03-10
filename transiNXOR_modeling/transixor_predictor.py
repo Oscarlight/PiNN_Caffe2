@@ -14,12 +14,12 @@ ids_data = np.load(ids_file[0])
 print(ids_data.shape)
 
 ## ------------  Prediction ---------------
-# vds = np.linspace(-0.1, 0.3, 101)
+# vds = np.linspace(-0.1, 0.3, 41)
 # vbg = np.linspace(0.1, 0.1, 1)
 # vtg = np.linspace(0.2, 0.2, 1)
 vds = np.linspace(0.2, 0.2, 1)
 vbg = np.linspace(0.1, 0.1, 1)
-vtg = np.linspace(-0.1, 0.3, 101)
+vtg = np.linspace(-0.1, 0.3, 41)
 
 iter_lst = list(product(vds, vbg, vtg))
 vds_pred = np.expand_dims(np.array([e[0] for e in iter_lst], dtype=np.float32), axis=1)
@@ -56,3 +56,10 @@ plt.show()
 plt.semilogy(vtg, np.abs(ids_pred), 'r') 
 plt.semilogy(vtg_true, np.abs(ids_true))
 plt.show()
+
+## Point test
+
+ids_pred = predict_ids(
+	'./transiXOR_Models/bise_ext_sym_h264_0',
+	np.array([0.2+0.2]), np.array([0.2]))
+print(ids_pred)
