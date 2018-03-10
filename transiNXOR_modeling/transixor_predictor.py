@@ -48,18 +48,30 @@ ids_pred = predict_ids(
 # plt.semilogy(vds_true, np.abs(ids_true))
 # plt.show()
 
-ids_true = ids_data[30, 20, :]
-vtg_true = np.linspace(-0.1, 0.3, 41)
-plt.plot(vtg, ids_pred, 'r')
-plt.plot(vtg_true, ids_true)
-plt.show()
-plt.semilogy(vtg, np.abs(ids_pred), 'r') 
-plt.semilogy(vtg_true, np.abs(ids_true))
-plt.show()
+# ids_true = ids_data[30, 20, :]
+# vtg_true = np.linspace(-0.1, 0.3, 41)
+# plt.plot(vtg, ids_pred, 'r')
+# plt.plot(vtg_true, ids_true)
+# plt.show()
+# plt.semilogy(vtg, np.abs(ids_pred), 'r') 
+# plt.semilogy(vtg_true, np.abs(ids_true))
+# plt.show()
 
 ## Point test
 
 ids_pred = predict_ids(
 	'./transiXOR_Models/bise_ext_sym_h264_0',
 	np.array([0.2+0.2]), np.array([0.2]))
+print(ids_pred)
+ids_pred = predict_ids(
+	'./transiXOR_Models/bise_ext_sym_h264_0',
+	np.array([0.0+0.0]), np.array([0.2]))
+print(ids_pred)
+ids_pred = predict_ids(
+	'./transiXOR_Models/bise_ext_sym_h264_0',
+	np.array([0.0+0.1]), np.array([0.2]))
+print(ids_pred)
+ids_pred = predict_ids(
+	'./transiXOR_Models/bise_ext_sym_h264_0',
+	np.array([0.1+0.0]), np.array([0.2]))
 print(ids_pred)
