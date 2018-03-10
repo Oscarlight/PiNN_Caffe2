@@ -58,7 +58,7 @@ def test(vtg, vbg, vds):
 	sig_temp2 = 1 / (1 + np.exp(-(inter2+sig_temp2)))
 	tanh_temp2 = np.tanh(tanh_temp2)
 	## ids = sig_temp2 * tanh_temp2 * scale['id']
-	ids = sig_temp2 * tanh_temp2 * 53.65093994
+	ids = sig_temp2 * tanh_temp2 * 457.86010742
 
 	return ids
 

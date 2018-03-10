@@ -4,5 +4,5 @@ main.o: main.c
 device_model.o: device_model.c
 	gcc -c device_model.c
 
-test: main.o device_model.o
-	gcc -o test main.o device_model.o -lcblas -lm
+main: main.o device_model.o
+	gcc -o main.o device_model.o -lcblas -lm
