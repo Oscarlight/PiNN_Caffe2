@@ -14,7 +14,7 @@ ids_data = np.load(ids_file[0])
 print(ids_data.shape)
 
 ## ------------  Prediction ---------------
-vds = np.linspace(-0.1, 0.3, 41)
+vds = np.linspace(-0.1, 0.3, 101)
 vbg = np.linspace(0.1, 0.1, 1)
 vtg = np.linspace(0.2, 0.2, 1)
 # vds = np.linspace(0.2, 0.2, 1)
@@ -27,6 +27,8 @@ vbg_pred = np.array([e[1] for e in iter_lst], dtype=np.float32)
 vtg_pred = np.array([e[2] for e in iter_lst], dtype=np.float32)
 vg_pred = np.column_stack((vtg_pred, vbg_pred))
 
+vg_pred = np.sum(vg_pred, axis=1, keepdims=True)
+
 # vg_pred = np.sum(vg_pred, axis=1, keepdims=True)
 
 ## If trained with adjoint builder
@@ -35,13 +37,14 @@ vg_pred = np.column_stack((vtg_pred, vbg_pred))
 
 ## If trained with origin builder
 ids_pred = predict_ids(
-	'./transiXOR_Models/bise_ext_h232_1', vg_pred, vds_pred)
+	'./transiXOR_Models/bise_ext_sym_h264_0', vg_pred, vds_pred)
 
 # ids_true = ids_data[30, 20, :]
 ids_true = ids_data[:, 30, 20]
-plt.plot(ids_pred, 'r')
-plt.plot((ids_true))
+vds_true = np.linspace(-0.1, 0.3, 41)
+plt.plot(vds, ids_pred, 'r')
+plt.plot(vds_true, ids_true)
 plt.show()
-plt.semilogy(np.abs(ids_pred), 'r') 
-plt.semilogy(np.abs(ids_true))
+plt.semilogy(vds, np.abs(ids_pred), 'r') 
+plt.semilogy(vds_true, np.abs(ids_true))
 plt.show()

@@ -7,7 +7,7 @@ from scipy.io import savemat
 import numpy as np
 import pickle
 
-model_name = 'bise_h216_0'
+model_name = 'bise_ext_sym_h264_0'
 
 init_net = exporter.load_init_net('./transiXOR_Models/'+model_name+'_init')
 print(type(init_net))
@@ -20,6 +20,7 @@ with open("c_model/device_param","w") as f:
 		print(tensor_name)
 		print(tensor.shape)
 		p[tensor_name] = tensor
+		np.set_printoptions(threshold=np.inf)  # force full expr print
 		tensor_str = np.array2string(tensor.flatten(), separator=',')
 		tensor_str = tensor_str.replace("[", "{").replace("]", "}")
 		str = 'static const float ' + tensor_name + '[] = ' + tensor_str + ';\n'
@@ -32,8 +33,11 @@ with open("c_model/device_param","w") as f:
 
 ## TESTING
 def test(vtg, vbg, vds):
-	vg = np.array([[vtg], [vbg]]); vd = np.array([[vds]])
-	vg = (vg - 0.1)/0.1; vd /= 0.2
+	# vg = np.array([[vtg], [vbg]]); 
+	vg = np.array([vtg + vbg]) # Symmetry assumption
+	vd = np.array([[vds]])
+	## (vg - vg_shift)/scale['vg']; vd / scale['vd']
+	vg = (vg - 0.2)/0.4; vd /= 0.3
 
 	tanh_temp0 = np.matmul(p['tanh_fc_layer_0_w'], vd)
 	sig_temp0 = np.matmul(p['sig_fc_layer_0_w'], vg) + np.expand_dims(p['sig_fc_layer_0_b'], axis=1)
@@ -53,6 +57,7 @@ def test(vtg, vbg, vds):
 	inter2 = np.matmul(p['inter_embed_layer_2_w'], tanh_temp2) + np.expand_dims(p['inter_embed_layer_2_b'], axis=1)
 	sig_temp2 = 1 / (1 + np.exp(-(inter2+sig_temp2)))
 	tanh_temp2 = np.tanh(tanh_temp2)
+	## ids = sig_temp2 * tanh_temp2 * scale['id']
 	ids = sig_temp2 * tanh_temp2 * 53.65093994
 
 	return ids
