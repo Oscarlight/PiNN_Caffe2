@@ -12,7 +12,7 @@ model_name = 'bise_ext_sym_h264_0'
 init_net = exporter.load_init_net('./transiXOR_Models/'+model_name+'_init')
 print(type(init_net))
 p = {}
-with open("c_model/device_param","w") as f:
+with open("c_model/device_param_0","w") as f:
 	f.write('/* --------------- MODEL: '+ model_name +' -------------------- */\n')
 	for op in init_net.op:
 		tensor = workspace.FetchBlob(op.output[0])

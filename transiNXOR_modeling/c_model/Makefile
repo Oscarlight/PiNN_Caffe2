@@ -45,4 +45,4 @@ include $(GNUMAKE_ROOT)/library.rules
 include $(GNUMAKE_ROOT)/std.rules
 
 main: main.c device_model.c
-	$(CC) -o $@ $(CFLAGS) $(LINK_FLAGS) -lm -m32 $^
+	$(CC) -o $@ -lcblas -lm $^
