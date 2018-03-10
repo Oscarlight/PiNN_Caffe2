@@ -43,6 +43,3 @@ include $(GNUMAKE_ROOT)/library.rules
 
 # Include some standard rules
 include $(GNUMAKE_ROOT)/std.rules
-
-main: main.c device_model.c
-	$(CC) -o $@ -lcblas -lm $^
