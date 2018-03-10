@@ -52,7 +52,7 @@ print(id_train.shape)
 
 ## Using the fact that vtg and vbg are interchangeable
 ## CAUTION: This invariance may not be true for experimental data
-# vg_train = np.sum(vg_train, axis=1, keepdims=True)
+vg_train = np.sum(vg_train, axis=1, keepdims=True)
 
 ## random select train/eval = 0.9/0.1
 np.random.seed = 42

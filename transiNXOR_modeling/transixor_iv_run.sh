@@ -12,4 +12,7 @@
 # python transixor_trainer.py transiXOR_Models/bise_ext_h216_0 -hidden 16 -layer 2 -mls 500 -batchsize 2048 -lossfunct scaled_l2
 # python transixor_trainer.py transiXOR_Models/bise_ext_h216_1 -hidden 16 -layer 2 -mls 50 -batchsize 2048 -lossfunct scaled_l1
 # python transixor_trainer.py transiXOR_Models/bise_ext_h232_0 -hidden 32 -layer 2 -mls 5000 -batchsize 2048 -lossfunct scaled_l2
-python transixor_trainer.py transiXOR_Models/bise_ext_h232_1 -hidden 32 -layer 2 -mls 500 -batchsize 2048 -lossfunct scaled_l1
+# python transixor_trainer.py transiXOR_Models/bise_ext_h232_1 -hidden 32 -layer 2 -mls 500 -batchsize 2048 -lossfunct scaled_l1
+python transixor_trainer.py transiXOR_Models/bise_ext_sym_h264_0 -hidden 64 -layer 2 -mls 500 -batchsize 2048 -lossfunct scaled_l1 -epoch 5e5
+python transixor_trainer.py transiXOR_Models/bise_ext_sym_h264_1 -hidden 64 -layer 2 -mls 1000 -batchsize 2048 -lossfunct scaled_l1 -epoch 5e5
+python transixor_trainer.py transiXOR_Models/bise_ext_sym_h232_0 -hidden 32 -layer 2 -mls 1000 -batchsize 2048 -lossfunct scaled_l1 -epoch 5e5
