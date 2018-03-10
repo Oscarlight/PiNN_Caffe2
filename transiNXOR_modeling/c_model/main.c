@@ -13,3 +13,5 @@ int main(int argc, char** argv) {
 	id = device_model(0.0, 0.1, 0.2, 1);
 	printf("%f\n", id);
 }
+
+

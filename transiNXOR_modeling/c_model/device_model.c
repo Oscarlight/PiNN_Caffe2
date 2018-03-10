@@ -61,7 +61,7 @@ double device_model( const double vtg_d, const double vbg_d,
   const double vds_d, const double w_d
 ) {
     
-    #include "device_param_0"
+    #include "device_param"
     // convert to float, cadence does not like floats
     const float vtg = (float) vtg_d;
     const float vbg = (float) vbg_d;
