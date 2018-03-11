@@ -3,8 +3,10 @@ sys.path.append('../')
 import caffe2_paths
 from caffe2.python import workspace
 from pinn import exporter
+import numpy as np
 from scipy.io import savemat
 import pickle
+import glob
 
 model_name = 'bise_ext_sym_h264_0'
 dest_folder = 'c_model/'
@@ -27,3 +29,7 @@ saved_preproc = preproc_dict['scale']
 saved_preproc['vg_shift'] = preproc_dict['vg_shift']
 print(saved_preproc)
 savemat(dest_folder + 'preproc.mat', saved_preproc)
+
+ids_file = glob.glob('./transiXOR_data/current_D9.npy')
+ids_data = np.load(ids_file[0])
+savemat(dest_folder + 'current.mat', {'data': ids_data})
