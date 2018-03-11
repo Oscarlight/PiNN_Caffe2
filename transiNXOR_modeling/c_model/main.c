@@ -2,6 +2,8 @@
 #include <stdio.h>
 #include "device_model.h"
 
+
+
 int main(int argc, char** argv) {
 	// vtg, vbg, vds
 	double id = device_model(0.2, 0.2, 0.2, 1);
