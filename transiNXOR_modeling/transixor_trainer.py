@@ -22,7 +22,7 @@ parser.add_argument("-epoch", type=int, default=1e5,
                     help="num of epoch")
 parser.add_argument("-report", type=float, default=1e3,
                     help="report_interval")
-parser.add_argument("-hidden", nargs='+', type=int, default="8",
+parser.add_argument("-hidden", nargs='+', type=int, default=8,
                     help="hidden dimension")
 parser.add_argument("-batchsize", type=int, default=1024,
                     help="batch size")
@@ -30,8 +30,6 @@ parser.add_argument("-lossfunct", type=str, default="scaled_l1",
                     help="type of loss function")
 args = parser.parse_args()
 
-print(args.hidden)
-quit()
 # ----------------- Train + Eval ---------------------
 dc_model = DeviceModel(
 	args.model_name,
@@ -49,8 +47,8 @@ dc_model.add_database('train', 'db/train.minidb', train_example, 'db/preproc_par
 dc_model.add_database('eval', 'db/eval.minidb', test_example, 'db/preproc_param.p')
 
 dc_model.build_nets(
-	hidden_sig_dims=args.hidden * args.layer + [1],
-	hidden_tanh_dims=args.hidden * args.layer + [1],
+	hidden_sig_dims=args.hidden + [1],
+	hidden_tanh_dims=args.hidden + [1],
 	train_batch_size=args.batchsize,
 	eval_batch_size=args.batchsize,
 	weight_optim_method='AdaGrad',
