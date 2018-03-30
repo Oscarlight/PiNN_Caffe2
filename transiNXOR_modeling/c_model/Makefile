@@ -15,6 +15,7 @@
 # provided to you AS IS with no warranties of any kind, and you agree to bear
 # the entire risk of any customizations you make using this file.
 
+BIT := 64
 ROOT		:= .
 BLAS_DIR := ${BLAS_DIR}
 LINK_FLAGS=-L$(BLAS_DIR)/lib -Wl,-rpath,$(BLAS_DIR)/lib -lopenblas 
@@ -26,7 +27,8 @@ include $(ROOT)/plugins.variables
 default : all 
 
 # Definition of the tfet library
-LIB_SRC		:= veriloga_bridge.c device_model.c
+#LIB_SRC		:= device_model.c 
+LIB_SRC		:= device_model.c limit_model.c
 LIB_NAME	:= tfet
 CFLAGS=-pthread -I$(BLAS_DIR)/include
 LIB_LDFLAGS=$(LINK_FLAGS) -pthread
@@ -43,3 +45,7 @@ include $(GNUMAKE_ROOT)/library.rules
 
 # Include some standard rules
 include $(GNUMAKE_ROOT)/std.rules
+
+mex: wrappedModel.c device_model.c
+	mex $^ -I$(BLAS_DIR)/include LDFLAGS='$(LINK_FLAGS)'
+
