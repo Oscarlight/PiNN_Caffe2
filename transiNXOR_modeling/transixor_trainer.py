@@ -18,7 +18,7 @@ parser.add_argument("-mls", type=float, default=1e2,
                     help="max loss scale")
 parser.add_argument("-lr", type=float, default=0.1,
                     help="base learning rate")
-parser.add_argument("-epoch", type=int, default=1e5,
+parser.add_argument("-epoch", type=float, default=1e5,
                     help="num of epoch")
 parser.add_argument("-report", type=float, default=1e3,
                     help="report_interval")
@@ -28,6 +28,8 @@ parser.add_argument("-batchsize", type=int, default=1024,
                     help="batch size")
 parser.add_argument("-lossfunct", type=str, default="scaled_l1",
                     help="type of loss function")
+parser.add_argument("-neg_grad_mag", type=float, default=100.0,
+                    help="negative gradient penalty magnitude")
 args = parser.parse_args()
 
 # ----------------- Train + Eval ---------------------
@@ -49,7 +51,7 @@ dc_model.add_database('eval', 'db/eval.minidb', test_example, 'db/preproc_param.
 neg_grad_penalty = {
 	'input_type': 'tanh',
 	'input_idx': [0],
-	'magnitude': 10.0,
+	'magnitude': args.neg_grad_mag,
 }
 
 dc_model.build_nets(
