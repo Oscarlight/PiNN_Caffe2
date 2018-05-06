@@ -20,7 +20,7 @@ from shutil import copyfile
 # import logging
 import matplotlib.pyplot as plt
 
-DEBUG = True
+DEBUG = False
 
 class DeviceModel(object):
     def __init__(
