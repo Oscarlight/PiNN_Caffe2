@@ -17,7 +17,7 @@ print(ids_data.shape)
 # vds = np.linspace(-0.1, 0.3, 41)
 # vbg = np.linspace(0.1, 0.1, 1)
 # vtg = np.linspace(0.2, 0.2, 1)
-vds = np.linspace(0.2, 0.2, 1)
+vds = np.linspace(0.0, 0.0, 1)
 vbg = np.linspace(0.1, 0.1, 1)
 vtg = np.linspace(-0.1, 0.3, 41)
 
@@ -39,16 +39,16 @@ vg_pred = np.sum(vg_pred, axis=1, keepdims=True)
 ids_pred = predict_ids(
 	'./transiXOR_Models/bise_ext_sym_h264_0', vg_pred, vds_pred)
 
-# ids_true = ids_data[:, 30, 20]
-# vds_true = np.linspace(-0.1, 0.3, 41)
-# plt.plot(vds, ids_pred, 'r')
-# plt.plot(vds_true, ids_true)
-# plt.show()
-# plt.semilogy(vds, np.abs(ids_pred), 'r') 
-# plt.semilogy(vds_true, np.abs(ids_true))
-# plt.show()
+ids_true = ids_data[:, 30, 20]
+vds_true = np.linspace(-0.1, 0.3, 41)
+plt.plot(vds, ids_pred, 'r')
+plt.plot(vds_true, ids_true)
+plt.show()
+plt.semilogy(vds, np.abs(ids_pred), 'r') 
+plt.semilogy(vds_true, np.abs(ids_true))
+plt.show()
 
-# ids_true = ids_data[30, 20, :]
+# ids_true = ids_data[10, 20, :]
 # vtg_true = np.linspace(-0.1, 0.3, 41)
 # plt.plot(vtg, ids_pred, 'r')
 # plt.plot(vtg_true, ids_true)
@@ -59,19 +59,18 @@ ids_pred = predict_ids(
 
 ## Point test
 
-ids_pred = predict_ids(
-	'./transiXOR_Models/bise_ext_sym_h264_0',
-	np.array([0.2+0.2]), np.array([0.2]))
-print(ids_pred)
-ids_pred = predict_ids(
-	'./transiXOR_Models/bise_ext_sym_h264_0',
-	np.array([0.0+0.0]), np.array([0.2]))
-print(ids_pred)
-ids_pred = predict_ids(
-	'./transiXOR_Models/bise_ext_sym_h264_0',
-	np.array([0.0+0.1]), np.array([0.2]))
-print(ids_pred)
-ids_pred = predict_ids(
-	'./transiXOR_Models/bise_ext_sym_h264_0',
-	np.array([0.1+0.0]), np.array([0.2]))
-print(ids_pred)
+# ids_pred = predict_ids(
+# 	'./transiXOR_Models/bise_ext_sym_h264_0',
+# 	np.array([0.2+0.2]), np.array([0.2]))
+# print(ids_pred)
+# ids_pred = predict_ids(
+# 	'./transiXOR_Models/bise_ext_sym_h264_0',
+# 	np.array([0.0+0.0]), np.array([0.2]))
+# print(ids_pred)
+# ids_pred = predict_ids(
+# 	'./transiXOR_Models/bise_ext_sym_h264_0',
+# 	np.array([0.0+0.1]), np.array([0.2]))
+# print(ids_pred)
+# ids_pred = predict_ids(
+# 	'./transiXOR_Models/bise_ext_sym_h264_0',
+# 	np.array([0.1+0.0]), np.array([0.2]))

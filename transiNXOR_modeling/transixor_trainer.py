@@ -12,7 +12,7 @@ import argparse
 import matplotlib.pyplot as plt
 
 parser = argparse.ArgumentParser(description='pinn')
-parser.add_argument("model_name", type=str, default='transiXOR_Mdoels/example',
+parser.add_argument("model_name", type=str, default='transiXOR_Models/example',
                     help="model_name")
 parser.add_argument("-mls", type=float, default=1e2,
                     help="max loss scale")
@@ -22,7 +22,7 @@ parser.add_argument("-epoch", type=int, default=1e5,
                     help="num of epoch")
 parser.add_argument("-report", type=float, default=1e3,
                     help="report_interval")
-parser.add_argument("-hidden", nargs='+', type=int, default=8,
+parser.add_argument("-hidden", nargs='+', type=int, default=[8],
                     help="hidden dimension")
 parser.add_argument("-batchsize", type=int, default=1024,
                     help="batch size")
@@ -37,7 +37,7 @@ dc_model = DeviceModel(
 	tanh_input_dim=1,
 	output_dim=1,
 	train_target='origin',
-	net_builder='origin', # use 'adjoint' here to generate adjoint net
+	net_builder='adjoint', # use 'adjoint' here to generate adjoint net
 )
 
 ## manually input the number of train/eval examples
@@ -45,6 +45,12 @@ train_example = 60516
 test_example  = 6724 
 dc_model.add_database('train', 'db/train.minidb', train_example, 'db/preproc_param.p')
 dc_model.add_database('eval', 'db/eval.minidb', test_example, 'db/preproc_param.p')
+
+neg_grad_penalty = {
+	'input_type': 'tanh',
+	'input_idx': [0],
+	'magnitude': 10.0,
+}
 
 dc_model.build_nets(
 	hidden_sig_dims=args.hidden + [1],
@@ -56,10 +62,11 @@ dc_model.build_nets(
 	bias_optim_method='AdaGrad',
 	bias_optim_param={'alpha':args.lr, 'epsilon':1e-4},
 	loss_function=args.lossfunct,
-	max_loss_scale=args.mls, 
+	max_loss_scale=args.mls,
+	neg_grad_penalty=neg_grad_penalty,
 )
 
-# dc_model.draw_nets()
+dc_model.draw_nets()
 
 start = time.time()
 dc_model.train_with_eval(

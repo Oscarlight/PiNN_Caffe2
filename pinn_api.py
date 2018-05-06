@@ -20,7 +20,7 @@ from shutil import copyfile
 # import logging
 import matplotlib.pyplot as plt
 
-DEBUG = False
+DEBUG = True
 
 class DeviceModel(object):
     def __init__(
@@ -52,15 +52,11 @@ class DeviceModel(object):
             'epoch':[],
             'train_loss':[], 'eval_loss':[],
             'train_l1_metric':[], 'eval_l1_metric':[],
-            'train_scaled_l1_metric':[], 'eval_scaled_l1_metric':[]
+            'train_scaled_l1_metric':[], 'eval_scaled_l1_metric':[],
+            'neg_grad_penalty':[]
         }
         self.train_target = train_target
         self.net_builder = net_builder
-        if train_target == TrainTarget.ORIGIN:
-            self.adjoint_tag = Tags.PREDICTION_ONLY
-        if train_target == TrainTarget.ADJOINT:
-            self.adjoint_tag = Tags.EXCLUDE_FROM_PREDICTION
-            assert net_builder == TrainTarget.ADJOINT, "Wrong Net Builder"
 
     # If reuse the same database many time, recommend to create the database
     # and the preproc_param only once (using add_database)
@@ -153,10 +149,17 @@ class DeviceModel(object):
         bias_optim_method='AdaGrad',
         bias_optim_param={'alpha':0.01, 'epsilon':1e-4},
         loss_function='scaled_l1', 
-        max_loss_scale=1.,
+        max_loss_scale=1.,  # used to scale up the loss signal for small input
+        neg_grad_penalty=None,  # whether and how to apply neg_grad_penalty
     ):
         assert len(self.input_data_store) > 0, 'Input data store is empty.'
         assert 'train' in self.input_data_store, 'Missing training data.'
+        assert (neg_grad_penalty is None or 
+            (neg_grad_penalty and self.train_target == TrainTarget.ORIGIN
+                and self.net_builder == TrainTarget.ADJOINT)
+            ), '''When set neg_grad_penalty, train target should be ORIGIN,
+            but net builder should be ADJOINT'''
+        self.has_neg_grad_penalty = True if neg_grad_penalty else False
         self.batch_size = train_batch_size
 
         # Build the date reader net for train net
@@ -200,6 +203,11 @@ class DeviceModel(object):
             input_data_train[1].get(), unsafe=True)
 
         if self.net_builder == TrainTarget.ADJOINT:
+            # decide adjoint tag
+            adjoint_tag = 'no_tag'
+            if self.train_target == TrainTarget.ORIGIN and neg_grad_penalty is None:
+                adjoint_tag = Tags.PREDICTION_ONLY
+            
             (self.pred, self.sig_adjoint_pred, 
                 self.tanh_adjoint_pred, self.loss) = build_adjoint_pinn(
                 self.model,
@@ -209,10 +217,11 @@ class DeviceModel(object):
                 tanh_net_dim=hidden_tanh_dims,
                 weight_optim=_build_optimizer(weight_optim_method, weight_optim_param),
                 bias_optim=_build_optimizer(bias_optim_method, bias_optim_param),
-                adjoint_tag=self.adjoint_tag,
+                adjoint_tag=adjoint_tag,
                 train_target=self.train_target,
                 loss_function=loss_function,
                 max_loss_scale=max_loss_scale,
+                neg_grad_penalty=neg_grad_penalty,
             )
         elif self.net_builder == TrainTarget.ORIGIN:
             self.pred, self.loss = build_pinn(
@@ -268,9 +277,10 @@ class DeviceModel(object):
             Slowest mode: report_interval > 0, eval_during_training=True
             Debug mode: DEBUG flag set to true
         '''
+        ## ----------------------- START DEBUG -------------------------
         if DEBUG:
             train_net = self.net_store['train_net']
-            workspace.RunNet(train_net, num_iter=5000)
+            workspace.RunNet(train_net, num_iter=5)
             if self.net_builder == TrainTarget.ORIGIN:
                 print(workspace.FetchBlob('DBInput_train/tanh_input'))
                 print(workspace.FetchBlob('DBInput_train/sig_input'))
@@ -283,14 +293,19 @@ class DeviceModel(object):
                 # print(workspace.FetchBlob('sig_fc_layer_0/b'))
             if self.net_builder == TrainTarget.ADJOINT:
                 print(workspace.FetchBlob('DBInput_train/tanh_input'))
-                print(workspace.FetchBlob('DBInput_train/sig_input'))
-                print(workspace.FetchBlob('DBInput_train/label'))
-                print(workspace.FetchBlob('origin/'+'Mul/origin_pred'))
-                print(workspace.FetchBlob('adjoint/'+'Sigmoid_auto_1/sig_tranfer_layer_2'))
-                print(workspace.FetchBlob('origin/'+'Tanh_auto_1/tanh_tranfer_layer_2'))
-                print(workspace.FetchBlob('origin/'+'Sigmoid/sig_tranfer_layer_0'))
-                print(workspace.FetchBlob('adjoint/'+'sig_fc_layer_0/w'))
-                print(workspace.FetchBlob('adjoint/'+'sig_fc_layer_0/b'))
+                # print(workspace.FetchBlob('DBInput_train/sig_input'))
+                # print(workspace.FetchBlob('DBInput_train/label'))
+                # print(workspace.FetchBlob('origin/'+'Mul/origin_pred'))
+                ## --- neg_grad_penalty ---
+                print(workspace.FetchBlob('penalty_scaler'))
+                print(workspace.FetchBlob('Relu/neg_gradients'))
+                print(workspace.FetchBlob('Relu_auto_0/input_gate'))
+                print(workspace.FetchBlob('PenaltyScaler/scaled_neg_gradient_loss'))
+                # print(workspace.FetchBlob('adjoint/'+'Sigmoid_auto_1/sig_tranfer_layer_2'))
+                # print(workspace.FetchBlob('origin/'+'Tanh_auto_1/tanh_tranfer_layer_2'))
+                # print(workspace.FetchBlob('origin/'+'Sigmoid/sig_tranfer_layer_0'))
+                # print(workspace.FetchBlob('adjoint/'+'sig_fc_layer_0/w'))
+                # print(workspace.FetchBlob('adjoint/'+'sig_fc_layer_0/b'))
             print('-'*50)
             eval_net = self.net_store['eval_net']
             workspace.RunNet(eval_net.Proto().name)
@@ -309,6 +324,7 @@ class DeviceModel(object):
                 print(workspace.FetchBlob('batch_direct_weighted_l1_loss/scaled_loss_no_clip'))
                 print(workspace.FetchBlob('batch_direct_weighted_l1_loss/loss'))
             quit()
+        ## ----------------------- END DEBUG ------------------------
 
         num_batch_per_epoch = int(
             self.input_data_store['train'][1] / 
@@ -351,7 +367,11 @@ class DeviceModel(object):
                     self.model.metrics_schema.scaled_l1_metric).get())
                 self.reports['train_scaled_l1_metric'].append(
                     train_scaled_l1_metric)
-                
+                if self.has_neg_grad_penalty:
+                    neg_grad_loss = np.asscalar(schema.FetchRecord(
+                        self.model.metrics_schema.neg_gradient_loss).get())
+                    self.reports['neg_grad_penalty'].append(neg_grad_loss)
+
                 if eval_during_training and 'eval_net' in self.net_store:       
                     workspace.RunNet(eval_net.Proto().name)
                     eval_loss = np.asscalar(schema.FetchRecord(self.loss).get())
@@ -474,25 +494,28 @@ class DeviceModel(object):
             f.write(
                 "{},{},{},{},{},{},{}\n".format(
                     "epoch", "train_loss","eval_loss","train_l1_metric",
-                    "eval_l1_metric","train_scaled_l1_metric","eval_scaled_l1_metric"))
+                    "eval_l1_metric","train_scaled_l1_metric","eval_scaled_l1_metric",
+                    "negative_gradient_penalty"))
             for x in zip(
                 self.reports['epoch'],self.reports['train_loss'],
                 self.reports['eval_loss'],self.reports['train_l1_metric'],
                 self.reports['eval_l1_metric'],
                 self.reports['train_scaled_l1_metric'],
-                self.reports['eval_scaled_l1_metric'] ):
+                self.reports['eval_scaled_l1_metric'],
+                self.reports['neg_grad_penalty']):
                 f.write("{},{},{},{},{},{},{}\n".format(
-                    x[0], x[1], x[2], x[3], x[4], x[5], x[6]))
+                    x[0], x[1], x[2], x[3], x[4], x[5], x[6], x[7]))
             f.close()
         else:
             f = open(save_name+'_loss_trend.csv', "w")
             f.write("{},{},{},{}\n".format("epoch", "train_loss","train_l1_metric",
-                                     "train_scaled_l1_metric" ))
+                                     "train_scaled_l1_metric","negative_gradient_penalty"))
             for x in zip(
                 self.reports['epoch'],
                 self.reports['train_loss'],self.reports['train_l1_metric'],
-                self.reports['train_scaled_l1_metric'] ):
-                f.write("{},{},{},{}\n".format(x[0], x[1], x[2], x[3]))
+                self.reports['train_scaled_l1_metric'],
+                self.reports['neg_grad_penalty']):
+                f.write("{},{},{},{}\n".format(x[0], x[1], x[2], x[3], x[4]))
             f.close()
 
     
