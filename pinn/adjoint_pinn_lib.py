@@ -266,61 +266,63 @@ def build_adjoint_pinn(
 				loss_and_metrics.scaled_l1_metric)
 
 			# Add negative gradient penalty
+			## TODO: Put them in a layer
 			if neg_grad_penalty:
 				# TODO: make neg_grad_penalty to a object
-				assert isinstance(neg_grad_penalty['input_idx'], list)
-				assert isinstance(neg_grad_penalty['magnitude'], float)
-				gather_indices = model.add_global_constant(
-					'neg_grad_penalty_input_idx',
-					neg_grad_penalty['input_idx'],
-					dtype=np.int32
-				)
-				penalty_scaler = model.add_global_constant(
-					'penalty_scaler',
-					neg_grad_penalty['magnitude'],
-					dtype=np.float32
-				)
-				if neg_grad_penalty['input_type'] == 'tanh':
-					gathered_adjoint_pred = model.BatchGather(
-						[tanh_adjoint_pred, gather_indices],
-						'gathered_adjoint_pred',
-						output_dtypes=(np.float32, (len(neg_grad_penalty['input_idx']),)))
-					origin_input_gate = model.BatchGather(
-						[model.input_feature_schema.tanh_input, gather_indices],
-						'origin_input_gate',
-						output_dtypes=(np.float32, (len(neg_grad_penalty['input_idx']),)))
+				with Tags(Tags.EXCLUDE_FROM_PREDICTION):
+					assert isinstance(neg_grad_penalty['input_idx'], list)
+					assert isinstance(neg_grad_penalty['magnitude'], float)
+					gather_indices = model.add_global_constant(
+						'neg_grad_penalty_input_idx',
+						neg_grad_penalty['input_idx'],
+						dtype=np.int32
+					)
+					penalty_scaler = model.add_global_constant(
+						'penalty_scaler',
+						neg_grad_penalty['magnitude'],
+						dtype=np.float32
+					)
+					if neg_grad_penalty['input_type'] == 'tanh':
+						gathered_adjoint_pred = model.BatchGather(
+							[tanh_adjoint_pred, gather_indices],
+							'gathered_adjoint_pred',
+							output_dtypes=(np.float32, (len(neg_grad_penalty['input_idx']),)))
+						origin_input_gate = model.BatchGather(
+							[model.input_feature_schema.tanh_input, gather_indices],
+							'origin_input_gate',
+							output_dtypes=(np.float32, (len(neg_grad_penalty['input_idx']),)))
 
-				elif neg_grad_penalty['input_type'] == 'sig':
-					gathered_adjoint_pred = model.BatchGather(
-						[sig_adjoint_pred, gather_indices],
-						'gathered_adjoint_pred')
-					origin_input_gate = model.BatchGather(
-						[model.input_feature_schema.sig_input, gather_indices],
-						'origin_input_gate')
-				else:
-					raise Exception('Wrong neg_grad_penalty[\'input_type\']')
+					elif neg_grad_penalty['input_type'] == 'sig':
+						gathered_adjoint_pred = model.BatchGather(
+							[sig_adjoint_pred, gather_indices],
+							'gathered_adjoint_pred')
+						origin_input_gate = model.BatchGather(
+							[model.input_feature_schema.sig_input, gather_indices],
+							'origin_input_gate')
+					else:
+						raise Exception('Wrong neg_grad_penalty[\'input_type\']')
 
-				## TODO: Put them in a operator
-				neg_gradients = model.Relu(
-					[model.Negative(
-						[model.FlattenToVec([gathered_adjoint_pred], 'flat_gathered_adjoint_pred')], 
-							'neg_gathered_adjoint_pred')],
-						'neg_gradients')
-				input_gate = model.Relu(
-					[model.Sign(
-						[model.FlattenToVec([origin_input_gate], 'flat_origin_input_gate')], 
-							'sign_origin_input_gate')],
-						'input_gate')
-				input_gate_stopgrad = model.StopGradient([input_gate], 'input_gate_stopgrad')
-				scaled_neg_gradient_loss = model.Mul(
-					[model.AveragedLoss(
-						[model.Mul([neg_gradients, input_gate_stopgrad], 'gated_neg_gradients')], 
-							'avg_gated_neg_graident_loss'), 
-						penalty_scaler], 'scaled_neg_gradient_loss',
-						name='PenaltyScaler')
-				model.add_metric_field('neg_gradient_loss', 
-					scaled_neg_gradient_loss)
-				model.add_loss(scaled_neg_gradient_loss)
+					## TODO: Put them in a operator
+					neg_gradients = model.Relu(
+						[model.Negative(
+							[model.FlattenToVec([gathered_adjoint_pred], 'flat_gathered_adjoint_pred')], 
+								'neg_gathered_adjoint_pred')],
+							'neg_gradients')
+					input_gate = model.Relu(
+						[model.Sign(
+							[model.FlattenToVec([origin_input_gate], 'flat_origin_input_gate')], 
+								'sign_origin_input_gate')],
+							'input_gate')
+					input_gate_stopgrad = model.StopGradient([input_gate], 'input_gate_stopgrad')
+					scaled_neg_gradient_loss = model.Mul(
+						[model.AveragedLoss(
+							[model.Mul([neg_gradients, input_gate_stopgrad], 'gated_neg_gradients')], 
+								'avg_gated_neg_graident_loss'), 
+							penalty_scaler], 'scaled_neg_gradient_loss',
+							name='PenaltyScaler')
+					model.add_metric_field('neg_gradient_loss', 
+						scaled_neg_gradient_loss)
+					model.add_loss(scaled_neg_gradient_loss)
 
 			if loss_function == 'scaled_l2':
 				print('[Pi-NN Build Net]: Use scaled_l2 loss, but l1 metrics.')
