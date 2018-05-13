@@ -25,8 +25,8 @@ python transixor_trainer.py transiXOR_Models/bise_ext_sym_h264_neggrad_1 \
 	-mls 500 \
 	-batchsize 2048 \
 	-lossfunct scaled_l1 \
-	-epoch 5 \
+	-epoch 10000 \
 	-neg_grad_mag 10 \
-	-report 5
+	-report 1000
 
 
