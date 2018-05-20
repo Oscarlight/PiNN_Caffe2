@@ -7,13 +7,10 @@ python transixor_trainer.py transiXOR_Models/bise_ext_sym_h264_neggrad_1 \
 	-hidden 64 64 -mls 500 -batchsize 2048 -lossfunct scaled_l1 \
 	-epoch 500000 -neg_grad_mag 1 -report 1000
 
-python transixor_trainer.py transiXOR_Models/bise_ext_sym_h264_neggrad_1 \
+python transixor_trainer.py transiXOR_Models/bise_ext_sym_h264_neggrad_2 \
+	-hidden 64 64 -mls 500 -batchsize 2048 -lossfunct scaled_l1 \
+	-epoch 500000 -neg_grad_mag 5 -report 1000
+
+python transixor_trainer.py transiXOR_Models/bise_ext_sym_h264_neggrad_3 \
 	-hidden 64 64 -mls 500 -batchsize 2048 -lossfunct scaled_l1 \
 	-epoch 500000 -neg_grad_mag 10 -report 1000
-
-python transixor_trainer.py transiXOR_Models/bise_ext_sym_h264_neggrad_1 \
-	-hidden 64 64 -mls 500 -batchsize 2048 -lossfunct scaled_l1 \
-	-epoch 500000 -neg_grad_mag 100 -report 1000
-
-
-

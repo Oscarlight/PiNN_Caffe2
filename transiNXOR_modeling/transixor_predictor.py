@@ -7,9 +7,9 @@ import matplotlib.pyplot as plt
 import glob
 
 ## ------------  Input  ---------------
-VDS = None
-VTG = 0.05
-VBG = 0.05
+VDS = 0.2
+VTG = None
+VBG = 0.2
 ## ------------  True data  ---------------
 ids_file = glob.glob('./transiXOR_data/current_D9.npy')
 data_true = np.load(ids_file[0])
@@ -35,7 +35,7 @@ def plot(data_pred, data_true, vds=None, vbg=None, vtg=None):
 ## ------------  Prediction ---------------
 pred_data_path = 'pred_data/'
 # model_name = 'bise_ext_sym_h264_0'
-model_name = 'bise_ext_sym_h264_neggrad_1'
+model_name = 'bise_ext_sym_h264_neggrad_0'
 if not os.path.isfile(pred_data_path + model_name + '.npy'):
 	print('Computing all data...')
 	vds = np.linspace(-0.1, 0.3, 41)
