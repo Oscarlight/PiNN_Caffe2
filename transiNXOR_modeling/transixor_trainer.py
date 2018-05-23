@@ -54,6 +54,11 @@ neg_grad_penalty = {
 	'magnitude': args.neg_grad_mag,
 }
 
+init_model = {
+	'name': './transiXOR_Models/bise_ext_sym_h264_0_init',
+	'prefix': 'adjoint/',
+}
+
 dc_model.build_nets(
 	hidden_sig_dims=args.hidden + [1],
 	hidden_tanh_dims=args.hidden + [1],
@@ -66,6 +71,7 @@ dc_model.build_nets(
 	loss_function=args.lossfunct,
 	max_loss_scale=args.mls,
 	neg_grad_penalty=neg_grad_penalty,
+	init_model=init_model,
 )
 
 dc_model.draw_nets()

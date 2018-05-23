@@ -38,4 +38,4 @@ def save_net(net, model, INIT_NET, PREDICT_NET):
 			arg=[utils.MakeArgument("shape", shape),utils.MakeArgument("values", blob)])
 		init_net.op.extend([op])
 	with open(INIT_NET+'.model', 'wb') as f:   
-		f.write(init_net.SerializeToString())	
+		f.write(init_net.SerializeToString())

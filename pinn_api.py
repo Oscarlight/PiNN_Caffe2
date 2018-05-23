@@ -151,6 +151,7 @@ class DeviceModel(object):
         loss_function='scaled_l1', 
         max_loss_scale=1.,  # used to scale up the loss signal for small input
         neg_grad_penalty=None,  # whether and how to apply neg_grad_penalty
+        init_model=None, # do postfix matching i.e. adjoint/<blob_nanme> == <blob_nanme>
     ):
         assert len(self.input_data_store) > 0, 'Input data store is empty.'
         assert 'train' in self.input_data_store, 'Missing training data.'
@@ -236,6 +237,17 @@ class DeviceModel(object):
 
         train_init_net, train_net = instantiator.generate_training_nets(self.model)
         workspace.RunNetOnce(train_init_net)
+
+        if init_model:
+            model_name = init_model['name']
+            print('[INFO] Init params from ' + model_name)
+            given_init_net = exporter.load_init_net(model_name)
+            if 'prefix' in init_model.keys():
+                print('[INFO] Append ' + init_model['prefix'] + ' to all blob names.')
+                for op in given_init_net.op:
+                    op.output[0] = init_model['prefix'] + op.output[0]
+                workspace.RunNetOnce(given_init_net)
+
         workspace.CreateNet(train_net)
         self.net_store['train_net'] = train_net
 

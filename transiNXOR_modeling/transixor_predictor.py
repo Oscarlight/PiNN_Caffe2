@@ -51,6 +51,9 @@ if not os.path.isfile(pred_data_path + model_name + '.npy'):
 	## If trained with adjoint builder
 	data_pred_flat, _, _ = predict_ids_grads(
 		model_path + model_name, vg_pred, vds_pred)
+	## If trained with origin builder
+	# data_pred_flat = predict_ids(
+	# 	model_path + model_name, vg_pred, vds_pred)
 	data_pred = np.zeros((41, 41, 41))
 	idx = 0
 	for i in range(41):
@@ -58,9 +61,6 @@ if not os.path.isfile(pred_data_path + model_name + '.npy'):
 			for k in range(41):
 				data_pred[i, j, k] = data_pred_flat[idx]
 				idx += 1
-	## If trained with origin builder
-	# ids_pred = predict_ids(
-	# 	model_path + model_name, vg_pred, vds_pred)
 	np.save(pred_data_path + model_name + '.npy', data_pred) 
 	plot(data_pred, data_true, vds=VDS, vbg=VBG, vtg=VTG)
 else:
