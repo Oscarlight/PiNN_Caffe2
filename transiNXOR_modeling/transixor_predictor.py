@@ -7,9 +7,9 @@ import matplotlib.pyplot as plt
 import glob
 
 ## ------------  Input  ---------------
-VDS = 0.2
-VTG = None
-VBG = 0.2
+VDS = None
+VTG = 0.1
+VBG = 0.1
 ## ------------  True data  ---------------
 ids_file = glob.glob('./transiXOR_data/current_D9.npy')
 data_true = np.load(ids_file[0])
@@ -25,12 +25,14 @@ def ids(data, vds=None, vbg=None, vtg=None):
 	else:
 		raise Exception('Not Supported')
 
-def plot(data_pred, data_true, vds=None, vbg=None, vtg=None):
+def plot(data_pred, data_true=None, vds=None, vbg=None, vtg=None):
 	plt.plot(ids(data_pred, vds=vds, vbg=vbg, vtg=vtg), 'r')
-	plt.plot(ids(data_true, vds=vds, vbg=vbg, vtg=vtg), 'b')
+	if data_true is not None:
+		plt.plot(ids(data_true, vds=vds, vbg=vbg, vtg=vtg), 'b')
 	plt.show()
 	plt.semilogy(ids(data_pred, vds=vds, vbg=vbg, vtg=vtg), 'r')
-	plt.semilogy(ids(data_true, vds=vds, vbg=vbg, vtg=vtg), 'b')
+	if data_true is not None:
+		plt.semilogy(ids(data_true, vds=vds, vbg=vbg, vtg=vtg), 'b')
 	plt.show()
 ## ------------  Prediction ---------------
 pred_data_path = 'pred_data/'
@@ -49,25 +51,27 @@ if not os.path.isfile(pred_data_path + model_name + '.npy'):
 	vg_pred = np.sum(vg_pred, axis=1, keepdims=True) # model use symmetry vtg vbg
 	model_path = './transiXOR_Models/'
 	## If trained with adjoint builder
-	data_pred_flat, _, _ = predict_ids_grads(
+	data_pred_flat, vg_grad_flat, vd_grad_flat = predict_ids_grads(
 		model_path + model_name, vg_pred, vds_pred)
 	## If trained with origin builder
 	# data_pred_flat = predict_ids(
 	# 	model_path + model_name, vg_pred, vds_pred)
-	data_pred = np.zeros((41, 41, 41))
-	idx = 0
-	for i in range(41):
-		for j in range(41):
-			for k in range(41):
-				data_pred[i, j, k] = data_pred_flat[idx]
-				idx += 1
+	data_pred = data_pred_flat.reshape((41, 41, 41))
+	vg_grad = vg_grad_flat.reshape((41, 41, 41))
+	vd_grad = vd_grad_flat.reshape((41, 41, 41))
 	np.save(pred_data_path + model_name + '.npy', data_pred) 
+	np.save(pred_data_path + model_name + '_vg_grad.npy', vg_grad) 
+	np.save(pred_data_path + model_name + '_vd_grad.npy', vd_grad) 
 	plot(data_pred, data_true, vds=VDS, vbg=VBG, vtg=VTG)
 else:
 	print('Reading from pre-computed data...')
 	data_pred = np.load(pred_data_path + model_name + '.npy')
+	vg_grad = np.load(pred_data_path + model_name + '_vg_grad.npy')
+	vd_grad = np.load(pred_data_path + model_name + '_vd_grad.npy')
 	print(data_pred.shape)
-	plot(data_pred, data_true, vds=VDS, vbg=VBG, vtg=VTG)
+	plot(data_pred, data_true=data_true, vds=VDS, vbg=VBG, vtg=VTG)
+	# plot(vg_grad, vds=VDS, vbg=VBG, vtg=VTG)
+	# plot(vd_grad, vds=VDS, vbg=VBG, vtg=VTG)
 
 ## Point test
 # ids_pred = predict_ids(

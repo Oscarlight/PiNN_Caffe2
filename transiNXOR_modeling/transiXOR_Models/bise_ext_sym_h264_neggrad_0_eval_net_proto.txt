@@ -1,0 +1,679 @@
+name: "eval_net"
+op {
+  input: "dbreader_eval"
+  output: "DBInput_eval/eval_sig_input"
+  output: "DBInput_eval/eval_tanh_input"
+  output: "DBInput_eval/eval_label"
+  name: ""
+  type: "TensorProtosDBInput"
+  arg {
+    name: "batch_size"
+    i: 2048
+  }
+}
+op {
+  input: "DBInput_eval/eval_sig_input"
+  output: "DBInput_eval/eval_sig_input"
+  name: ""
+  type: "StopGradient"
+}
+op {
+  input: "DBInput_eval/eval_tanh_input"
+  output: "DBInput_eval/eval_tanh_input"
+  name: ""
+  type: "StopGradient"
+}
+op {
+  input: "DBInput_eval/eval_tanh_input"
+  input: "adjoint/tanh_fc_layer_0/w"
+  output: "origin/tanh_fc_layer_0/output"
+  name: ""
+  type: "MatMul"
+  arg {
+    name: "trans_b"
+    i: 1
+  }
+}
+op {
+  input: "DBInput_eval/eval_sig_input"
+  input: "adjoint/sig_fc_layer_0/w"
+  input: "adjoint/sig_fc_layer_0/b"
+  output: "origin/sig_fc_layer_0/output"
+  name: ""
+  type: "FC"
+}
+op {
+  input: "origin/tanh_fc_layer_0/output"
+  input: "adjoint/inter_embed_layer_0/w"
+  input: "adjoint/inter_embed_layer_0/b"
+  output: "origin/inter_embed_layer_0/output"
+  name: ""
+  type: "FC"
+}
+op {
+  input: "origin/inter_embed_layer_0/output"
+  input: "origin/sig_fc_layer_0/output"
+  output: "origin/Add/inter_add_layer_0"
+  name: ""
+  type: "Add"
+}
+op {
+  input: "origin/Add/inter_add_layer_0"
+  output: "origin/Sigmoid/sig_tranfer_layer_0"
+  name: ""
+  type: "Sigmoid"
+}
+op {
+  input: "origin/tanh_fc_layer_0/output"
+  output: "origin/Tanh/tanh_tranfer_layer_0"
+  name: ""
+  type: "Tanh"
+}
+op {
+  input: "origin/Tanh/tanh_tranfer_layer_0"
+  input: "adjoint/tanh_fc_layer_1/w"
+  output: "origin/tanh_fc_layer_1/output"
+  name: ""
+  type: "MatMul"
+  arg {
+    name: "trans_b"
+    i: 1
+  }
+}
+op {
+  input: "origin/Sigmoid/sig_tranfer_layer_0"
+  input: "adjoint/sig_fc_layer_1/w"
+  input: "adjoint/sig_fc_layer_1/b"
+  output: "origin/sig_fc_layer_1/output"
+  name: ""
+  type: "FC"
+}
+op {
+  input: "origin/tanh_fc_layer_1/output"
+  input: "adjoint/inter_embed_layer_1/w"
+  input: "adjoint/inter_embed_layer_1/b"
+  output: "origin/inter_embed_layer_1/output"
+  name: ""
+  type: "FC"
+}
+op {
+  input: "origin/inter_embed_layer_1/output"
+  input: "origin/sig_fc_layer_1/output"
+  output: "origin/Add_auto_0/inter_add_layer_1"
+  name: ""
+  type: "Add"
+}
+op {
+  input: "origin/Add_auto_0/inter_add_layer_1"
+  output: "origin/Sigmoid_auto_0/sig_tranfer_layer_1"
+  name: ""
+  type: "Sigmoid"
+}
+op {
+  input: "origin/tanh_fc_layer_1/output"
+  output: "origin/Tanh_auto_0/tanh_tranfer_layer_1"
+  name: ""
+  type: "Tanh"
+}
+op {
+  input: "origin/Tanh_auto_0/tanh_tranfer_layer_1"
+  input: "adjoint/tanh_fc_layer_2/w"
+  output: "origin/tanh_fc_layer_2/output"
+  name: ""
+  type: "MatMul"
+  arg {
+    name: "trans_b"
+    i: 1
+  }
+}
+op {
+  input: "origin/Sigmoid_auto_0/sig_tranfer_layer_1"
+  input: "adjoint/sig_fc_layer_2/w"
+  input: "adjoint/sig_fc_layer_2/b"
+  output: "origin/sig_fc_layer_2/output"
+  name: ""
+  type: "FC"
+}
+op {
+  input: "origin/tanh_fc_layer_2/output"
+  input: "adjoint/inter_embed_layer_2/w"
+  input: "adjoint/inter_embed_layer_2/b"
+  output: "origin/inter_embed_layer_2/output"
+  name: ""
+  type: "FC"
+}
+op {
+  input: "origin/inter_embed_layer_2/output"
+  input: "origin/sig_fc_layer_2/output"
+  output: "origin/Add_auto_1/inter_add_layer_2"
+  name: ""
+  type: "Add"
+}
+op {
+  input: "origin/Add_auto_1/inter_add_layer_2"
+  output: "origin/Sigmoid_auto_1/sig_tranfer_layer_2"
+  name: ""
+  type: "Sigmoid"
+}
+op {
+  input: "origin/tanh_fc_layer_2/output"
+  output: "origin/Tanh_auto_1/tanh_tranfer_layer_2"
+  name: ""
+  type: "Tanh"
+}
+op {
+  input: "origin/Sigmoid_auto_1/sig_tranfer_layer_2"
+  input: "origin/Tanh_auto_1/tanh_tranfer_layer_2"
+  output: "origin/Mul/origin_pred"
+  name: ""
+  type: "Mul"
+}
+op {
+  input: "origin/Sigmoid_auto_1/sig_tranfer_layer_2"
+  output: "adjoint/ConstantFill/output_ones_3"
+  name: ""
+  type: "ConstantFill"
+  arg {
+    name: "dtype"
+    i: 1
+  }
+  arg {
+    name: "value"
+    f: 1.0
+  }
+}
+op {
+  input: "adjoint/ConstantFill/output_ones_3"
+  input: "origin/Sigmoid_auto_1/sig_tranfer_layer_2"
+  output: "adjoint/Sub/sig_output_sub_3"
+  name: ""
+  type: "Sub"
+}
+op {
+  input: "origin/Sigmoid_auto_1/sig_tranfer_layer_2"
+  input: "adjoint/Sub/sig_output_sub_3"
+  output: "adjoint/Mul/sig_output_mul_3"
+  name: ""
+  type: "Mul"
+}
+op {
+  input: "origin/Tanh_auto_1/tanh_tranfer_layer_2"
+  input: "adjoint/Mul/sig_output_mul_3"
+  output: "adjoint/Mul_auto_0/sig_output_beta_3"
+  name: ""
+  type: "Mul"
+}
+op {
+  input: "origin/Tanh_auto_1/tanh_tranfer_layer_2"
+  input: "origin/Tanh_auto_1/tanh_tranfer_layer_2"
+  output: "adjoint/Mul_auto_1/tanh_output_sq_3"
+  name: ""
+  type: "Mul"
+}
+op {
+  input: "adjoint/ConstantFill/output_ones_3"
+  input: "adjoint/Mul_auto_1/tanh_output_sq_3"
+  output: "adjoint/Sub_auto_0/tanh_output_sub_3"
+  name: ""
+  type: "Sub"
+}
+op {
+  input: "origin/Sigmoid_auto_1/sig_tranfer_layer_2"
+  input: "adjoint/Sub_auto_0/tanh_output_sub_3"
+  output: "adjoint/Mul_auto_2/tanh_output_mul_3"
+  name: ""
+  type: "Mul"
+}
+op {
+  input: "adjoint/Mul_auto_0/sig_output_beta_3"
+  input: "adjoint/inter_embed_layer_2/w"
+  output: "adjoint/inter_embed_layer_2/output"
+  name: ""
+  type: "MatMul"
+  arg {
+    name: "trans_b"
+    i: 0
+  }
+}
+op {
+  input: "adjoint/Mul_auto_2/tanh_output_mul_3"
+  input: "adjoint/inter_embed_layer_2/output"
+  output: "adjoint/Add/tanh_output_alpha_3"
+  name: ""
+  type: "Add"
+}
+op {
+  input: "adjoint/Mul_auto_0/sig_output_beta_3"
+  input: "adjoint/sig_fc_layer_2/w"
+  output: "adjoint/sig_fc_layer_2/output"
+  name: ""
+  type: "MatMul"
+  arg {
+    name: "trans_b"
+    i: 0
+  }
+}
+op {
+  input: "origin/Sigmoid_auto_0/sig_tranfer_layer_1"
+  output: "adjoint/ConstantFill_auto_0/sig_ones_2"
+  name: ""
+  type: "ConstantFill"
+  arg {
+    name: "dtype"
+    i: 1
+  }
+  arg {
+    name: "value"
+    f: 1.0
+  }
+}
+op {
+  input: "adjoint/ConstantFill_auto_0/sig_ones_2"
+  input: "origin/Sigmoid_auto_0/sig_tranfer_layer_1"
+  output: "adjoint/Sub_auto_1/sig_sub_2"
+  name: ""
+  type: "Sub"
+}
+op {
+  input: "origin/Sigmoid_auto_0/sig_tranfer_layer_1"
+  input: "adjoint/Sub_auto_1/sig_sub_2"
+  output: "adjoint/Mul_auto_3/sig_multiplier_2"
+  name: ""
+  type: "Mul"
+}
+op {
+  input: "adjoint/sig_fc_layer_2/output"
+  input: "adjoint/Mul_auto_3/sig_multiplier_2"
+  output: "adjoint/Mul_auto_4/sig_output_beta_2"
+  name: ""
+  type: "Mul"
+}
+op {
+  input: "adjoint/Add/tanh_output_alpha_3"
+  input: "adjoint/tanh_fc_layer_2/w"
+  output: "adjoint/tanh_fc_layer_2/output"
+  name: ""
+  type: "MatMul"
+  arg {
+    name: "trans_b"
+    i: 0
+  }
+}
+op {
+  input: "origin/Tanh_auto_0/tanh_tranfer_layer_1"
+  output: "adjoint/ConstantFill_auto_1/tanh_ones_2"
+  name: ""
+  type: "ConstantFill"
+  arg {
+    name: "dtype"
+    i: 1
+  }
+  arg {
+    name: "value"
+    f: 1.0
+  }
+}
+op {
+  input: "origin/Tanh_auto_0/tanh_tranfer_layer_1"
+  input: "origin/Tanh_auto_0/tanh_tranfer_layer_1"
+  output: "adjoint/Mul_auto_5/tanh_mul_2"
+  name: ""
+  type: "Mul"
+}
+op {
+  input: "adjoint/ConstantFill_auto_1/tanh_ones_2"
+  input: "adjoint/Mul_auto_5/tanh_mul_2"
+  output: "adjoint/Sub_auto_2/tanh_multiplier_2"
+  name: ""
+  type: "Sub"
+}
+op {
+  input: "adjoint/tanh_fc_layer_2/output"
+  input: "adjoint/Sub_auto_2/tanh_multiplier_2"
+  output: "adjoint/Mul_auto_6/tanh_adjoint_layer_2"
+  name: ""
+  type: "Mul"
+}
+op {
+  input: "adjoint/Mul_auto_4/sig_output_beta_2"
+  input: "adjoint/inter_embed_layer_1/w"
+  output: "adjoint/inter_embed_layer_1/output"
+  name: ""
+  type: "MatMul"
+  arg {
+    name: "trans_b"
+    i: 0
+  }
+}
+op {
+  input: "adjoint/Mul_auto_6/tanh_adjoint_layer_2"
+  input: "adjoint/inter_embed_layer_1/output"
+  output: "adjoint/Add_auto_0/tanh_output_alpha_2"
+  name: ""
+  type: "Add"
+}
+op {
+  input: "adjoint/Mul_auto_4/sig_output_beta_2"
+  input: "adjoint/sig_fc_layer_1/w"
+  output: "adjoint/sig_fc_layer_1/output"
+  name: ""
+  type: "MatMul"
+  arg {
+    name: "trans_b"
+    i: 0
+  }
+}
+op {
+  input: "origin/Sigmoid/sig_tranfer_layer_0"
+  output: "adjoint/ConstantFill_auto_2/sig_ones_1"
+  name: ""
+  type: "ConstantFill"
+  arg {
+    name: "dtype"
+    i: 1
+  }
+  arg {
+    name: "value"
+    f: 1.0
+  }
+}
+op {
+  input: "adjoint/ConstantFill_auto_2/sig_ones_1"
+  input: "origin/Sigmoid/sig_tranfer_layer_0"
+  output: "adjoint/Sub_auto_3/sig_sub_1"
+  name: ""
+  type: "Sub"
+}
+op {
+  input: "origin/Sigmoid/sig_tranfer_layer_0"
+  input: "adjoint/Sub_auto_3/sig_sub_1"
+  output: "adjoint/Mul_auto_7/sig_multiplier_1"
+  name: ""
+  type: "Mul"
+}
+op {
+  input: "adjoint/sig_fc_layer_1/output"
+  input: "adjoint/Mul_auto_7/sig_multiplier_1"
+  output: "adjoint/Mul_auto_8/sig_output_beta_1"
+  name: ""
+  type: "Mul"
+}
+op {
+  input: "adjoint/Add_auto_0/tanh_output_alpha_2"
+  input: "adjoint/tanh_fc_layer_1/w"
+  output: "adjoint/tanh_fc_layer_1/output"
+  name: ""
+  type: "MatMul"
+  arg {
+    name: "trans_b"
+    i: 0
+  }
+}
+op {
+  input: "origin/Tanh/tanh_tranfer_layer_0"
+  output: "adjoint/ConstantFill_auto_3/tanh_ones_1"
+  name: ""
+  type: "ConstantFill"
+  arg {
+    name: "dtype"
+    i: 1
+  }
+  arg {
+    name: "value"
+    f: 1.0
+  }
+}
+op {
+  input: "origin/Tanh/tanh_tranfer_layer_0"
+  input: "origin/Tanh/tanh_tranfer_layer_0"
+  output: "adjoint/Mul_auto_9/tanh_mul_1"
+  name: ""
+  type: "Mul"
+}
+op {
+  input: "adjoint/ConstantFill_auto_3/tanh_ones_1"
+  input: "adjoint/Mul_auto_9/tanh_mul_1"
+  output: "adjoint/Sub_auto_4/tanh_multiplier_1"
+  name: ""
+  type: "Sub"
+}
+op {
+  input: "adjoint/tanh_fc_layer_1/output"
+  input: "adjoint/Sub_auto_4/tanh_multiplier_1"
+  output: "adjoint/Mul_auto_10/tanh_adjoint_layer_1"
+  name: ""
+  type: "Mul"
+}
+op {
+  input: "adjoint/Mul_auto_8/sig_output_beta_1"
+  input: "adjoint/inter_embed_layer_0/w"
+  output: "adjoint/inter_embed_layer_0/output"
+  name: ""
+  type: "MatMul"
+  arg {
+    name: "trans_b"
+    i: 0
+  }
+}
+op {
+  input: "adjoint/Mul_auto_10/tanh_adjoint_layer_1"
+  input: "adjoint/inter_embed_layer_0/output"
+  output: "adjoint/Add_auto_1/tanh_output_alpha_1"
+  name: ""
+  type: "Add"
+}
+op {
+  input: "adjoint/Mul_auto_8/sig_output_beta_1"
+  input: "adjoint/sig_fc_layer_0/w"
+  output: "adjoint/sig_fc_layer_0/output"
+  name: ""
+  type: "MatMul"
+  arg {
+    name: "trans_b"
+    i: 0
+  }
+}
+op {
+  input: "adjoint/Add_auto_1/tanh_output_alpha_1"
+  input: "adjoint/tanh_fc_layer_0/w"
+  output: "adjoint/tanh_fc_layer_0/output"
+  name: ""
+  type: "MatMul"
+  arg {
+    name: "trans_b"
+    i: 0
+  }
+}
+op {
+  input: "DBInput_eval/eval_label"
+  output: "batch_direct_weighted_l1_loss/stopped_label"
+  name: ""
+  type: "StopGradient"
+}
+op {
+  input: "batch_direct_weighted_l1_loss/stopped_label"
+  input: "origin/Mul/origin_pred"
+  output: "batch_direct_weighted_l1_loss/l1_dist"
+  name: ""
+  type: "L1Distance"
+}
+op {
+  input: "batch_direct_weighted_l1_loss/l1_dist"
+  output: "batch_direct_weighted_l1_loss/l1_metric"
+  name: ""
+  type: "AveragedLoss"
+}
+op {
+  input: "batch_direct_weighted_l1_loss/stopped_label"
+  output: "batch_direct_weighted_l1_loss/scaler"
+  output: "batch_direct_weighted_l1_loss/scaler_no_clip"
+  name: ""
+  type: "ScaleWithClip"
+  arg {
+    name: "max_scale"
+    f: 500.0
+  }
+}
+op {
+  input: "batch_direct_weighted_l1_loss/scaler"
+  output: "batch_direct_weighted_l1_loss/stopped_scaler"
+  name: ""
+  type: "StopGradient"
+}
+op {
+  input: "batch_direct_weighted_l1_loss/scaler_no_clip"
+  output: "batch_direct_weighted_l1_loss/stopped_scaler_no_clip"
+  name: ""
+  type: "StopGradient"
+}
+op {
+  input: "batch_direct_weighted_l1_loss/stopped_scaler"
+  output: "batch_direct_weighted_l1_loss/squeezed_scaler"
+  name: ""
+  type: "Squeeze"
+  arg {
+    name: "dims"
+    ints: 1
+  }
+}
+op {
+  input: "batch_direct_weighted_l1_loss/stopped_scaler_no_clip"
+  output: "batch_direct_weighted_l1_loss/squeezed_scaler_no_clip"
+  name: ""
+  type: "Squeeze"
+  arg {
+    name: "dims"
+    ints: 1
+  }
+}
+op {
+  input: "batch_direct_weighted_l1_loss/l1_dist"
+  input: "batch_direct_weighted_l1_loss/squeezed_scaler"
+  output: "batch_direct_weighted_l1_loss/scaled_loss"
+  name: ""
+  type: "Mul"
+}
+op {
+  input: "batch_direct_weighted_l1_loss/l1_dist"
+  input: "batch_direct_weighted_l1_loss/squeezed_scaler_no_clip"
+  output: "batch_direct_weighted_l1_loss/scaled_loss_no_clip"
+  name: ""
+  type: "Mul"
+}
+op {
+  input: "batch_direct_weighted_l1_loss/scaled_loss"
+  output: "batch_direct_weighted_l1_loss/loss"
+  name: ""
+  type: "AveragedLoss"
+}
+op {
+  input: "batch_direct_weighted_l1_loss/scaled_loss_no_clip"
+  output: "batch_direct_weighted_l1_loss/scaled_l1_metric"
+  name: ""
+  type: "AveragedLoss"
+}
+op {
+  input: "adjoint/tanh_fc_layer_0/output"
+  input: "neg_grad_penalty_input_idx"
+  output: "BatchGather/gathered_adjoint_pred"
+  name: ""
+  type: "BatchGather"
+}
+op {
+  input: "DBInput_train/tanh_input"
+  input: "neg_grad_penalty_input_idx"
+  output: "BatchGather_auto_0/origin_input_gate"
+  name: ""
+  type: "BatchGather"
+}
+op {
+  input: "BatchGather/gathered_adjoint_pred"
+  output: "FlattenToVec/flat_gathered_adjoint_pred"
+  name: ""
+  type: "FlattenToVec"
+}
+op {
+  input: "FlattenToVec/flat_gathered_adjoint_pred"
+  output: "Negative/neg_gathered_adjoint_pred"
+  name: ""
+  type: "Negative"
+}
+op {
+  input: "Negative/neg_gathered_adjoint_pred"
+  output: "Relu/neg_gradients"
+  name: ""
+  type: "Relu"
+}
+op {
+  input: "BatchGather_auto_0/origin_input_gate"
+  output: "FlattenToVec_auto_0/flat_origin_input_gate"
+  name: ""
+  type: "FlattenToVec"
+}
+op {
+  input: "FlattenToVec_auto_0/flat_origin_input_gate"
+  output: "Sign/sign_origin_input_gate"
+  name: ""
+  type: "Sign"
+}
+op {
+  input: "Sign/sign_origin_input_gate"
+  output: "Relu_auto_0/input_gate"
+  name: ""
+  type: "Relu"
+}
+op {
+  input: "Relu_auto_0/input_gate"
+  output: "StopGradient_auto_3/input_gate_stopgrad"
+  name: ""
+  type: "StopGradient"
+}
+op {
+  input: "Relu/neg_gradients"
+  input: "StopGradient_auto_3/input_gate_stopgrad"
+  output: "Mul/gated_neg_gradients"
+  name: ""
+  type: "Mul"
+}
+op {
+  input: "Mul/gated_neg_gradients"
+  output: "AveragedLoss/avg_gated_neg_graident_loss"
+  name: ""
+  type: "AveragedLoss"
+}
+op {
+  input: "AveragedLoss/avg_gated_neg_graident_loss"
+  input: "penalty_scaler"
+  output: "PenaltyScaler/scaled_neg_gradient_loss"
+  name: ""
+  type: "Mul"
+}
+external_input: "dbreader_eval"
+external_input: "adjoint/tanh_fc_layer_0/w"
+external_input: "adjoint/sig_fc_layer_0/w"
+external_input: "adjoint/sig_fc_layer_0/b"
+external_input: "adjoint/inter_embed_layer_0/w"
+external_input: "adjoint/inter_embed_layer_0/b"
+external_input: "adjoint/tanh_fc_layer_1/w"
+external_input: "adjoint/sig_fc_layer_1/w"
+external_input: "adjoint/sig_fc_layer_1/b"
+external_input: "adjoint/inter_embed_layer_1/w"
+external_input: "adjoint/inter_embed_layer_1/b"
+external_input: "adjoint/tanh_fc_layer_2/w"
+external_input: "adjoint/sig_fc_layer_2/w"
+external_input: "adjoint/sig_fc_layer_2/b"
+external_input: "adjoint/inter_embed_layer_2/w"
+external_input: "adjoint/inter_embed_layer_2/b"
+external_input: "neg_grad_penalty_input_idx"
+external_input: "DBInput_train/tanh_input"
+external_input: "penalty_scaler"
+external_input: "DBInput_eval/eval_sig_input"
+external_input: "DBInput_eval/eval_tanh_input"
+external_input: "adjoint_input"
+external_input: "DBInput_eval/eval_label"
+external_input: "origin/Mul/origin_pred"
+external_output: "batch_direct_weighted_l1_loss/loss"
+external_output: "origin/Mul/origin_pred"
+external_output: "batch_direct_weighted_l1_loss/l1_metric"
+external_output: "batch_direct_weighted_l1_loss/scaled_l1_metric"
+external_output: "PenaltyScaler/scaled_neg_gradient_loss"
