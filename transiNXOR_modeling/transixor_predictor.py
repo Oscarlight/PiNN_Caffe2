@@ -37,7 +37,7 @@ def plot(data_pred, data_true=None, vds=None, vbg=None, vtg=None):
 ## ------------  Prediction ---------------
 pred_data_path = 'pred_data/'
 # model_name = 'bise_ext_sym_h264_0'
-model_name = 'bise_ext_sym_h264_neggrad_0'
+model_name = 'bise_ext_sym_h264_neggrad_3'
 if not os.path.isfile(pred_data_path + model_name + '.npy'):
 	print('Computing all data...')
 	vds = np.linspace(-0.1, 0.3, 41)
@@ -62,7 +62,7 @@ if not os.path.isfile(pred_data_path + model_name + '.npy'):
 	np.save(pred_data_path + model_name + '.npy', data_pred) 
 	np.save(pred_data_path + model_name + '_vg_grad.npy', vg_grad) 
 	np.save(pred_data_path + model_name + '_vd_grad.npy', vd_grad) 
-	plot(data_pred, data_true, vds=VDS, vbg=VBG, vtg=VTG)
+	plot(data_pred, data_true=data_true, vds=VDS, vbg=VBG, vtg=VTG)
 else:
 	print('Reading from pre-computed data...')
 	data_pred = np.load(pred_data_path + model_name + '.npy')
@@ -71,7 +71,7 @@ else:
 	print(data_pred.shape)
 	plot(data_pred, data_true=data_true, vds=VDS, vbg=VBG, vtg=VTG)
 	# plot(vg_grad, vds=VDS, vbg=VBG, vtg=VTG)
-	# plot(vd_grad, vds=VDS, vbg=VBG, vtg=VTG)
+	plot(vd_grad, vds=VDS, vbg=VBG, vtg=VTG)
 
 ## Point test
 # ids_pred = predict_ids(
